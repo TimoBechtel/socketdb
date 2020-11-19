@@ -188,6 +188,27 @@ test('can unsubscribe from keys of path', (done) => {
 	}, 100);
 });
 
+test('received data should not be passed as reference', (done) => {
+	const socket = new MockedSocket();
+	const store = createStore();
+	const client = SocketDBClient(socket.socketClient, { store });
+
+	const testData = { test: '0' };
+
+	client.get('data').once((data) => {
+		expect(data).toEqual({ test: '0' });
+		client.get('data').once((data2) => {
+			expect(data === data2).toBe(false);
+			expect(data2).toEqual({ test: '1' });
+			done();
+		});
+		data.test = '1';
+		client.get('data').set(data);
+	});
+
+	client.get('data').set(testData);
+});
+
 test('on/once always receives data on first call', (done) => {
 	const socket = new MockedSocket();
 	const client = SocketDBClient(socket.socketClient);

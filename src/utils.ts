@@ -20,7 +20,7 @@ export function traverseData(
 	});
 }
 
-export function merge(
+export function mergeDiff(
 	source: { [key: string]: any },
 	target: { [key: string]: any }
 ): { [key: string]: any } {
@@ -28,7 +28,7 @@ export function merge(
 	for (const [key, value] of Object.entries(source)) {
 		if (isObject(value)) {
 			if (!isObject(target[key])) target[key] = {};
-			const subdiff = merge(value, target[key]);
+			const subdiff = mergeDiff(value, target[key]);
 			if (Object.keys(subdiff).length > 0) diff[key] = subdiff;
 		} else {
 			if (!equals(target[key], value)) {

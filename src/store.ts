@@ -1,5 +1,5 @@
 import { parsePath } from './parsePath';
-import { merge } from './utils';
+import { mergeDiff } from './utils';
 
 export type Store = {
 	get: (path?: string) => any;
@@ -19,7 +19,7 @@ export function createStore(): Store {
 		return current;
 	}
 	function put(diff: { [key: string]: any }): { [key: string]: any } {
-		return merge(diff, store);
+		return mergeDiff(diff, store);
 	}
 	return {
 		get,

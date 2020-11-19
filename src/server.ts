@@ -1,6 +1,6 @@
 import socketio from 'socket.io';
 import { createStore, Store } from './store';
-import { isObject, joinPath, merge, traverseData } from './utils';
+import { isObject, joinPath, mergeDiff, traverseData } from './utils';
 
 type Subscribtions = {
 	[id: string]: { [path: string]: (data: any) => void };
@@ -25,7 +25,7 @@ export function SocketDBServer(
 
 	function queueUpdate(diff: any) {
 		if (pendingUpdate) {
-			merge(diff, queuedUpdate);
+			mergeDiff(diff, queuedUpdate);
 		} else {
 			queuedUpdate = diff;
 			pendingUpdate = setTimeout(() => {
@@ -95,6 +95,8 @@ export function SocketDBServer(
 	});
 	return {
 		update,
-		get: store.get,
+		get: (path: string) => {
+			mergeDiff(store.get(path), {});
+		},
 	};
 }

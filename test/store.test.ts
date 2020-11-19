@@ -145,3 +145,25 @@ test('returns a diff containing all changed values', () => {
 		},
 	});
 });
+
+test('should recognize changes when passed as reference', () => {
+	const store = createStore();
+
+	const data = {
+		a: {
+			b: 'c',
+		},
+		d: 0,
+	};
+	store.put(data);
+
+	data.a.b = 'e';
+
+	const diff = store.put(data);
+
+	expect(diff).toEqual({
+		a: {
+			b: 'e',
+		},
+	});
+});

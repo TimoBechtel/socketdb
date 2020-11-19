@@ -1,6 +1,6 @@
 import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
-import { isObject, joinPath, traverseData } from './utils';
+import { isObject, joinPath, mergeDiff, traverseData } from './utils';
 
 type Unsubscriber = () => void;
 
@@ -29,7 +29,9 @@ export function SocketDBClient(
 		// should not go through multiple loops
 		traverseData(diff, (path, data) => {
 			if (listener?.[path]) {
-				listener[path].forEach((listener) => listener(store.get(path)));
+				let storedData = store.get(path);
+				if (isObject(storedData)) storedData = mergeDiff(storedData, {});
+				listener[path].forEach((listener) => listener(storedData));
 				delete listener[path];
 			}
 			// if a path is subscribed but has no data, we still need to inform subscribers
@@ -37,8 +39,10 @@ export function SocketDBClient(
 			if (!isObject(data)) {
 				Object.keys(listener).forEach((subscribedPath) => {
 					if (subscribedPath.startsWith(path)) {
+						let storedData = store.get(subscribedPath);
+						if (isObject(storedData)) storedData = mergeDiff(storedData, {});
 						listener[subscribedPath].forEach((listener) =>
-							listener(store.get(subscribedPath))
+							listener(storedData)
 						);
 					}
 				});
