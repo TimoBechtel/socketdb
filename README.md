@@ -22,8 +22,10 @@ npm install -D socketdb
 It currently uses socket.io, so you also need to install socket.io:
 
 ```
-npm install -D socket.io
+npm install -D socket.io@2.3.0
 ```
+Info: Currently does not support socket.io in version 3.
+SocketDB will not be updated to support version 3, as it will be replaced with vanilla websockets.
 
 ## Usage examples
 
