@@ -135,13 +135,20 @@ test('can subscribe to path once', (done) => {
 		socket.emit('players/1', { data: 'test' });
 	});
 
+	let updateCount = 0;
 	client
 		.get('players')
 		.get('1')
 		.once((data) => {
 			expect(data).toEqual('test');
-			done();
+			client.get('players').get('1').set('-');
+			updateCount++;
 		});
+
+	setTimeout(() => {
+		expect(updateCount).toBe(1);
+		done();
+	}, 100);
 });
 
 test('can subscribe to keys of path', (done) => {

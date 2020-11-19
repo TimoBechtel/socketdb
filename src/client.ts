@@ -138,9 +138,9 @@ export function SocketDBClient(
 			},
 			set(value) {
 				const diff = store.put(creatUpdate(path, value));
-				notifySubscriber(diff);
 				if (diff && Object.keys(diff).length > 0)
 					socket.emit('update', { data: diff });
+				notifySubscriber(diff);
 				return this;
 			},
 			on(callback) {
@@ -154,10 +154,10 @@ export function SocketDBClient(
 			},
 			once(callback) {
 				subscribe(path, function listener(data) {
-					callback(data);
 					// TODO: should use subscribe {once: true}
 					// and not need to send "unsubscribe" back
 					unsubscribe(path, listener);
+					callback(data);
 				});
 			},
 		};
