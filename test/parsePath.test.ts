@@ -13,3 +13,7 @@ test('correctly parses empty path', () => {
 	expect(parsePath('')).toEqual([]);
 	expect(parsePath('/')).toEqual([]);
 });
+
+test('ignores leading and trailing slashes', () => {
+	expect(parsePath('/root/path/')).toEqual(['root', 'path']);
+});
