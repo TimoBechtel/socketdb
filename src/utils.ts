@@ -32,15 +32,11 @@ export function mergeDiff(
 			const subdiff = mergeDiff(value, target[key]);
 			if (Object.keys(subdiff).length > 0) diff[key] = subdiff;
 		} else {
-			if (!equals(target[key], value)) {
+			if (target[key] !== value) {
 				target[key] = value;
 				diff[key] = value;
 			}
 		}
 	}
 	return diff;
-}
-
-function equals(value: any, newValue: any) {
-	return value === newValue;
 }
