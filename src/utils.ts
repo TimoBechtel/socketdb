@@ -7,17 +7,18 @@ export function joinPath(path: string, subpath: string): string {
 }
 
 export function traverseData(
-	data: any,
-	callback: (path: string, data: any) => void,
-	path: string = ''
+	data: { [key: string]: any },
+	callback: (path: string, data: any) => void
 ) {
-	Object.entries(data).forEach(([key, value]) => {
-		const currentPath = joinPath(path, key);
-		callback(currentPath, value);
-		if (isObject(value)) {
-			traverseData(value, callback, currentPath);
+	let stack: { data: any; path: string }[] = [{ data, path: '' }];
+	while (stack.length) {
+		const current = stack.pop();
+		for (let [key, value] of Object.entries(current.data)) {
+			const path = joinPath(current.path, key);
+			callback(path, value);
+			if (isObject(value)) stack.push({ data: value, path });
 		}
-	});
+	}
 }
 
 export function mergeDiff(
