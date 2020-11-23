@@ -19,10 +19,16 @@ type UpdateListener = {
 };
 
 export function SocketDBClient({
-	url = `ws://${window.location.hostname}:${window.location.port}`,
+	url,
 	store = createStore(),
 	socketClient = createWebsocketClient({ url }),
 }: { url?: string; store?: Store; socketClient?: SocketClient } = {}) {
+	if (!url)
+		url =
+			typeof window !== 'undefined'
+				? `ws://${window.location.hostname}:${window.location.port}`
+				: 'ws://localhost:8080';
+
 	const subscribedPaths: string[] = [];
 	const updateListener: UpdateListener = {};
 
