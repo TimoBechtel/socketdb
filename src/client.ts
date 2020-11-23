@@ -1,3 +1,5 @@
+import { SocketClient } from './socketAdapter/socketClient';
+import { createWebsocketClient } from './socketAdapter/websocketClient';
 import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
 import { isObject, joinPath, mergeDiff, traverseData } from './utils';
@@ -16,10 +18,11 @@ type UpdateListener = {
 	[path: string]: ((data: any) => void)[];
 };
 
-export function SocketDBClient(
-	socket: SocketIOClient.Socket,
-	{ store = createStore() }: { store?: Store } = {}
-) {
+export function SocketDBClient({
+	url = `ws://${window.location.hostname}:${window.location.port}`,
+	store = createStore(),
+	socketClient = createWebsocketClient({ url }),
+}: { url?: string; store?: Store; socketClient?: SocketClient } = {}) {
 	const subscribedPaths: string[] = [];
 	const updateListener: UpdateListener = {};
 
@@ -51,19 +54,19 @@ export function SocketDBClient(
 	}
 
 	function addSocketPathSubscription(path: string) {
-		socket.on(path, ({ data }) => {
+		socketClient.on(path, ({ data }) => {
 			const diff = store.put(creatUpdate(path, data));
 			notifySubscriber(diff);
 		});
 		subscribedPaths.push(path);
-		socket.emit('subscribe', { path });
+		socketClient.send('subscribe', { path });
 	}
 
 	function removeSocketPathSubscription(path: string) {
 		if (subscribedPaths.indexOf(path) !== -1) {
-			socket.off(path);
+			socketClient.off(path);
 			subscribedPaths.splice(subscribedPaths.indexOf(path));
-			socket.emit('unsubscribe', { path });
+			socketClient.send('unsubscribe', { path });
 		}
 	}
 
@@ -133,17 +136,17 @@ export function SocketDBClient(
 						callback(get(refpath), key);
 					});
 				};
-				socket.on(wildcardPath, onKeysReceived);
-				socket.emit('subscribeKeys', { path });
+				socketClient.on(wildcardPath, onKeysReceived);
+				socketClient.send('subscribeKeys', { path });
 				return () => {
-					socket.off(wildcardPath, onKeysReceived);
-					socket.emit('unsubscribe', { path: wildcardPath });
+					socketClient.off(wildcardPath, onKeysReceived);
+					socketClient.send('unsubscribe', { path: wildcardPath });
 				};
 			},
 			set(value) {
 				const diff = store.put(creatUpdate(path, value));
 				if (diff && Object.keys(diff).length > 0)
-					socket.emit('update', { data: diff });
+					socketClient.send('update', { data: diff });
 				notifySubscriber(diff);
 				return this;
 			},

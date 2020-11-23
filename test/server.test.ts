@@ -1,10 +1,17 @@
+import { createEventBroker } from '../src/socketAdapter/eventBroker';
+import { SocketClient } from '../src/socketAdapter/socketClient';
+import { SocketServer } from '../src/socketAdapter/socketServer';
 import { SocketDBServer } from '../src/server';
-import MockedSocket from 'socket.io-mock';
 import { createStore } from '../src/store';
 
 test('updates data on manual update', () => {
 	const store = createStore();
-	const server = SocketDBServer({ on() {} } as any, { store });
+	const server = SocketDBServer({
+		store,
+		socketServer: {
+			onConnection() {},
+		},
+	});
 
 	server.update({
 		players: { 1: { name: 'Arnold' } },
@@ -14,18 +21,27 @@ test('updates data on manual update', () => {
 });
 
 test('updates data on socket request', () => {
-	const socket = new MockedSocket();
 	const store = createStore();
-	SocketDBServer(
+	let connect: (client: SocketClient, id: string) => void;
+	const { addListener, notify } = createEventBroker();
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ store, socketServer });
+
+	connect(
 		{
-			on(topic: string, callback) {
-				if (topic === 'connect') callback(socket);
-			},
-		} as any,
-		{ store }
+			on: addListener,
+			off() {},
+			send() {},
+		},
+		'1'
 	);
 
-	socket.socketClient.emit('update', {
+	notify('update', {
 		data: {
 			players: {
 				1: {
@@ -39,7 +55,6 @@ test('updates data on socket request', () => {
 });
 
 test('sends data on first subscribe', (done) => {
-	const socket = new MockedSocket();
 	const store = createStore();
 	store.put({
 		players: {
@@ -49,71 +64,80 @@ test('sends data on first subscribe', (done) => {
 		},
 	});
 
-	let connect;
-	SocketDBServer(
+	let connect: (client: SocketClient, id: string) => void;
+	const { addListener, removeListener, notify } = createEventBroker();
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ store, socketServer });
+	connect(
 		{
-			on(topic: string, callback) {
-				if (topic === 'connect') connect = callback;
+			on: addListener,
+			off: removeListener,
+			send(event, { data }) {
+				if (event === 'players/1') {
+					expect(data).toEqual({ name: 'Ralph' });
+					done();
+				}
 			},
-		} as any,
-		{ store }
+		},
+		'1'
 	);
-	connect(socket);
 
-	socket.socketClient.on('players/1', ({ data }) => {
-		expect(data).toEqual({ name: 'Ralph' });
-		done();
-	});
-
-	socket.socketClient.emit('subscribe', { path: 'players/1' });
+	notify('subscribe', { path: 'players/1' });
 });
 
-test('emits updates to subscriber', async () => {
-	const socket = new MockedSocket();
-	socket.id = '123';
+test('emits updates to subscriber', (done) => {
 	const store = createStore();
-	let connect;
-	SocketDBServer(
+	let connect: (client: SocketClient, id: string) => void;
+	const { addListener, removeListener, notify } = createEventBroker();
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ store, socketServer });
+
+	let count = 1;
+	connect(
 		{
-			on(topic: string, callback) {
-				if (topic === 'connect') connect = callback;
-			},
-		} as any,
-		{ store }
-	);
-	connect(socket);
-
-	await new Promise((resolve) => {
-		let count = 1;
-		socket.socketClient.on('players/1', ({ data }) => {
-			if (count === 1) {
-				expect(data).toBe(null);
-				count++;
-				setTimeout(() => {
-					socket.socketClient.emit('update', {
-						data: {
-							players: {
-								1: {
-									name: 'Peter',
+			on: addListener,
+			off: removeListener,
+			send(event, { data }) {
+				if (event === 'players/1') {
+					if (count === 1) {
+						expect(data).toBe(null);
+						count++;
+						setTimeout(() => {
+							notify('update', {
+								data: {
+									players: {
+										1: {
+											name: 'Peter',
+										},
+									},
 								},
-							},
-						},
-					});
-					expect(store.get('players/1/name')).toBe('Peter');
-				}, 100);
-			} else {
-				expect(data).toEqual({ name: 'Peter' });
-				resolve();
-			}
-		});
+							});
+							expect(store.get('players/1/name')).toBe('Peter');
+						}, 100);
+					} else {
+						expect(data).toEqual({ name: 'Peter' });
+						done();
+					}
+				}
+			},
+		},
+		'1'
+	);
 
-		socket.socketClient.emit('subscribe', { path: 'players/1' });
-	});
+	notify('subscribe', { path: 'players/1' });
 });
 
 test('only emits changed values', (done) => {
-	const socket = new MockedSocket();
-	socket.id = '123';
 	const store = createStore();
 	store.put({
 		players: {
@@ -123,27 +147,43 @@ test('only emits changed values', (done) => {
 		},
 	});
 
-	let connect;
-	SocketDBServer(
+	let connect: (client: SocketClient, id: string) => void;
+	const { addListener, removeListener, notify } = createEventBroker();
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ store, socketServer });
+
+	let updateCount = 0;
+	connect(
 		{
-			on(topic: string, callback) {
-				if (topic === 'connect') connect = callback;
+			on: addListener,
+			off: removeListener,
+			send(event, { data }) {
+				if (event === 'players/1') {
+					if (updateCount === 0) {
+						updateCount++;
+						expect(data).toEqual({ name: 'Peter' });
+					} else {
+						expect(data).toEqual({
+							position: {
+								x: 0,
+								y: 1,
+							},
+						});
+						done();
+					}
+				}
 			},
-		} as any,
-		{ store }
+		},
+		'1'
 	);
-	connect(socket);
-	socket.socketClient.emit('subscribe', { path: 'players/1' });
-	socket.socketClient.on('players/1', ({ data }) => {
-		expect(data).toEqual({
-			position: {
-				x: 0,
-				y: 1,
-			},
-		});
-		done();
-	});
-	socket.socketClient.emit('update', {
+
+	notify('subscribe', { path: 'players/1' });
+	notify('update', {
 		data: {
 			players: {
 				1: {
@@ -159,10 +199,6 @@ test('only emits changed values', (done) => {
 });
 
 test('emits updates to all subscribers', async () => {
-	const socket1 = new MockedSocket();
-	socket1.id = '1';
-	const socket2 = new MockedSocket();
-	socket2.id = '2';
 	const store = createStore();
 	store.put({
 		players: {
@@ -171,52 +207,66 @@ test('emits updates to all subscribers', async () => {
 			},
 		},
 	});
-	let connect;
-	SocketDBServer(
-		{
-			on(topic: string, callback) {
-				if (topic === 'connect') connect = callback;
-			},
-		} as any,
-		{ store }
-	);
+	let connect: (client: SocketClient, id: string) => void;
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ store, socketServer });
 
 	await new Promise((resolve) => {
-		connect(socket1);
-		socket1.socketClient.on('players', ({ data }) => {
-			expect(data).toEqual({
-				1: {
-					name: 'Peter',
+		const { addListener, removeListener, notify } = createEventBroker();
+		connect(
+			{
+				on: addListener,
+				off: removeListener,
+				send(event, { data }) {
+					if (event === 'players') {
+						expect(data).toEqual({
+							1: {
+								name: 'Peter',
+							},
+						});
+						resolve();
+					}
 				},
-			});
-			resolve();
-		});
-		socket1.socketClient.emit('subscribe', { path: 'players', once: true });
+			},
+			'1'
+		);
+		notify('subscribe', { path: 'players', once: true });
 	});
 	await new Promise((resolve) => {
-		connect(socket2);
-		socket2.socketClient.on('players/1/name', ({ data }) => {
-			expect(data).toEqual('Peter');
-			resolve();
-		});
-		socket2.socketClient.emit('subscribe', { path: 'players/1/name' });
+		const { addListener, removeListener, notify } = createEventBroker();
+		connect(
+			{
+				on: addListener,
+				off: removeListener,
+				send(event, { data }) {
+					if (event === 'players/1/name') {
+						expect(data).toEqual('Peter');
+						resolve();
+					}
+				},
+			},
+			'2'
+		);
+		notify('subscribe', { path: 'players/1/name' });
 	});
 });
 
 test('sends keys when entries are added or removed', async () => {
-	const socket = new MockedSocket();
-	socket.id = '123';
 	const store = createStore();
-	let connect;
-	const server = SocketDBServer(
-		{
-			on(topic: string, callback) {
-				if (topic === 'connect') connect = callback;
-			},
-		} as any,
-		{ store }
-	);
-	connect(socket);
+	let connect: (client: SocketClient, id: string) => void;
+	const { addListener, removeListener, notify } = createEventBroker();
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	const server = SocketDBServer({ store, socketServer });
 
 	server.update({
 		players: {
@@ -228,56 +278,71 @@ test('sends keys when entries are added or removed', async () => {
 
 	await new Promise((resolve) => {
 		let count = 0;
-		socket.socketClient.on('players/*', ({ data }) => {
-			if (count === 0) {
-				expect(data).toEqual(['1']);
-				setTimeout(() => {
-					socket.socketClient.emit('update', {
-						data: {
-							players: {
-								1: {
-									name: 'Peter',
-								},
-								2: {
-									name: 'Parker',
-								},
-							},
-						},
-					});
-				}, 100);
-			}
-			if (count === 1) {
-				expect(data).toEqual(['2']);
-				resolve();
-			}
-			count++;
-		});
-
-		socket.socketClient.emit('subscribeKeys', { path: 'players', flat: true });
+		connect(
+			{
+				on: addListener,
+				off: removeListener,
+				send(event, { data }) {
+					if (event === 'players/*') {
+						if (count === 0) {
+							expect(data).toEqual(['1']);
+							setTimeout(() => {
+								notify('update', {
+									data: {
+										players: {
+											1: {
+												name: 'Peter',
+											},
+											2: {
+												name: 'Parker',
+											},
+										},
+									},
+								});
+							}, 100);
+						}
+						if (count === 1) {
+							expect(data).toEqual(['2']);
+							resolve();
+						}
+						count++;
+					}
+				},
+			},
+			'1'
+		);
+		notify('subscribeKeys', { path: 'players', flat: true });
 	});
 });
 
 test('only send data if client is subscribed', (done) => {
-	const socket = new MockedSocket();
-	socket.id = '123';
 	const store = createStore();
-	let connect;
-	const server = SocketDBServer(
-		{
-			on(topic: string, callback) {
-				if (topic === 'connect') connect = callback;
-			},
-		} as any,
-		{ store }
-	);
-	connect(socket);
+	let connect: (client: SocketClient, id: string) => void;
+	const { addListener, removeListener, notify } = createEventBroker();
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	const server = SocketDBServer({ store, socketServer });
 
 	let receivedCount = 0;
-	socket.socketClient.on('players/1', () => {
-		receivedCount++;
-	});
-	socket.socketClient.emit('subscribe', { path: 'players/1' });
-	socket.socketClient.emit('unsubscribe', { path: 'players/1' });
+	connect(
+		{
+			on: addListener,
+			off: removeListener,
+			send(event, { data }) {
+				if (event === 'players/1') {
+					receivedCount++;
+				}
+			},
+		},
+		'1'
+	);
+
+	notify('subscribe', { path: 'players/1' });
+	notify('unsubscribe', { path: 'players/1' });
 	server.update({
 		players: {
 			1: {

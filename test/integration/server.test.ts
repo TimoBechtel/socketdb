@@ -1,20 +1,38 @@
 import { SocketDBClient, SocketDBServer } from '../../src/index';
-import MockedSocket from 'socket.io-mock';
+import { createEventBroker } from '../../src/socketAdapter/eventBroker';
+import { SocketClient } from '../../src/socketAdapter/socketClient';
+import { SocketServer } from '../../src/socketAdapter/socketServer';
 
 test('client receives updated data', (done) => {
-	const socket = new MockedSocket();
-	socket.id = '1';
-	const client = SocketDBClient(socket.socketClient);
+	const clientEventBroker = createEventBroker();
+	const serverEventBroker = createEventBroker();
 
-	let connect;
-	SocketDBServer({
-		on(topic: string, callback) {
-			if (topic === 'connect') connect = callback;
+	const socketClient: SocketClient = {
+		off: clientEventBroker.removeListener,
+		on: clientEventBroker.addListener,
+		send: serverEventBroker.notify,
+	};
+	const client = SocketDBClient({ socketClient });
+
+	let connect: (client: SocketClient, id: string) => void;
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
 		},
-	} as any);
-	connect(socket);
+	};
+	SocketDBServer({ socketServer });
+	connect(
+		{
+			on: serverEventBroker.addListener,
+			off: serverEventBroker.removeListener,
+			send: clientEventBroker.notify,
+		},
+		'1'
+	);
 
 	let updateCount1 = 1;
+
 	client.get('players').on((data) => {
 		if (updateCount1 === 1) {
 			expect(data).toEqual(null);
@@ -32,21 +50,50 @@ test('client receives updated data', (done) => {
 });
 
 test('all clients receive data on update', async () => {
-	const socket1 = new MockedSocket();
-	socket1.id = '1';
-	const client1 = SocketDBClient(socket1.socketClient);
-	const socket2 = new MockedSocket();
-	socket2.id = '2';
-	const client2 = SocketDBClient(socket2.socketClient);
+	const client1EventBroker = createEventBroker();
+	const client2EventBroker = createEventBroker();
+	const serverEventBroker = createEventBroker();
 
-	let connect;
-	SocketDBServer({
-		on(topic: string, callback) {
-			if (topic === 'connect') connect = callback;
+	const client1 = SocketDBClient({
+		socketClient: {
+			off: client1EventBroker.removeListener,
+			on: client1EventBroker.addListener,
+			send: serverEventBroker.notify,
 		},
-	} as any);
-	connect(socket1);
-	connect(socket2);
+	});
+	const client2 = SocketDBClient({
+		socketClient: {
+			off: client2EventBroker.removeListener,
+			on: client2EventBroker.addListener,
+			send: serverEventBroker.notify,
+		},
+	});
+
+	let connect: (client: SocketClient, id: string) => void;
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ socketServer });
+
+	connect(
+		{
+			on: serverEventBroker.addListener,
+			off: serverEventBroker.removeListener,
+			send: client1EventBroker.notify,
+		},
+		'1'
+	);
+	connect(
+		{
+			on: serverEventBroker.addListener,
+			off: serverEventBroker.removeListener,
+			send: client2EventBroker.notify,
+		},
+		'2'
+	);
 
 	const promises = [];
 
@@ -91,30 +138,36 @@ test('all clients receive data on update', async () => {
 });
 
 test('only sends data once for every update on same root path', (done) => {
-	const socket = new MockedSocket();
-	socket.id = '1';
-	const client = SocketDBClient(socket.socketClient);
-
-	let connect;
-	SocketDBServer(
-		{
-			on(topic: string, callback) {
-				if (topic === 'connect') connect = callback;
-			},
-		} as any,
-		{
-			updateInterval: 0,
-		}
-	);
-	connect(socket);
+	const clientEventBroker = createEventBroker();
+	const serverEventBroker = createEventBroker();
 
 	let emitCount = 0;
-	socket.socketClient.on('players', () => {
-		emitCount++;
-	});
-	socket.socketClient.on('players/1', () => {
-		emitCount++;
-	});
+	const socketClient: SocketClient = {
+		off: clientEventBroker.removeListener,
+		on: clientEventBroker.addListener,
+		send(event, data) {
+			emitCount++;
+			serverEventBroker.notify(event, data);
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+
+	let connect: (client: SocketClient, id: string) => void;
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ socketServer });
+	connect(
+		{
+			on: serverEventBroker.addListener,
+			off: serverEventBroker.removeListener,
+			send: clientEventBroker.notify,
+		},
+		'1'
+	);
 
 	client.get('players').on(() => {});
 	client

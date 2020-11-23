@@ -19,23 +19,16 @@ Info: Currently a non-stable version, so api might change!
 npm install -D socketdb
 ```
 
-It currently uses socket.io, so you also need to install socket.io:
-
-```
-npm install -D socket.io@2.3.0
-```
-Info: Currently does not support socket.io in version 3.
-SocketDB will not be updated to support version 3, as it will be replaced with vanilla websockets.
-
 ## Usage examples
 
 ### Client
 
 ```js
-import io from 'socket.io-client';
 import { SocketDBClient } from 'socketdb';
 
-const client = SocketDBClient(io());
+const client = SocketDBClient({
+	url: 'ws://localhost:8080',
+});
 
 client.get('players').all((player, name) => {
 	player.get('position').on(({ x, y }) => {
@@ -58,26 +51,38 @@ client.get('players').set({ paul: { position: { x: 9, y: 9 } } });
 
 ### Server
 
+```js
+import { SocketDBServer } from 'socketdb';
+
+const fps = 30;
+SocketDBServer({
+	port: 8080,
+	updateInterval: 1000 / fps,
+});
+```
+
 Using express:
 
 ```js
-import socketio from 'socket.io';
 import { createServer } from 'http';
 import express from 'express';
 import { SocketDBServer } from 'socketdb';
+
+const port = 8080;
 
 const server = createServer(express()).listen(port, () => {
 	console.log(`server listening on localhost:${port}`);
 });
 
 const fps = 30;
-SocketDBServer(socketio(server), {
+const socketdb = SocketDBServer({
+	socketServer: createWebsocketServer({ server }),
 	updateInterval: 1000 / fps,
 });
 ```
 
 ## Roadmap
 
-- improve performance (currently high cpu usage)
-- replace socket.io with vanilla websockets
-- come up with a better name
+- [ ] improve performance (currently high cpu usage)
+- [x] replace socket.io with vanilla websockets
+- [ ] come up with a better name
