@@ -1,3 +1,20 @@
+# [2.0.0](https://github.com/TimoBechtel/socketdb/compare/v1.0.0...v2.0.0) (2020-11-23)
+
+
+### Bug Fixes
+
+* **client:** add check for window object ([5b0cbc5](https://github.com/TimoBechtel/socketdb/commit/5b0cbc54d883bbc7dfa8d366bacec73b67df7464))
+
+
+### Features
+
+* replace socket.io with native websockets ([8892b41](https://github.com/TimoBechtel/socketdb/commit/8892b41e77ccce2a689df3c16fcb04da164e4973))
+
+
+### BREAKING CHANGES
+
+* API for initializing Server and Client was changed. It does not need a socket.io instance anymore.
+
 # 1.0.0 (2020-11-19)
 
 
