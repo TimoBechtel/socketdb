@@ -23,7 +23,11 @@ export const createWebsocketServer = (
 						on: addListener,
 						off: removeListener,
 						send(event, data) {
-							socket.send(JSON.stringify({ event, data }));
+							try {
+								socket.send(JSON.stringify({ event, data }));
+							} catch (error) {
+								console.error(error);
+							}
 						},
 					},
 					ids++ + ''
