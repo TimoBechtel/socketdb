@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/TimoBechtel/socketdb/compare/v2.0.0...v2.1.0) (2020-12-05)
+
+
+### Features
+
+* **client:** automatically reconnect on connection lost ([06c636b](https://github.com/TimoBechtel/socketdb/commit/06c636be0fc0ba266776ed10e6638a8394c8639f))
+
 # [2.0.0](https://github.com/TimoBechtel/socketdb/compare/v1.0.0...v2.0.0) (2020-11-23)
 
 
