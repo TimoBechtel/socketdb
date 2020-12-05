@@ -1,5 +1,5 @@
-import { SocketClient } from './socketClient';
+import { Socket } from './socket';
 
 export type SocketServer = {
-	onConnection: (callback: (client: SocketClient, id: string) => void) => void;
+	onConnection: (callback: (client: Socket, id: string) => void) => void;
 };

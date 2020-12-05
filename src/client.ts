@@ -21,16 +21,37 @@ type UpdateListener = {
 export function SocketDBClient({
 	url,
 	store = createStore(),
-	socketClient = createWebsocketClient({ url }),
-}: { url?: string; store?: Store; socketClient?: SocketClient } = {}) {
-	if (!url)
+	socketClient,
+}: {
+	url?: string;
+	store?: Store;
+	socketClient?: SocketClient;
+} = {}) {
+	if (!url && !socketClient)
 		url =
 			typeof window !== 'undefined'
 				? `ws://${window.location.hostname}:${window.location.port}`
 				: 'ws://localhost:8080';
+	if (!socketClient) socketClient = createWebsocketClient({ url });
 
 	const subscribedPaths: string[] = [];
 	const updateListener: UpdateListener = {};
+
+	let connectionLost = false;
+	socketClient.onConnect(() => {
+		if (connectionLost) {
+			// reattach subscriptions on every reconnect
+			subscribedPaths.forEach((path) => {
+				if (path.endsWith('*')) {
+					socketClient.send('subscribeKeys', { path });
+				} else {
+					socketClient.send('subscribe', { path });
+				}
+			});
+			connectionLost = false;
+		}
+	});
+	socketClient.onDisconnect(() => (connectionLost = true));
 
 	function notifySubscriber(diff: any) {
 		const listener: UpdateListener = { ...updateListener };
@@ -144,16 +165,18 @@ export function SocketDBClient({
 				};
 				socketClient.on(wildcardPath, onKeysReceived);
 				socketClient.send('subscribeKeys', { path });
+				subscribedPaths.push(wildcardPath);
 				return () => {
-					socketClient.off(wildcardPath, onKeysReceived);
-					socketClient.send('unsubscribe', { path: wildcardPath });
+					removeSocketPathSubscription(wildcardPath);
 				};
 			},
 			set(value) {
-				const diff = store.put(creatUpdate(path, value));
-				if (diff && Object.keys(diff).length > 0)
-					socketClient.send('update', { data: diff });
-				notifySubscriber(diff);
+				if (!connectionLost) {
+					const diff = store.put(creatUpdate(path, value));
+					if (diff && Object.keys(diff).length > 0)
+						socketClient.send('update', { data: diff });
+					notifySubscriber(diff);
+				}
 				return this;
 			},
 			on(callback) {

@@ -4,32 +4,67 @@ import { SocketClient } from './socketClient';
 export const createWebsocketClient = ({
 	url,
 	protocols,
+	reconnectTimeout = 1000 * 5,
 }: {
 	url: string;
 	protocols?: string[];
+	reconnectTimeout?: number;
 }): SocketClient => {
-	const { notify, addListener, removeListener } = createEventBroker();
+	const messageEvents = createEventBroker();
+	const connectionClosedListener = [];
+	const connectionOpenedListener = [];
 
-	const socket = new WebSocket(url, protocols);
+	let socket: Promise<WebSocket>;
 
-	socket.onmessage = ({ data: packet }) => {
+	connect();
+
+	function connect() {
+		socket = new Promise((resolve) => {
+			const _socket = new WebSocket(url, protocols);
+			_socket.onopen = () => {
+				resolve(_socket);
+				onOpen();
+			};
+			_socket.onmessage = onMessage;
+			_socket.onclose = onClose;
+			_socket.onerror = onError;
+		});
+	}
+
+	function onOpen() {
+		connectionOpenedListener.forEach((callback) => callback());
+	}
+
+	function onMessage({ data: packet }) {
 		const { event, data } = JSON.parse(packet);
-		notify(event, data);
-	};
+		messageEvents.notify(event, data);
+	}
 
-	const connectionReady = new Promise((resolve, reject) => {
-		socket.onerror = (error) => reject(error);
-		socket.onopen = () => resolve();
-	});
+	async function onError(error) {
+		console.log(error);
+		(await socket).close();
+	}
+
+	function onClose() {
+		connectionClosedListener.forEach((callback) => callback());
+		setTimeout(() => {
+			connect();
+		}, reconnectTimeout);
+	}
 
 	async function sendMessage(message: string) {
-		await connectionReady;
-		socket.send(message);
+		(await socket).send(message);
 	}
 
 	return {
-		on: addListener,
-		off: removeListener,
+		onConnect(callback) {
+			connectionOpenedListener.push(callback);
+		},
+		onDisconnect(callback) {
+			connectionClosedListener.push(callback);
+		},
+		on: messageEvents.addListener,
+		off: messageEvents.removeListener,
 		send(event: string, data: any) {
 			sendMessage(JSON.stringify({ event, data }));
 		},

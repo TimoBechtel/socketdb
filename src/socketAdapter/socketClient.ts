@@ -1,5 +1,5 @@
+import { Socket } from './socket';
+
 export type SocketClient = {
-	on(event: string, callback: (data: any) => void);
-	off: (event: string, callback?: (data: any) => void) => void;
-	send: (event: string, data: any) => void;
-};
+	onConnect: (callback: () => void) => void;
+} & Socket;

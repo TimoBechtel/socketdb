@@ -1,8 +1,9 @@
 import { createEventBroker } from '../src/socketAdapter/eventBroker';
-import { SocketClient } from '../src/socketAdapter/socketClient';
+// import { SocketClient } from '../src/socketAdapter/socketClient';
 import { SocketServer } from '../src/socketAdapter/socketServer';
 import { SocketDBServer } from '../src/server';
 import { createStore } from '../src/store';
+import { Socket } from '../src/socketAdapter/socket';
 
 test('updates data on manual update', () => {
 	const store = createStore();
@@ -22,7 +23,7 @@ test('updates data on manual update', () => {
 
 test('updates data on socket request', () => {
 	const store = createStore();
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 	const { addListener, notify } = createEventBroker();
 
 	const socketServer: SocketServer = {
@@ -34,6 +35,7 @@ test('updates data on socket request', () => {
 
 	connect(
 		{
+			onDisconnect() {},
 			on: addListener,
 			off() {},
 			send() {},
@@ -64,7 +66,7 @@ test('sends data on first subscribe', (done) => {
 		},
 	});
 
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 	const { addListener, removeListener, notify } = createEventBroker();
 
 	const socketServer: SocketServer = {
@@ -75,6 +77,7 @@ test('sends data on first subscribe', (done) => {
 	SocketDBServer({ store, socketServer });
 	connect(
 		{
+			onDisconnect() {},
 			on: addListener,
 			off: removeListener,
 			send(event, { data }) {
@@ -92,7 +95,7 @@ test('sends data on first subscribe', (done) => {
 
 test('emits updates to subscriber', (done) => {
 	const store = createStore();
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 	const { addListener, removeListener, notify } = createEventBroker();
 
 	const socketServer: SocketServer = {
@@ -105,6 +108,7 @@ test('emits updates to subscriber', (done) => {
 	let count = 1;
 	connect(
 		{
+			onDisconnect() {},
 			on: addListener,
 			off: removeListener,
 			send(event, { data }) {
@@ -147,7 +151,7 @@ test('only emits changed values', (done) => {
 		},
 	});
 
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 	const { addListener, removeListener, notify } = createEventBroker();
 
 	const socketServer: SocketServer = {
@@ -160,6 +164,7 @@ test('only emits changed values', (done) => {
 	let updateCount = 0;
 	connect(
 		{
+			onDisconnect() {},
 			on: addListener,
 			off: removeListener,
 			send(event, { data }) {
@@ -207,7 +212,7 @@ test('emits updates to all subscribers', async () => {
 			},
 		},
 	});
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 
 	const socketServer: SocketServer = {
 		onConnection(callback) {
@@ -220,6 +225,7 @@ test('emits updates to all subscribers', async () => {
 		const { addListener, removeListener, notify } = createEventBroker();
 		connect(
 			{
+				onDisconnect() {},
 				on: addListener,
 				off: removeListener,
 				send(event, { data }) {
@@ -241,6 +247,7 @@ test('emits updates to all subscribers', async () => {
 		const { addListener, removeListener, notify } = createEventBroker();
 		connect(
 			{
+				onDisconnect() {},
 				on: addListener,
 				off: removeListener,
 				send(event, { data }) {
@@ -258,7 +265,7 @@ test('emits updates to all subscribers', async () => {
 
 test('sends keys when entries are added or removed', async () => {
 	const store = createStore();
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 	const { addListener, removeListener, notify } = createEventBroker();
 
 	const socketServer: SocketServer = {
@@ -280,6 +287,7 @@ test('sends keys when entries are added or removed', async () => {
 		let count = 0;
 		connect(
 			{
+				onDisconnect() {},
 				on: addListener,
 				off: removeListener,
 				send(event, { data }) {
@@ -317,7 +325,7 @@ test('sends keys when entries are added or removed', async () => {
 
 test('only send data if client is subscribed', (done) => {
 	const store = createStore();
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 	const { addListener, removeListener, notify } = createEventBroker();
 
 	const socketServer: SocketServer = {
@@ -330,6 +338,7 @@ test('only send data if client is subscribed', (done) => {
 	let receivedCount = 0;
 	connect(
 		{
+			onDisconnect() {},
 			on: addListener,
 			off: removeListener,
 			send(event, { data }) {

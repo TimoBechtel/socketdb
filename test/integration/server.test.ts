@@ -1,5 +1,6 @@
 import { SocketDBClient, SocketDBServer } from '../../src/index';
 import { createEventBroker } from '../../src/socketAdapter/eventBroker';
+import { Socket } from '../../src/socketAdapter/socket';
 import { SocketClient } from '../../src/socketAdapter/socketClient';
 import { SocketServer } from '../../src/socketAdapter/socketServer';
 
@@ -8,13 +9,15 @@ test('client receives updated data', (done) => {
 	const serverEventBroker = createEventBroker();
 
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off: clientEventBroker.removeListener,
 		on: clientEventBroker.addListener,
 		send: serverEventBroker.notify,
 	};
 	const client = SocketDBClient({ socketClient });
 
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 
 	const socketServer: SocketServer = {
 		onConnection(callback) {
@@ -24,6 +27,7 @@ test('client receives updated data', (done) => {
 	SocketDBServer({ socketServer });
 	connect(
 		{
+			onDisconnect() {},
 			on: serverEventBroker.addListener,
 			off: serverEventBroker.removeListener,
 			send: clientEventBroker.notify,
@@ -56,6 +60,8 @@ test('all clients receive data on update', async () => {
 
 	const client1 = SocketDBClient({
 		socketClient: {
+			onConnect() {},
+			onDisconnect() {},
 			off: client1EventBroker.removeListener,
 			on: client1EventBroker.addListener,
 			send: serverEventBroker.notify,
@@ -63,13 +69,15 @@ test('all clients receive data on update', async () => {
 	});
 	const client2 = SocketDBClient({
 		socketClient: {
+			onConnect() {},
+			onDisconnect() {},
 			off: client2EventBroker.removeListener,
 			on: client2EventBroker.addListener,
 			send: serverEventBroker.notify,
 		},
 	});
 
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 
 	const socketServer: SocketServer = {
 		onConnection(callback) {
@@ -80,6 +88,7 @@ test('all clients receive data on update', async () => {
 
 	connect(
 		{
+			onDisconnect() {},
 			on: serverEventBroker.addListener,
 			off: serverEventBroker.removeListener,
 			send: client1EventBroker.notify,
@@ -88,6 +97,7 @@ test('all clients receive data on update', async () => {
 	);
 	connect(
 		{
+			onDisconnect() {},
 			on: serverEventBroker.addListener,
 			off: serverEventBroker.removeListener,
 			send: client2EventBroker.notify,
@@ -143,6 +153,8 @@ test('only sends data once for every update on same root path', (done) => {
 
 	let emitCount = 0;
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off: clientEventBroker.removeListener,
 		on: clientEventBroker.addListener,
 		send(event, data) {
@@ -152,7 +164,7 @@ test('only sends data once for every update on same root path', (done) => {
 	};
 	const client = SocketDBClient({ socketClient });
 
-	let connect: (client: SocketClient, id: string) => void;
+	let connect: (client: Socket, id: string) => void;
 
 	const socketServer: SocketServer = {
 		onConnection(callback) {
@@ -162,6 +174,7 @@ test('only sends data once for every update on same root path', (done) => {
 	SocketDBServer({ socketServer });
 	connect(
 		{
+			onDisconnect() {},
 			on: serverEventBroker.addListener,
 			off: serverEventBroker.removeListener,
 			send: clientEventBroker.notify,

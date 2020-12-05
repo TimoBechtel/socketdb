@@ -20,6 +20,9 @@ export const createWebsocketServer = (
 
 				callback(
 					{
+						onDisconnect(callback) {
+							socket.on('close', callback);
+						},
 						on: addListener,
 						off: removeListener,
 						send(event, data) {

@@ -5,6 +5,8 @@ import { createEventBroker } from '../src/socketAdapter/eventBroker';
 
 test('emits update object for path', (done) => {
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off() {},
 		on() {},
 		send(event, { data }) {
@@ -30,6 +32,8 @@ test('merges data on update', (done) => {
 	const { addListener, notify } = createEventBroker();
 
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off() {},
 		on: addListener,
 		send(event, { data }) {},
@@ -83,6 +87,8 @@ test('merges data on update', (done) => {
 test('can subscribe to path', (done) => {
 	const { addListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off() {},
 		on: addListener,
 		send(event, { path, once }) {
@@ -116,6 +122,8 @@ test('can unsubscribe from path', (done) => {
 
 	const { addListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off() {},
 		on: addListener,
 		send(event) {
@@ -151,6 +159,8 @@ test('can unsubscribe from path', (done) => {
 test('can subscribe to path once', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off: removeListener,
 		on: addListener,
 		send(event, { path }) {
@@ -181,6 +191,8 @@ test('can subscribe to path once', (done) => {
 test('can subscribe to keys of path', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off: removeListener,
 		on: addListener,
 		send(event, { path }) {
@@ -201,6 +213,8 @@ test('can subscribe to keys of path', (done) => {
 test('can unsubscribe from keys of path', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off: removeListener,
 		on: addListener,
 		send(event, { path }) {
@@ -228,6 +242,8 @@ test('can unsubscribe from keys of path', (done) => {
 test('received data should not be passed as reference', (done) => {
 	const store = createStore();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off() {},
 		on() {},
 		send() {},
@@ -253,6 +269,8 @@ test('received data should not be passed as reference', (done) => {
 test('on/once always receives data on first call', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off: removeListener,
 		on: addListener,
 		send(event) {
@@ -282,6 +300,8 @@ test('on/once always receives data on first call', (done) => {
 test('only subscribes once for every root path', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off: removeListener,
 		on: addListener,
 		send(event) {
@@ -331,6 +351,8 @@ test('only subscribes once for every root path', (done) => {
 test('always subscribe to highest level path', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off: removeListener,
 		on: addListener,
 		send(event, { path }) {
@@ -394,6 +416,8 @@ test('always subscribe to highest level path', (done) => {
 test('if data is null, should notify every subpath', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
 		off: removeListener,
 		on: addListener,
 		send(event, { path }) {
@@ -437,4 +461,70 @@ test('if data is null, should notify every subpath', (done) => {
 	}, 500);
 });
 
-// TODO: should reconnect on connection lost
+test('subscribes again after reconnect', (done) => {
+	const { addListener, notify } = createEventBroker();
+	let subscribeCount = 0;
+
+	let connect, disconnect;
+	const socketClient: SocketClient = {
+		onConnect(callback) {
+			connect = callback;
+		},
+		onDisconnect(callback) {
+			disconnect = callback;
+		},
+		off() {},
+		on: addListener,
+		send(event, { path, once }) {
+			subscribeCount++;
+			expect(event).toEqual('subscribe');
+			expect(path).toBe('players/1');
+			expect(once).not.toBe(true);
+			if (subscribeCount === 1) {
+				notify('players/1', { data: { name: 'Thomas' } });
+				disconnect();
+				connect();
+			} else {
+				expect(subscribeCount).toBe(2);
+				done();
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+	connect();
+
+	let updateCount = 1;
+	client
+		.get('players')
+		.get('1')
+		.on((data) => {
+			if (updateCount === 1) {
+				expect(data).toEqual({ name: 'Thomas' });
+				updateCount++;
+			}
+		});
+});
+
+test('should not update local cache on connection lost', (done) => {
+	let updateCount = 0;
+
+	let disconnect;
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect(callback) {
+			disconnect = callback;
+		},
+		off() {},
+		on() {},
+		send() {
+			updateCount++;
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+	disconnect();
+	client.get('players').get('1').set({ name: 'Thomas' });
+	setTimeout(() => {
+		expect(updateCount).toBe(0);
+		done();
+	}, 10);
+});
