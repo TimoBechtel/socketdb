@@ -65,34 +65,37 @@ export function SocketDBServer({
 		}
 	}
 
-	socketServer.onConnection((socket, id) => {
-		socket.on('update', ({ data }) => {
+	socketServer.onConnection((client, id) => {
+		client.onDisconnect(() => {
+			delete subscriber[id];
+		});
+		client.on('update', ({ data }) => {
 			update(data);
 		});
-		socket.on('subscribe', ({ path, once }) => {
-			socket.send(path, { data: store.get(path) });
+		client.on('subscribe', ({ path, once }) => {
+			client.send(path, { data: store.get(path) });
 			if (once) return;
 			addSubscriber(id, path, (data) => {
-				socket.send(path, { data });
+				client.send(path, { data });
 			});
 		});
-		socket.on('unsubscribe', ({ path }) => {
+		client.on('unsubscribe', ({ path }) => {
 			removeSubscriber(id, path);
 		});
-		socket.on('subscribeKeys', ({ path }) => {
+		client.on('subscribeKeys', ({ path }) => {
 			const data = store.get(path);
 			const wildcardPath = joinPath(path, '*');
 			let keys = [];
 			if (isObject(data)) {
 				keys = Object.keys(data);
-				socket.send(wildcardPath, { data: keys });
+				client.send(wildcardPath, { data: keys });
 			}
 			addSubscriber(id + 'wildcard', path, (data) => {
 				if (isObject(data)) {
 					const newKeys = Object.keys(data).filter(
 						(key) => !keys.includes(key)
 					);
-					if (newKeys.length > 0) socket.send(wildcardPath, { data: newKeys });
+					if (newKeys.length > 0) client.send(wildcardPath, { data: newKeys });
 					keys = [...keys, ...newKeys];
 				}
 			});
