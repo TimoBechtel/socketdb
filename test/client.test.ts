@@ -362,16 +362,21 @@ test('always subscribe to highest level path', (done) => {
 					expect(path).toBe('players');
 				}
 			} else if (event === 'unsubscribe') {
-				unscubscribtionCount++;
+				unsubscribtionCount++;
 			}
 		},
 	};
 	const client = SocketDBClient({ socketClient });
 
 	let subscribtionCount = 0;
-	let unscubscribtionCount = 0;
+	let unsubscribtionCount = 0;
 
 	let updateReceivedCount = 0;
+
+	/**
+	 * should subscribe to /players/2
+	 * subscribtionCount = 1
+	 */
 	client
 		.get('players')
 		.get('2')
@@ -379,7 +384,14 @@ test('always subscribe to highest level path', (done) => {
 			expect(data).toBe(null);
 			updateReceivedCount++;
 		});
-	client.get('players').on((data) => {
+
+	/**
+	 * should unsubscribe from /players/2
+	 * unsubscribtionCount = 1
+	 * should subscribe to /players
+	 * subscribtionCount = 2
+	 */
+	const unsubscribePlayers = client.get('players').on((data) => {
 		expect(data).toEqual({
 			1: {
 				name: 'a',
@@ -396,6 +408,13 @@ test('always subscribe to highest level path', (done) => {
 			2: null,
 		},
 	});
+
+	/**
+	 * should not subscribe to anything,
+	 * as there is already /players subscribed
+	 * unsubscribtionCount = 1
+	 * subscribtionCount = 2
+	 */
 	client
 		.get('players')
 		.get('1')
@@ -405,9 +424,27 @@ test('always subscribe to highest level path', (done) => {
 			updateReceivedCount++;
 		});
 
+	/**
+	 * should unsubscribe from /players
+	 * unsubscribtionCount = 2
+	 * should subscribe to /players/2
+	 * should subscribe to /players/1/name
+	 * subscribtionCount = 4
+	 */
+	unsubscribePlayers();
+
+	/**
+	 * should unsubscribe from /players/2
+	 * should unsubscribe from /players/1/name
+	 * unsubscribtionCount = 4
+	 * should subscribe to /players
+	 * subscribtionCount = 5
+	 */
+	client.get('players').on(() => {});
+
 	setTimeout(() => {
-		expect(subscribtionCount).toBe(2);
-		expect(unscubscribtionCount).toBe(1);
+		expect(unsubscribtionCount).toBe(4);
+		expect(subscribtionCount).toBe(5);
 		expect(updateReceivedCount).toBe(3);
 		done();
 	}, 100);

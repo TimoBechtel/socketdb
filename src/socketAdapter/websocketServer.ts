@@ -5,14 +5,14 @@ import ws from 'ws';
 export const createWebsocketServer = (
 	options: ws.ServerOptions
 ): SocketServer => {
-	const { notify, addListener, removeListener } = createEventBroker();
-
 	let ids = 0;
 	const server = new ws.Server(options);
 
 	return {
 		onConnection(callback) {
 			server.on('connection', (socket) => {
+				const { notify, addListener, removeListener } = createEventBroker();
+
 				socket.on('message', (packet: string) => {
 					const { event, data } = JSON.parse(packet);
 					notify(event, data);

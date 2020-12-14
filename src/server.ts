@@ -68,6 +68,7 @@ export function SocketDBServer({
 	socketServer.onConnection((client, id) => {
 		client.onDisconnect(() => {
 			delete subscriber[id];
+			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
 		});
 		client.on('update', ({ data }) => {
 			update(data);

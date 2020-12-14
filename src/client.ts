@@ -92,13 +92,13 @@ export function SocketDBClient({
 	function removeSocketPathSubscription(path: string) {
 		if (subscribedPaths.indexOf(path) !== -1) {
 			socketClient.off(path);
-			subscribedPaths.splice(subscribedPaths.indexOf(path));
+			subscribedPaths.splice(subscribedPaths.indexOf(path), 1);
 			socketClient.send('unsubscribe', { path });
 		}
 	}
 
-	function findLowerLevelSubscribedPath(newPath: string) {
-		return subscribedPaths.find(
+	function findLowerLevelSubscribedPaths(newPath: string) {
+		return subscribedPaths.filter(
 			(subscribedPath) =>
 				subscribedPath.length > newPath.length &&
 				subscribedPath.startsWith(newPath)
@@ -111,10 +111,17 @@ export function SocketDBClient({
 		);
 	}
 
-	function findNextHighestLevelPath(path: string) {
+	function findNextHighestLevelPaths(path: string): string[] {
 		return Object.keys(updateListener)
-			.sort((k1, k2) => k1.length - k2.length)
-			.find((key) => key.startsWith(path));
+			.sort((k1, k2) => parsePath(k1).length - parsePath(k2).length)
+			.reduce((arr: string[], key: string) => {
+				if (key.startsWith(path)) {
+					if (!arr.some((k) => key.startsWith(k))) {
+						arr.push(key);
+					}
+				}
+				return arr;
+			}, []);
 	}
 
 	function subscribe(path: string, callback: (data: any) => void) {
@@ -122,8 +129,8 @@ export function SocketDBClient({
 		updateListener[path].push(callback);
 
 		if (!isSameOrHigherLevelPathSubscribed(path)) {
-			const oldPath = findLowerLevelSubscribedPath(path);
-			if (oldPath) removeSocketPathSubscription(oldPath);
+			const oldPaths = findLowerLevelSubscribedPaths(path);
+			oldPaths.forEach(removeSocketPathSubscription);
 			addSocketPathSubscription(path);
 		} else {
 			/* 
@@ -139,13 +146,13 @@ export function SocketDBClient({
 
 	function unsubscribe(path: string, callback: (data: any) => void) {
 		const listenersForPath = updateListener[path];
-		listenersForPath.splice(listenersForPath.indexOf(callback));
+		listenersForPath.splice(listenersForPath.indexOf(callback), 1);
 
 		if (listenersForPath.length < 1) {
 			delete updateListener[path];
 			removeSocketPathSubscription(path);
-			const nextPath = findNextHighestLevelPath(path);
-			if (nextPath) addSocketPathSubscription(nextPath);
+			const nextPaths = findNextHighestLevelPaths(path);
+			nextPaths.forEach(addSocketPathSubscription);
 		}
 	}
 
@@ -190,8 +197,8 @@ export function SocketDBClient({
 			},
 			once(callback) {
 				subscribe(path, function listener(data) {
-					// TODO: should use subscribe {once: true}
-					// and not need to send "unsubscribe" back
+					// maybe should use subscribe {once: true} ?
+					// and not send "unsubscribe" back
 					unsubscribe(path, listener);
 					callback(data);
 				});

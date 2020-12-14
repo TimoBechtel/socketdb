@@ -16,7 +16,10 @@ export function createEventBroker(): EventBroker {
 
 	function removeListener(event: string, listener?: (message: string) => void) {
 		if (listener)
-			messageListener[event]?.splice(messageListener[event].indexOf(listener));
+			messageListener[event]?.splice(
+				messageListener[event].indexOf(listener),
+				1
+			);
 		else messageListener[event] = [];
 	}
 
