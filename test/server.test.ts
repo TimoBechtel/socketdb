@@ -221,7 +221,7 @@ test('emits updates to all subscribers', async () => {
 	};
 	SocketDBServer({ store, socketServer });
 
-	await new Promise((resolve) => {
+	await new Promise<void>((resolve) => {
 		const { addListener, removeListener, notify } = createEventBroker();
 		connect(
 			{
@@ -243,7 +243,7 @@ test('emits updates to all subscribers', async () => {
 		);
 		notify('subscribe', { path: 'players', once: true });
 	});
-	await new Promise((resolve) => {
+	await new Promise<void>((resolve) => {
 		const { addListener, removeListener, notify } = createEventBroker();
 		connect(
 			{
@@ -283,7 +283,7 @@ test('sends keys when entries are added or removed', async () => {
 		},
 	});
 
-	await new Promise((resolve) => {
+	await new Promise<void>((resolve) => {
 		let count = 0;
 		connect(
 			{

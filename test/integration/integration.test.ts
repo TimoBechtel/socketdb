@@ -109,7 +109,7 @@ test('all clients receive data on update', async () => {
 
 	let updateCount1 = 1;
 	promises.push(
-		new Promise((resolve) => {
+		new Promise<void>((resolve) => {
 			client1.get('players').on((data) => {
 				if (updateCount1 === 1) {
 					expect(data).toEqual(null);
@@ -127,7 +127,7 @@ test('all clients receive data on update', async () => {
 	);
 	let updateCount2 = 1;
 	promises.push(
-		new Promise((resolve) => {
+		new Promise<void>((resolve) => {
 			client2.get('players').on((data) => {
 				if (updateCount2 === 1) {
 					expect(data).toEqual(null);
