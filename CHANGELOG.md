@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/TimoBechtel/socketdb/compare/v2.1.0...v2.1.1) (2020-12-14)
+
+
+### Bug Fixes
+
+* issues with unsubscribing and resubscribing ([b3bfd99](https://github.com/TimoBechtel/socketdb/commit/b3bfd991b18ae6321518b0b237f8eae4a0b855be))
+
 # [2.1.0](https://github.com/TimoBechtel/socketdb/compare/v2.0.0...v2.1.0) (2020-12-05)
 
 
