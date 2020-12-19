@@ -16,3 +16,6 @@ dist
 
 # documentation page
 /public
+
+
+.DS_Store
