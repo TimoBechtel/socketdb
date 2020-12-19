@@ -2,6 +2,7 @@
 	"name": "socketdb",
 	"version": "2.1.2",
 	"description": "Real-time synchronized data storage",
+	"homepage": "https://timobechtel.github.io/socketdb/",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
