@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/TimoBechtel/socketdb/compare/v2.1.1...v2.1.2) (2020-12-19)
+
+
+### Bug Fixes
+
+* **dependencies:** fix missing ws dependency ([5e56c75](https://github.com/TimoBechtel/socketdb/commit/5e56c75a5f5b144f3b2c2573e2161997004f5b2e))
+
 ## [2.1.1](https://github.com/TimoBechtel/socketdb/compare/v2.1.0...v2.1.1) (2020-12-14)
 
 
