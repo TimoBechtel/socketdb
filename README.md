@@ -1,88 +1,84 @@
-# socketdb
+<h1 align="center">
+  <img alt="logo" src="https://timobechtel.github.io/socketdb/logo.png">
+  <br>
+  SocketDB
+</h1>
+<h3 align="center">Real-time synchronized data storage</h3>
+<p align="center">
+  <a href="https://www.npmjs.com/package/socketdb" target="_blank">
+    <img alt="Version" src="https://img.shields.io/npm/v/socketdb.svg">
+  </a>
+  <a href="https://timobechtel.github.io/socketdb/guide" target="_blank">
+    <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" />
+  </a>
+  <a href="https://github.com/TimoBechtel/socketdb/blob/main/LICENSE" target="_blank">
+    <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" />
+  </a>
+</p>
+<p align="center">
+  ·
+  <a href="https://timobechtel.github.io/socketdb">Homepage</a>
+  ·
+  <a href="https://github.com/TimoBechtel/socketdb/issues">Report Bug / Request Feature</a>
+  ·
+</p>
 
-Real-time data storage
+## Table of Contents
 
-> Synchronize data between your webclients in real-time.
+- [Installation](#Install)
+- [Test](#run-tests)
+- [Contact](#contact)
+- [Contributing](#Contributing)
+- [License](#license)
 
-Info: Currently a non-stable version, so api might change!
+## ➡️ Documentation
 
-## Features
-
-- subscription based data transfer
-- only sends data that is requested and has changed
-- data is sent in batches
-- simple api
+You can find the documentation here: <https://timobechtel.github.io/socketdb>
 
 ## Install
 
 ```sh
-npm install -D socketdb
+yarn add -D socketdb
 ```
 
-## Usage examples
+## Run tests
 
-### Client
-
-```js
-import { SocketDBClient } from 'socketdb';
-
-const client = SocketDBClient({
-	url: 'ws://localhost:8080',
-});
-
-client.get('players').all((player, name) => {
-	player.get('position').on(({ x, y }) => {
-		console.log(`player, ${name} moved:`, x, y);
-	});
-});
-
-client.get('players').once((players) => {
-	console.log('players changed: ', players);
-});
-
-client.get('players').get('karl').get('position').set({ x: 0, y: 1 });
-
-client.get('players').set({ paul: { position: { x: 9, y: 9 } } });
-
-// => players changed: { karl: { position: { x: 0, y: 1 } } }
-// => player, karl moved: 0 1
-// => player, paul moved: 9 9
+```sh
+yarn test
 ```
 
-### Server
+## 🤝 Contributing
 
-```js
-import { SocketDBServer } from 'socketdb';
+Contributions, issues and feature requests are welcome!<br />
 
-const fps = 30;
-SocketDBServer({
-	port: 8080,
-	updateInterval: 1000 / fps,
-});
-```
+1. Check [issues](https://github.com/TimoBechtel/socketdb/issues)
+1. Fork the project
+1. Create your feature branch (`git checkout -b feat/AmazingFeature`)
+1. Test your changes `yarn run test`
+1. Commit your changes (`git commit -m 'feat: add amazingFeature'`)
+1. Push to the branch (`git push origin feat/AmazingFeature`)
+1. Open a pull request
 
-Using express:
+### Commit messages
 
-```js
-import { createServer } from 'http';
-import express from 'express';
-import { SocketDBServer } from 'socketdb';
+This project uses semantic-release for automated release versions. So commits in this project follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0-beta.2/) guidelines. I recommend using [commitizen](https://github.com/commitizen/cz-cli) for automated commit messages.
 
-const port = 8080;
+## Show your support
 
-const server = createServer(express()).listen(port, () => {
-	console.log(`server listening on localhost:${port}`);
-});
+Give a ⭐️ if this project helped you!
 
-const fps = 30;
-const socketdb = SocketDBServer({
-	socketServer: createWebsocketServer({ server }),
-	updateInterval: 1000 / fps,
-});
-```
+## 📝 License
 
-## Roadmap
+This project is [MIT](https://github.com/TimoBechtel/socketdb/blob/main/LICENSE) licensed.
 
-- [ ] improve performance (currently high cpu usage)
-- [x] replace socket.io with vanilla websockets
-- [ ] come up with a better name
+## Author
+
+👤 **Timo Bechtel**
+
+- GitHub: [@TimoBechtel](https://github.com/TimoBechtel)
+- Website: <https://timobechtel.com>
+- Twitter: [@TimoBechtel](https://twitter.com/TimoBechtel)
+
+---
+
+_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
