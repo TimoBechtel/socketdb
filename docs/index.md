@@ -1,6 +1,8 @@
 ---
 home: true
+title: SocketDB
 heroImage: /hero.png
+image: /hero.png
 tagline: Easy to use data storage that syncs accross browsers in realtime.
 description: Easy to use data storage that syncs accross browsers in realtime.
 actionText: Quick Start →

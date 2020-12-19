@@ -108,7 +108,12 @@ module.exports = {
 	plugins: [
 		'@vuepress/plugin-back-to-top',
 		'@vuepress/plugin-medium-zoom',
-		'vuepress-plugin-seo',
+		[
+			'vuepress-plugin-seo',
+			{
+				twitterCard: _ => 'summary',
+			},
+		],
 		[
 			'vuepress-plugin-one-click-copy',
 			{
