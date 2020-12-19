@@ -13,3 +13,6 @@ coverage
 
 # build files
 dist
+
+# documentation page
+/public
