@@ -13,6 +13,7 @@ Instead it is recommended to use a bundler, like [RollupJS](https://rollupjs.org
 
 For both client and server:
 
+<ClientOnly>
 <code-group>
 <code-block title="YARN">
 ```bash
@@ -25,7 +26,9 @@ yarn add socketdb
 npm install socketdb
 ```
 </code-block>
+
 </code-group>
+</ClientOnly>
 
 ## Setup Server
 
