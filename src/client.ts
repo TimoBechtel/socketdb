@@ -1,3 +1,5 @@
+import { SocketClient } from './socketAdapter/socketClient';
+import { createWebsocketClient } from './socketAdapter/websocketClient';
 import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
 import { isObject, joinPath, mergeDiff, traverseData } from './utils';
@@ -16,12 +18,40 @@ type UpdateListener = {
 	[path: string]: ((data: any) => void)[];
 };
 
-export function SocketDBClient(
-	socket: SocketIOClient.Socket,
-	{ store = createStore() }: { store?: Store } = {}
-) {
+export function SocketDBClient({
+	url,
+	store = createStore(),
+	socketClient,
+}: {
+	url?: string;
+	store?: Store;
+	socketClient?: SocketClient;
+} = {}) {
+	if (!url && !socketClient)
+		url =
+			typeof window !== 'undefined'
+				? `ws://${window.location.hostname}:${window.location.port}`
+				: 'ws://localhost:8080';
+	if (!socketClient) socketClient = createWebsocketClient({ url });
+
 	const subscribedPaths: string[] = [];
 	const updateListener: UpdateListener = {};
+
+	let connectionLost = false;
+	socketClient.onConnect(() => {
+		if (connectionLost) {
+			// reattach subscriptions on every reconnect
+			subscribedPaths.forEach((path) => {
+				if (path.endsWith('*')) {
+					socketClient.send('subscribeKeys', { path });
+				} else {
+					socketClient.send('subscribe', { path });
+				}
+			});
+			connectionLost = false;
+		}
+	});
+	socketClient.onDisconnect(() => (connectionLost = true));
 
 	function notifySubscriber(diff: any) {
 		const listener: UpdateListener = { ...updateListener };
@@ -51,24 +81,24 @@ export function SocketDBClient(
 	}
 
 	function addSocketPathSubscription(path: string) {
-		socket.on(path, ({ data }) => {
+		socketClient.on(path, ({ data }) => {
 			const diff = store.put(creatUpdate(path, data));
 			notifySubscriber(diff);
 		});
 		subscribedPaths.push(path);
-		socket.emit('subscribe', { path });
+		socketClient.send('subscribe', { path });
 	}
 
 	function removeSocketPathSubscription(path: string) {
 		if (subscribedPaths.indexOf(path) !== -1) {
-			socket.off(path);
-			subscribedPaths.splice(subscribedPaths.indexOf(path));
-			socket.emit('unsubscribe', { path });
+			socketClient.off(path);
+			subscribedPaths.splice(subscribedPaths.indexOf(path), 1);
+			socketClient.send('unsubscribe', { path });
 		}
 	}
 
-	function findLowerLevelSubscribedPath(newPath: string) {
-		return subscribedPaths.find(
+	function findLowerLevelSubscribedPaths(newPath: string) {
+		return subscribedPaths.filter(
 			(subscribedPath) =>
 				subscribedPath.length > newPath.length &&
 				subscribedPath.startsWith(newPath)
@@ -81,10 +111,17 @@ export function SocketDBClient(
 		);
 	}
 
-	function findNextHighestLevelPath(path: string) {
+	function findNextHighestLevelPaths(path: string): string[] {
 		return Object.keys(updateListener)
-			.sort((k1, k2) => k1.length - k2.length)
-			.find((key) => key.startsWith(path));
+			.sort((k1, k2) => parsePath(k1).length - parsePath(k2).length)
+			.reduce((arr: string[], key: string) => {
+				if (key.startsWith(path)) {
+					if (!arr.some((k) => key.startsWith(k))) {
+						arr.push(key);
+					}
+				}
+				return arr;
+			}, []);
 	}
 
 	function subscribe(path: string, callback: (data: any) => void) {
@@ -92,8 +129,8 @@ export function SocketDBClient(
 		updateListener[path].push(callback);
 
 		if (!isSameOrHigherLevelPathSubscribed(path)) {
-			const oldPath = findLowerLevelSubscribedPath(path);
-			if (oldPath) removeSocketPathSubscription(oldPath);
+			const oldPaths = findLowerLevelSubscribedPaths(path);
+			oldPaths.forEach(removeSocketPathSubscription);
 			addSocketPathSubscription(path);
 		} else {
 			/* 
@@ -109,13 +146,13 @@ export function SocketDBClient(
 
 	function unsubscribe(path: string, callback: (data: any) => void) {
 		const listenersForPath = updateListener[path];
-		listenersForPath.splice(listenersForPath.indexOf(callback));
+		listenersForPath.splice(listenersForPath.indexOf(callback), 1);
 
 		if (listenersForPath.length < 1) {
 			delete updateListener[path];
 			removeSocketPathSubscription(path);
-			const nextPath = findNextHighestLevelPath(path);
-			if (nextPath) addSocketPathSubscription(nextPath);
+			const nextPaths = findNextHighestLevelPaths(path);
+			nextPaths.forEach(addSocketPathSubscription);
 		}
 	}
 
@@ -133,18 +170,20 @@ export function SocketDBClient(
 						callback(get(refpath), key);
 					});
 				};
-				socket.on(wildcardPath, onKeysReceived);
-				socket.emit('subscribeKeys', { path });
+				socketClient.on(wildcardPath, onKeysReceived);
+				socketClient.send('subscribeKeys', { path });
+				subscribedPaths.push(wildcardPath);
 				return () => {
-					socket.off(wildcardPath, onKeysReceived);
-					socket.emit('unsubscribe', { path: wildcardPath });
+					removeSocketPathSubscription(wildcardPath);
 				};
 			},
 			set(value) {
-				const diff = store.put(creatUpdate(path, value));
-				if (diff && Object.keys(diff).length > 0)
-					socket.emit('update', { data: diff });
-				notifySubscriber(diff);
+				if (!connectionLost) {
+					const diff = store.put(creatUpdate(path, value));
+					if (diff && Object.keys(diff).length > 0)
+						socketClient.send('update', { data: diff });
+					notifySubscriber(diff);
+				}
 				return this;
 			},
 			on(callback) {
@@ -158,8 +197,8 @@ export function SocketDBClient(
 			},
 			once(callback) {
 				subscribe(path, function listener(data) {
-					// TODO: should use subscribe {once: true}
-					// and not need to send "unsubscribe" back
+					// maybe should use subscribe {once: true} ?
+					// and not send "unsubscribe" back
 					unsubscribe(path, listener);
 					callback(data);
 				});

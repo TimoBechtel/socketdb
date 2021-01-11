@@ -1,4 +1,5 @@
-import socketio from 'socket.io';
+import { SocketServer } from './socketAdapter/socketServer';
+import { createWebsocketServer } from './socketAdapter/websocketServer';
 import { createStore, Store } from './store';
 import { isObject, joinPath, mergeDiff, traverseData } from './utils';
 
@@ -11,13 +12,17 @@ export type SocketDB = {
 	get: (path: string) => any;
 };
 
-export function SocketDBServer(
-	socketioServer: socketio.Server,
-	{
-		store = createStore(),
-		updateInterval = 50,
-	}: { store?: Store; updateInterval?: number } = {}
-): SocketDB {
+export function SocketDBServer({
+	port = 8080,
+	store = createStore(),
+	updateInterval = 50,
+	socketServer = createWebsocketServer({ port }),
+}: {
+	port?: number;
+	store?: Store;
+	updateInterval?: number;
+	socketServer?: SocketServer;
+} = {}): SocketDB {
 	let subscriber: Subscribtions = {};
 
 	let queuedUpdate: any;
@@ -60,34 +65,38 @@ export function SocketDBServer(
 		}
 	}
 
-	socketioServer.on('connect', (socket) => {
-		socket.on('update', ({ data }) => {
+	socketServer.onConnection((client, id) => {
+		client.onDisconnect(() => {
+			delete subscriber[id];
+			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
+		});
+		client.on('update', ({ data }) => {
 			update(data);
 		});
-		socket.on('subscribe', ({ path, once }) => {
-			socket.emit(path, { data: store.get(path) });
+		client.on('subscribe', ({ path, once }) => {
+			client.send(path, { data: store.get(path) });
 			if (once) return;
-			addSubscriber(socket.id, path, (data) => {
-				socket.emit(path, { data });
+			addSubscriber(id, path, (data) => {
+				client.send(path, { data });
 			});
 		});
-		socket.on('unsubscribe', ({ path }) => {
-			removeSubscriber(socket.id, path);
+		client.on('unsubscribe', ({ path }) => {
+			removeSubscriber(id, path);
 		});
-		socket.on('subscribeKeys', ({ path }) => {
+		client.on('subscribeKeys', ({ path }) => {
 			const data = store.get(path);
 			const wildcardPath = joinPath(path, '*');
 			let keys = [];
 			if (isObject(data)) {
 				keys = Object.keys(data);
-				socket.emit(wildcardPath, { data: keys });
+				client.send(wildcardPath, { data: keys });
 			}
-			addSubscriber(socket.id + 'wildcard', path, (data) => {
+			addSubscriber(id + 'wildcard', path, (data) => {
 				if (isObject(data)) {
 					const newKeys = Object.keys(data).filter(
 						(key) => !keys.includes(key)
 					);
-					if (newKeys.length > 0) socket.emit(wildcardPath, { data: newKeys });
+					if (newKeys.length > 0) client.send(wildcardPath, { data: newKeys });
 					keys = [...keys, ...newKeys];
 				}
 			});

@@ -1,29 +1,45 @@
 import { SocketDBClient } from '../src/client';
-import MockedSocket from 'socket.io-mock';
 import { createStore } from '../src/store';
+import { SocketClient } from '../src/socketAdapter/socketClient';
+import { createEventBroker } from '../src/socketAdapter/eventBroker';
 
 test('emits update object for path', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
-
-	socket.on('update', ({ data }) => {
-		expect(data).toEqual({
-			players: {
-				1: {
-					name: 'Patrick',
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on() {},
+		send(event, { data }) {
+			expect(event).toEqual('update');
+			expect(data).toEqual({
+				players: {
+					1: {
+						name: 'Patrick',
+					},
 				},
-			},
-		});
-		done();
-	});
+			});
+			done();
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	client.get('players').get('1').get('name').set('Patrick');
 });
 
-test('merges data on update', () => {
-	const socket = new MockedSocket();
+test('merges data on update', (done) => {
 	const store = createStore();
-	const client = SocketDBClient(socket.socketClient, { store });
+
+	const { addListener, notify } = createEventBroker();
+
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on: addListener,
+		send(event, { data }) {},
+	};
+
+	const client = SocketDBClient({ store, socketClient });
 
 	let updateCount = 1;
 	client
@@ -45,11 +61,12 @@ test('merges data on update', () => {
 						y: 1,
 					},
 				});
+				done();
 			}
 			updateCount++;
 		});
 
-	socket.emit('players/1', {
+	notify('players/1', {
 		data: {
 			name: 'Peter',
 			position: {
@@ -58,7 +75,7 @@ test('merges data on update', () => {
 			},
 		},
 	});
-	socket.emit('players/1', {
+	notify('players/1', {
 		data: {
 			position: {
 				x: 1,
@@ -68,15 +85,21 @@ test('merges data on update', () => {
 });
 
 test('can subscribe to path', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
-
-	socket.on('subscribe', ({ path, once }) => {
-		expect(path).toBe('players/1');
-		expect(once).not.toBe(true);
-		socket.emit('players/1', { data: { name: 'Thomas' } });
-		socket.emit('players/1', { data: { name: 'Thomas2' } });
-	});
+	const { addListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on: addListener,
+		send(event, { path, once }) {
+			expect(event).toEqual('subscribe');
+			expect(path).toBe('players/1');
+			expect(once).not.toBe(true);
+			notify('players/1', { data: { name: 'Thomas' } });
+			notify('players/1', { data: { name: 'Thomas2' } });
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	let updateCount = 1;
 	client
@@ -94,22 +117,29 @@ test('can subscribe to path', (done) => {
 });
 
 test('can unsubscribe from path', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
-
 	let subscribeCount = 0;
-	socket.on('subscribe', () => {
-		subscribeCount++;
-		setTimeout(() => {
-			socket.emit('players/1', { data: { name: 'Thomas' } });
-			unsubscribe();
-			socket.emit('players/1', { data: { name: 'Thomas2' } });
-		}, 10);
-	});
 	let unsubscribeCount = 0;
-	socket.on('unsubscribe', () => {
-		unsubscribeCount++;
-	});
+
+	const { addListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on: addListener,
+		send(event) {
+			if (event === 'subscribe') {
+				subscribeCount++;
+				setTimeout(() => {
+					notify('players/1', { data: { name: 'Thomas' } });
+					unsubscribe();
+					notify('players/1', { data: { name: 'Thomas2' } });
+				}, 10);
+			} else if (event === 'unsubscribe') {
+				unsubscribeCount++;
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	let updateCount = 0;
 	const unsubscribe = client
@@ -127,13 +157,20 @@ test('can unsubscribe from path', (done) => {
 });
 
 test('can subscribe to path once', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
-
-	socket.on('subscribe', ({ path }) => {
-		expect(path).toBe('players/1');
-		socket.emit('players/1', { data: 'test' });
-	});
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event, { path }) {
+			if (event === 'subscribe') {
+				expect(path).toBe('players/1');
+				notify('players/1', { data: 'test' });
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	let updateCount = 0;
 	client
@@ -152,13 +189,20 @@ test('can subscribe to path once', (done) => {
 });
 
 test('can subscribe to keys of path', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
-
-	socket.on('subscribeKeys', ({ path }) => {
-		expect(path).toBe('players');
-		socket.emit('players/*', { data: ['1', '2'] });
-	});
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event, { path }) {
+			if (event === 'subscribeKeys') {
+				expect(path).toBe('players');
+				notify('players/*', { data: ['1', '2'] });
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	client.get('players').each((ref) => {
 		expect(ref).toHaveProperty('get');
@@ -167,13 +211,20 @@ test('can subscribe to keys of path', (done) => {
 });
 
 test('can unsubscribe from keys of path', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
-
-	socket.on('subscribeKeys', ({ path }) => {
-		expect(path).toBe('players');
-		socket.emit('players/*', { data: ['1'] });
-	});
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event, { path }) {
+			if (event === 'subscribeKeys') {
+				expect(path).toBe('players');
+				notify('players/*', { data: ['1'] });
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	let updateCount = 0;
 	const unsubscribe = client.get('players').each((ref) => {
@@ -182,16 +233,22 @@ test('can unsubscribe from keys of path', (done) => {
 	});
 	setTimeout(() => {
 		unsubscribe();
-		socket.emit('players/*', { data: ['2', '3'] });
+		notify('players/*', { data: ['2', '3'] });
 		expect(updateCount).toBe(1);
 		done();
 	}, 100);
 });
 
 test('received data should not be passed as reference', (done) => {
-	const socket = new MockedSocket();
 	const store = createStore();
-	const client = SocketDBClient(socket.socketClient, { store });
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on() {},
+		send() {},
+	};
+	const client = SocketDBClient({ socketClient, store });
 
 	const testData = { test: '0' };
 
@@ -210,19 +267,26 @@ test('received data should not be passed as reference', (done) => {
 });
 
 test('on/once always receives data on first call', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
-
-	socket.on('subscribe', ({ path, once }) => {
-		socket.emit('players/1', { data: { name: 'Thomas' } });
-		client
-			.get('players')
-			.get('1')
-			.on(() => {
-				updateCount++;
-				done();
-			});
-	});
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event) {
+			if (event === 'subscribe') {
+				notify('players/1', { data: { name: 'Thomas' } });
+				client
+					.get('players')
+					.get('1')
+					.on(() => {
+						updateCount++;
+						done();
+					});
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	let updateCount = 1;
 	client
@@ -234,14 +298,21 @@ test('on/once always receives data on first call', (done) => {
 });
 
 test('only subscribes once for every root path', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event) {
+			if (event === 'subscribe') {
+				subscribtionCount++;
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	let subscribtionCount = 0;
-	socket.on('subscribe', () => {
-		subscribtionCount++;
-	});
-
 	let updateCount = 0;
 
 	client.get('players').on(() => {
@@ -268,7 +339,8 @@ test('only subscribes once for every root path', (done) => {
 		expect(subscribtionCount).toBe(1);
 		// we dont have data yet
 		expect(updateCount).toBe(0);
-		socket.emit('players', { data: { 1: { name: 'Paul' } } });
+		notify('players', { data: { 1: { name: 'Paul' } } });
+
 		setTimeout(() => {
 			expect(updateCount).toBe(4);
 			done();
@@ -277,22 +349,34 @@ test('only subscribes once for every root path', (done) => {
 });
 
 test('always subscribe to highest level path', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event, { path }) {
+			if (event === 'subscribe') {
+				subscribtionCount++;
+				if (subscribtionCount === 2) {
+					expect(path).toBe('players');
+				}
+			} else if (event === 'unsubscribe') {
+				unsubscribtionCount++;
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	let subscribtionCount = 0;
-	let unscubscribtionCount = 0;
-	socket.on('subscribe', ({ path }) => {
-		subscribtionCount++;
-		if (subscribtionCount === 2) {
-			expect(path).toBe('players');
-		}
-	});
-	socket.on('unsubscribe', ({ path }) => {
-		unscubscribtionCount++;
-	});
+	let unsubscribtionCount = 0;
 
 	let updateReceivedCount = 0;
+
+	/**
+	 * should subscribe to /players/2
+	 * subscribtionCount = 1
+	 */
 	client
 		.get('players')
 		.get('2')
@@ -300,7 +384,14 @@ test('always subscribe to highest level path', (done) => {
 			expect(data).toBe(null);
 			updateReceivedCount++;
 		});
-	client.get('players').on((data) => {
+
+	/**
+	 * should unsubscribe from /players/2
+	 * unsubscribtionCount = 1
+	 * should subscribe to /players
+	 * subscribtionCount = 2
+	 */
+	const unsubscribePlayers = client.get('players').on((data) => {
 		expect(data).toEqual({
 			1: {
 				name: 'a',
@@ -309,7 +400,7 @@ test('always subscribe to highest level path', (done) => {
 		});
 		updateReceivedCount++;
 	});
-	socket.emit('players', {
+	notify('players', {
 		data: {
 			1: {
 				name: 'a',
@@ -317,6 +408,13 @@ test('always subscribe to highest level path', (done) => {
 			2: null,
 		},
 	});
+
+	/**
+	 * should not subscribe to anything,
+	 * as there is already /players subscribed
+	 * unsubscribtionCount = 1
+	 * subscribtionCount = 2
+	 */
 	client
 		.get('players')
 		.get('1')
@@ -326,22 +424,48 @@ test('always subscribe to highest level path', (done) => {
 			updateReceivedCount++;
 		});
 
+	/**
+	 * should unsubscribe from /players
+	 * unsubscribtionCount = 2
+	 * should subscribe to /players/2
+	 * should subscribe to /players/1/name
+	 * subscribtionCount = 4
+	 */
+	unsubscribePlayers();
+
+	/**
+	 * should unsubscribe from /players/2
+	 * should unsubscribe from /players/1/name
+	 * unsubscribtionCount = 4
+	 * should subscribe to /players
+	 * subscribtionCount = 5
+	 */
+	client.get('players').on(() => {});
+
 	setTimeout(() => {
-		expect(subscribtionCount).toBe(2);
-		expect(unscubscribtionCount).toBe(1);
+		expect(unsubscribtionCount).toBe(4);
+		expect(subscribtionCount).toBe(5);
 		expect(updateReceivedCount).toBe(3);
 		done();
 	}, 100);
 });
 
 test('if data is null, should notify every subpath', (done) => {
-	const socket = new MockedSocket();
-	const client = SocketDBClient(socket.socketClient);
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event, { path }) {
+			if (event === 'subscribe') {
+				subscribtionCount++;
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
 
 	let subscribtionCount = 0;
-	socket.on('subscribe', () => {
-		subscribtionCount++;
-	});
 
 	let updateCount = 0;
 
@@ -365,7 +489,7 @@ test('if data is null, should notify every subpath', (done) => {
 			updateCount++;
 		});
 
-	socket.emit('players', { data: null });
+	notify('players', { data: null });
 
 	setTimeout(() => {
 		expect(subscribtionCount).toBe(1);
@@ -374,4 +498,70 @@ test('if data is null, should notify every subpath', (done) => {
 	}, 500);
 });
 
-// TODO: should reconnect on connection lost
+test('subscribes again after reconnect', (done) => {
+	const { addListener, notify } = createEventBroker();
+	let subscribeCount = 0;
+
+	let connect, disconnect;
+	const socketClient: SocketClient = {
+		onConnect(callback) {
+			connect = callback;
+		},
+		onDisconnect(callback) {
+			disconnect = callback;
+		},
+		off() {},
+		on: addListener,
+		send(event, { path, once }) {
+			subscribeCount++;
+			expect(event).toEqual('subscribe');
+			expect(path).toBe('players/1');
+			expect(once).not.toBe(true);
+			if (subscribeCount === 1) {
+				notify('players/1', { data: { name: 'Thomas' } });
+				disconnect();
+				connect();
+			} else {
+				expect(subscribeCount).toBe(2);
+				done();
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+	connect();
+
+	let updateCount = 1;
+	client
+		.get('players')
+		.get('1')
+		.on((data) => {
+			if (updateCount === 1) {
+				expect(data).toEqual({ name: 'Thomas' });
+				updateCount++;
+			}
+		});
+});
+
+test('should not update local cache on connection lost', (done) => {
+	let updateCount = 0;
+
+	let disconnect;
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect(callback) {
+			disconnect = callback;
+		},
+		off() {},
+		on() {},
+		send() {
+			updateCount++;
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+	disconnect();
+	client.get('players').get('1').set({ name: 'Thomas' });
+	setTimeout(() => {
+		expect(updateCount).toBe(0);
+		done();
+	}, 10);
+});

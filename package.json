@@ -1,14 +1,18 @@
 {
 	"name": "socketdb",
-	"version": "1.0.0",
+	"version": "2.1.2",
 	"description": "Real-time synchronized data storage",
+	"homepage": "https://timobechtel.github.io/socketdb/",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"dev": "tsc -w",
 		"build": "tsc",
 		"test": "jest",
-		"prepack": "npm run build"
+		"prepack": "npm run build",
+		"docs:dev": "vuepress check-md docs && vuepress dev docs",
+		"docs:check-links": "vuepress check-md docs",
+		"docs:build": "vuepress check-md docs && vuepress build docs"
 	},
 	"files": [
 		"dist"
@@ -29,16 +33,21 @@
 		"socket.io"
 	],
 	"devDependencies": {
-		"@types/jest": "^26.0.15",
-		"@types/node": "^14.14.6",
-		"@types/socket.io": "^2.1.11",
-		"@types/socket.io-client": "^1.4.34",
-		"jest": "^26.6.1",
-		"socket.io-mock": "^1.3.1",
-		"ts-jest": "^26.4.3",
-		"typescript": "^4.0.5",
 		"@semantic-release/changelog": "^5.0.1",
 		"@semantic-release/git": "^9.0.0",
-		"semantic-release": "^17.2.3"
+		"@types/jest": "^26.0.20",
+		"@types/node": "^14.14.20",
+		"@types/ws": "^7.4.0",
+		"jest": "^26.6.3",
+		"semantic-release": "^17.3.1",
+		"ts-jest": "^26.4.4",
+		"typescript": "^4.1.3",
+		"vuepress": "^1.8.0",
+		"vuepress-plugin-check-md": "^0.0.2",
+		"vuepress-plugin-one-click-copy": "^1.0.2",
+		"vuepress-plugin-seo": "^0.1.4"
+	},
+	"dependencies": {
+		"ws": "^7.4.2"
 	}
 }

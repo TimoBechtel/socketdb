@@ -1,14 +1,13 @@
-name: Release
+name: github pages
 
 on:
   push:
     branches:
       - main
-      - next
 
 jobs:
-  release:
-    name: Release
+  deploy:
+    name: deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,10 +18,10 @@ jobs:
           node-version: 14
       - name: Install dependencies
         run: yarn install
-      - name: Test
-        run: yarn test
-      - name: Publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+      - name: Generate docs
+        run: yarn docs:build
+      - name: GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/.vuepress/dist
