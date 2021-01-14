@@ -2,7 +2,8 @@ import { SocketClient } from './socketAdapter/socketClient';
 import { createWebsocketClient } from './socketAdapter/websocketClient';
 import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
-import { isObject, joinPath, mergeDiff, traverseData } from './utils';
+import { isObject, joinPath, mergeDiff } from './utils';
+import { Node, nodeify, traverseNode, unwrap } from './node';
 import { createUpdateBatcher } from './updateBatcher';
 
 type Unsubscriber = () => void;
@@ -60,24 +61,24 @@ export function SocketDBClient({
 	});
 	socketClient.onDisconnect(() => (connectionLost = true));
 
-	function notifySubscriber(diff: any) {
+	function notifySubscriber(diff: Node) {
 		const listener: UpdateListener = { ...updateListener };
 		// TODO: make this thing more efficient,
 		// should not go through multiple loops
-		traverseData(diff, (path, data) => {
+		traverseNode(diff, (path, data) => {
 			if (listener?.[path]) {
 				let storedData = store.get(path);
-				if (isObject(storedData)) storedData = mergeDiff(storedData, {});
+				storedData = mergeDiff(storedData, {}) as Node; // deep copy
 				listener[path].forEach((listener) => listener(storedData));
 				delete listener[path];
 			}
 			// if a path is subscribed but has no data, we still need to inform subscribers
 			// this has the issue, that it notifies even if data has not changed
-			if (!isObject(data)) {
+			if (!isObject(data.value)) {
 				Object.keys(listener).forEach((subscribedPath) => {
 					if (subscribedPath.startsWith(path)) {
 						let storedData = store.get(subscribedPath);
-						if (isObject(storedData)) storedData = mergeDiff(storedData, {});
+						storedData = mergeDiff(storedData, {}) as Node; // deep copy
 						listener[subscribedPath].forEach((listener) =>
 							listener(storedData)
 						);
@@ -131,7 +132,7 @@ export function SocketDBClient({
 			}, []);
 	}
 
-	function subscribe(path: string, callback: (data: any) => void) {
+	function subscribe(path: string, callback: (data: Node) => void) {
 		if (!updateListener[path]) updateListener[path] = [];
 		updateListener[path].push(callback);
 
@@ -147,11 +148,11 @@ export function SocketDBClient({
 			  in both cases we dont need to notify user on first request
 			*/
 			const cachedData = store.get(path);
-			if (cachedData !== null) callback(cachedData);
+			if (cachedData.value !== null) callback(cachedData);
 		}
 	}
 
-	function unsubscribe(path: string, callback: (data: any) => void) {
+	function unsubscribe(path: string, callback: (data: Node) => void) {
 		const listenersForPath = updateListener[path];
 		listenersForPath.splice(listenersForPath.indexOf(callback), 1);
 
@@ -186,15 +187,15 @@ export function SocketDBClient({
 			},
 			set(value) {
 				if (!connectionLost) {
-					const diff = store.put(creatUpdate(path, value));
+					const diff = store.put(creatUpdate(path, nodeify(value)));
 					if (diff && Object.keys(diff).length > 0) queueUpdate(diff);
 					notifySubscriber(diff);
 				}
 				return this;
 			},
 			on(callback) {
-				const listener = (data) => {
-					callback(data);
+				const listener = (data: Node) => {
+					callback(unwrap(data));
 				};
 				subscribe(path, listener);
 				return () => {
@@ -206,7 +207,7 @@ export function SocketDBClient({
 					// maybe should use subscribe {once: true} ?
 					// and not send "unsubscribe" back
 					unsubscribe(path, listener);
-					callback(data);
+					callback(unwrap(data));
 				});
 			},
 		};
@@ -217,16 +218,16 @@ export function SocketDBClient({
 	};
 }
 
-function creatUpdate(path: string, data: any) {
-	const diff = {};
+function creatUpdate(path: string, data: Node): Node {
+	const diff: Node = { value: {} };
 	let current = diff;
 	const keys = parsePath(path);
 	keys.forEach((key, i) => {
 		if (i === keys.length - 1) {
-			current[key] = data;
+			current.value[key] = data;
 			return;
 		}
-		current = current[key] = {};
+		current = current.value[key] = { value: {} };
 	});
 	return diff;
 }

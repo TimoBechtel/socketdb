@@ -1,25 +1,31 @@
+import { isNode, Node, nodeify } from './node';
 import { parsePath } from './parsePath';
 import { mergeDiff } from './utils';
 
 export type Store = {
-	get: (path?: string) => any;
-	put: (diff: { [key: string]: any }) => { [key: string]: any };
+	get: (path?: string) => Node;
+	put: (diff: Node) => Node;
 };
 
 export function createStore(): Store {
-	const store = {};
+	const store: Node = { value: {} };
 	function get(path: string = '') {
 		let current = store;
 		for (let key of parsePath(path)) {
-			if (current[key] === undefined || current[key] === null) {
-				return null;
+			if (
+				current.value[key] === undefined ||
+				current.value[key].value === null
+			) {
+				return nodeify(null);
 			}
-			current = current[key];
+			current = current.value[key];
 		}
 		return current;
 	}
-	function put(diff: { [key: string]: any }): { [key: string]: any } {
-		return mergeDiff(diff, store);
+	function put(diff: Node): Node {
+		const _diff = mergeDiff(diff, store);
+		if (!isNode(_diff)) _diff.value = {};
+		return _diff as Node;
 	}
 	return {
 		get,
