@@ -305,6 +305,33 @@ test('received data should not be passed as reference', (done) => {
 	client.get('data').set(testData);
 });
 
+test('also receives metadata', (done) => {
+	const metaExample = { owner: 'Thomas' };
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event) {
+			if (event === 'subscribe') {
+				notify('players/1', {
+					data: { meta: metaExample, value: 'Thomas' },
+				});
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+
+	client
+		.get('players')
+		.get('1')
+		.on((_, meta) => {
+			expect(meta).toEqual(metaExample);
+			done();
+		});
+});
+
 test('on/once always receives data on first call', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
@@ -320,6 +347,7 @@ test('on/once always receives data on first call', (done) => {
 					.get('1')
 					.on(() => {
 						updateCount++;
+						expect(updateCount).toBe(2);
 						done();
 					});
 			}
@@ -327,7 +355,7 @@ test('on/once always receives data on first call', (done) => {
 	};
 	const client = SocketDBClient({ socketClient });
 
-	let updateCount = 1;
+	let updateCount = 0;
 	client
 		.get('players')
 		.get('1')

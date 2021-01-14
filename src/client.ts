@@ -8,12 +8,14 @@ import { createUpdateBatcher } from './updateBatcher';
 
 type Unsubscriber = () => void;
 
+type Meta = { [namespace: string]: any };
+
 export type ChainReference = {
 	get: (path: string) => ChainReference;
 	each: (callback: (ref: ChainReference, key: string) => void) => Unsubscriber;
 	set: (value: any) => ChainReference;
-	on: (callback: (data: any) => void) => Unsubscriber;
-	once: (callback: (data: any) => void) => void;
+	on: (callback: (data: any, meta: Meta) => void) => Unsubscriber;
+	once: (callback: (data: any, meta: Meta) => void) => void;
 };
 
 type UpdateListener = {
@@ -195,7 +197,7 @@ export function SocketDBClient({
 			},
 			on(callback) {
 				const listener = (data: Node) => {
-					callback(unwrap(data));
+					callback(unwrap(data), data.meta);
 				};
 				subscribe(path, listener);
 				return () => {
@@ -207,7 +209,7 @@ export function SocketDBClient({
 					// maybe should use subscribe {once: true} ?
 					// and not send "unsubscribe" back
 					unsubscribe(path, listener);
-					callback(unwrap(data));
+					callback(unwrap(data), data.meta);
 				});
 			},
 		};
