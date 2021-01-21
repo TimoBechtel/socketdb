@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/TimoBechtel/socketdb/compare/v2.1.2...v2.2.0) (2021-01-21)
+
+
+### Features
+
+* **client:** add client side update batching ([720c33a](https://github.com/TimoBechtel/socketdb/commit/720c33abb5c37fc673f70d0a1b009d4567e664b0))
+
 ## [2.1.2](https://github.com/TimoBechtel/socketdb/compare/v2.1.1...v2.1.2) (2020-12-19)
 
 
