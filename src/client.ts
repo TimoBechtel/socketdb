@@ -3,6 +3,7 @@ import { createWebsocketClient } from './socketAdapter/websocketClient';
 import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
 import { isObject, joinPath, mergeDiff, traverseData } from './utils';
+import { createUpdateBatcher } from './updateBatcher';
 
 type Unsubscriber = () => void;
 
@@ -22,10 +23,12 @@ export function SocketDBClient({
 	url,
 	store = createStore(),
 	socketClient,
+	updateInterval = 50,
 }: {
 	url?: string;
 	store?: Store;
 	socketClient?: SocketClient;
+	updateInterval?: number;
 } = {}) {
 	if (!url && !socketClient)
 		url =
@@ -36,6 +39,10 @@ export function SocketDBClient({
 
 	const subscribedPaths: string[] = [];
 	const updateListener: UpdateListener = {};
+
+	const queueUpdate = createUpdateBatcher((diff) => {
+		socketClient.send('update', { data: diff });
+	}, updateInterval);
 
 	let connectionLost = false;
 	socketClient.onConnect(() => {
@@ -180,8 +187,7 @@ export function SocketDBClient({
 			set(value) {
 				if (!connectionLost) {
 					const diff = store.put(creatUpdate(path, value));
-					if (diff && Object.keys(diff).length > 0)
-						socketClient.send('update', { data: diff });
+					if (diff && Object.keys(diff).length > 0) queueUpdate(diff);
 					notifySubscriber(diff);
 				}
 				return this;

@@ -1,6 +1,7 @@
 import { SocketServer } from './socketAdapter/socketServer';
 import { createWebsocketServer } from './socketAdapter/websocketServer';
 import { createStore, Store } from './store';
+import { createUpdateBatcher } from './updateBatcher';
 import { isObject, joinPath, mergeDiff, traverseData } from './utils';
 
 type Subscribtions = {
@@ -25,24 +26,11 @@ export function SocketDBServer({
 } = {}): SocketDB {
 	let subscriber: Subscribtions = {};
 
-	let queuedUpdate: any;
-	let pendingUpdate = null;
-
-	function queueUpdate(diff: any) {
-		if (pendingUpdate) {
-			mergeDiff(diff, queuedUpdate);
-		} else {
-			queuedUpdate = diff;
-			pendingUpdate = setTimeout(() => {
-				pendingUpdate = null;
-				notifySubscibers(queuedUpdate);
-			}, updateInterval);
-		}
-	}
+	const queue = createUpdateBatcher(notifySubscibers, updateInterval);
 
 	function update(data: any) {
 		const diff = store.put(data);
-		queueUpdate(diff);
+		queue(diff);
 	}
 
 	function notifySubscibers(diff: any) {

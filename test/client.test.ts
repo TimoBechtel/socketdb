@@ -26,6 +26,38 @@ test('emits update object for path', (done) => {
 	client.get('players').get('1').get('name').set('Patrick');
 });
 
+test('should batch updates', (done) => {
+	let sendCount = 0;
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on() {},
+		send(event, { data }) {
+			expect(event).toEqual('update');
+			expect(data).toEqual({
+				players: {
+					1: {
+						name: 'Star',
+						hp: 100,
+					},
+				},
+			});
+			sendCount++;
+		},
+	};
+	const client = SocketDBClient({ socketClient, updateInterval: 10 });
+
+	client.get('players').get('1').get('name').set('Patrick');
+	client.get('players').get('1').get('name').set('Star');
+	client.get('players').get('1').get('hp').set(100);
+
+	setTimeout(() => {
+		expect(sendCount).toBe(1);
+		done();
+	}, 50);
+});
+
 test('merges data on update', (done) => {
 	const store = createStore();
 

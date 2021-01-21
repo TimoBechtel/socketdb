@@ -365,4 +365,47 @@ test('only send data if client is subscribed', (done) => {
 	}, 100);
 });
 
-// TODO: should not notify socket about own update
+test('should batch updates', (done) => {
+	const store = createStore();
+	let connect: (client: Socket, id: string) => void;
+	const { addListener, removeListener, notify } = createEventBroker();
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ store, socketServer, updateInterval: 10 });
+
+	let receivedCount = 0;
+	connect(
+		{
+			onDisconnect() {},
+			on: addListener,
+			off: removeListener,
+			send(event, { data }) {
+				if (receivedCount === 0) {
+					expect(data).toEqual(null);
+				}
+				if (receivedCount === 1) {
+					expect(data).toBe('b');
+				}
+				receivedCount++;
+			},
+		},
+		'1'
+	);
+
+	notify('subscribe', { path: 'player' });
+
+	notify('update', { data: { player: 'a' } });
+	notify('update', { data: { player: 'b' } });
+
+	setTimeout(() => {
+		// first: null, second: 'b'
+		expect(receivedCount).toBe(2);
+		done();
+	}, 50);
+});
+
+// TODO: should not notify client about its own update
