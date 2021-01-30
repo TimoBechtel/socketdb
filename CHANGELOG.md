@@ -1,3 +1,16 @@
+# [3.0.0](https://github.com/TimoBechtel/socketdb/compare/v2.2.0...v3.0.0) (2021-01-30)
+
+
+### Code Refactoring
+
+* store nodes as objects ([d754093](https://github.com/TimoBechtel/socketdb/commit/d75409333e65e06812d8d737131a1d1439b6ad90))
+
+
+### BREAKING CHANGES
+
+* store api has changed. it now returns and accepts only node object types. this also
+changes the server api, as the update and get methods now also require data as node types.
+
 # [2.2.0](https://github.com/TimoBechtel/socketdb/compare/v2.1.2...v2.2.0) (2021-01-21)
 
 
