@@ -1,27 +1,59 @@
-import { mergeDiff } from './utils';
+import { Node } from './node';
+import { createStore } from './store';
 
-type Queue = (diff: any) => void;
+type Queue = (update: Change | Deletion) => void;
+
+export type BatchedUpdate = {
+	delete?: string[];
+	change?: Node;
+};
+
+type Change = {
+	type: 'change';
+	data: Node;
+};
+
+type Deletion = {
+	type: 'delete';
+	path: string;
+};
 
 export function createUpdateBatcher(
-	flush: (diff: any) => void,
+	flush: (batchedUpdate: BatchedUpdate) => void,
 	updateInterval: number
 ): Queue {
-	if (!updateInterval) return flush;
+	if (!updateInterval)
+		return (update) => {
+			if (update.type === 'delete') {
+				flush({ delete: [update.path] });
+			} else if (update.type === 'change') {
+				flush({ change: update.data });
+			}
+		};
 
-	let queuedUpdate: any;
+	let diff = createStore();
+	let deletions: Set<string> = new Set();
 	let pendingUpdate = null;
 
-	// WARNING: queue function has sideeffects,
-	// as diff is merged in place
-	return (diff: any) => {
-		if (pendingUpdate) {
-			mergeDiff(diff, queuedUpdate);
-		} else {
-			queuedUpdate = diff;
+	return (update: Change | Deletion) => {
+		if (!pendingUpdate) {
+			diff = createStore();
+			deletions = new Set();
 			pendingUpdate = setTimeout(() => {
 				pendingUpdate = null;
-				flush(queuedUpdate);
+				const update: BatchedUpdate = {};
+				if (deletions.size > 0) update.delete = Array.from(deletions);
+				if (Object.keys(diff.get().value).length > 0)
+					update.change = diff.get();
+				flush(update);
 			}, updateInterval);
+		}
+
+		if (update.type === 'delete') {
+			diff.del(update.path);
+			deletions.add(update.path);
+		} else if (update.type === 'change') {
+			diff.put(update.data);
 		}
 	};
 }

@@ -1,4 +1,4 @@
-import { Node, nodeify, unwrap } from '../src/node';
+import { Node, nodeify, traverseNode, unwrap } from '../src/node';
 
 test('wraps object with nodes', () => {
 	const obj = {
@@ -70,4 +70,16 @@ test('unwraps node', () => {
 
 test('unwraps node with a sinlge string', () => {
 	expect(unwrap({ value: 'string' })).toEqual('string');
+});
+
+test('traverses node until true was returned', () => {
+	const node: Node = nodeify({
+		player: { 1: { position: { x: 0, y: 1 } }, 2: {} },
+	});
+	let loopcount = 0;
+	traverseNode(node, (path) => {
+		loopcount++;
+		if (path === 'player/1/position') return true;
+	});
+	expect(loopcount).toBe(4);
 });

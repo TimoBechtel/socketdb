@@ -306,3 +306,21 @@ test('should recognize changes when passed as reference', () => {
 		},
 	});
 });
+
+test('can delete data', () => {
+	const store = createStore();
+	store.put(nodeify({ player: { a: { position: { x: 0, y: 1 } } } }));
+	expect(store.get('player/a/position')).toEqual(nodeify({ x: 0, y: 1 }));
+
+	store.del('player/a/position');
+	expect(store.get('player/a/position')).toEqual(nodeify(null));
+});
+
+test('can delete root data', () => {
+	const store = createStore();
+	store.put(nodeify({ player: { a: { position: { x: 0, y: 1 } } } }));
+	expect(store.get('player/a/position')).toEqual(nodeify({ x: 0, y: 1 }));
+
+	store.del('player');
+	expect(store.get('player/a/position')).toEqual(nodeify(null));
+});
