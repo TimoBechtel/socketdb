@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/TimoBechtel/socketdb/compare/v3.0.0...v3.1.0) (2021-02-11)
+
+
+### Features
+
+* **plugins:** add hook based plugin system ([a40b61a](https://github.com/TimoBechtel/socketdb/commit/a40b61ab69d9846146dfff9c845adbfc3ef5a2ff)), closes [#8](https://github.com/TimoBechtel/socketdb/issues/8)
+
 # [3.0.0](https://github.com/TimoBechtel/socketdb/compare/v2.2.0...v3.0.0) (2021-01-30)
 
 
