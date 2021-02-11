@@ -1,4 +1,6 @@
+import { createHooks, Hook } from './hooks';
 import { Node, traverseNode } from './node';
+import { Plugin } from './plugin';
 import { SocketServer } from './socketAdapter/socketServer';
 import { createWebsocketServer } from './socketAdapter/websocketServer';
 import { createStore, Store } from './store';
@@ -14,24 +16,57 @@ export type SocketDB = {
 	get: (path: string) => Node;
 };
 
+export type ServerHooks = {
+	'server:clientConnect'?: Hook<{ id: string }>;
+	'server:clientDisconnect'?: Hook<{ id: string }>;
+	'server:update'?: Hook<{ data: Node }>;
+};
+
+export type ServerPlugin = Plugin<ServerHooks>;
+
 export function SocketDBServer({
 	port = 8080,
 	store = createStore(),
 	updateInterval = 50,
 	socketServer = createWebsocketServer({ port }),
+	plugins = [],
 }: {
 	port?: number;
 	store?: Store;
 	updateInterval?: number;
 	socketServer?: SocketServer;
+	plugins?: ServerPlugin[];
 } = {}): SocketDB {
 	let subscriber: Subscribtions = {};
 
 	const queue = createUpdateBatcher(notifySubscibers, updateInterval);
 
+	const hooks = createHooks<ServerHooks>();
+	registerPlugins(plugins);
+
+	function registerPlugins(plugins: ServerPlugin[]) {
+		plugins.forEach((plugin) => {
+			Object.entries(plugin.events).forEach(
+				([name, hook]: [keyof ServerHooks, ServerHooks[keyof ServerHooks]]) => {
+					hooks.register(name, hook);
+				}
+			);
+		});
+	}
+
 	function update(data: Node) {
-		const diff = store.put(data);
-		queue(diff);
+		hooks
+			.call(
+				'server:update',
+				({ data }) => {
+					const diff = store.put(data);
+					queue(diff);
+				},
+				{ data }
+			)
+			.catch((e) => {
+				console.log(e);
+			});
 	}
 
 	function notifySubscibers(diff: Node) {
@@ -59,9 +94,12 @@ export function SocketDBServer({
 	}
 
 	socketServer.onConnection((client, id) => {
+		hooks.call('server:clientConnect', null, { id });
+
 		client.onDisconnect(() => {
 			delete subscriber[id];
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
+			hooks.call('server:clientDisconnect', null, { id });
 		});
 		client.on('update', ({ data }: { data: Node }) => {
 			update(data);
