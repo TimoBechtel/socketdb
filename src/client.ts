@@ -2,9 +2,11 @@ import { SocketClient } from './socketAdapter/socketClient';
 import { createWebsocketClient } from './socketAdapter/websocketClient';
 import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
-import { isObject, joinPath, mergeDiff } from './utils';
+import { deepClone, isObject, joinPath, mergeDiff } from './utils';
 import { Node, nodeify, traverseNode, unwrap } from './node';
 import { createUpdateBatcher } from './updateBatcher';
+import { Plugin } from './plugin';
+import { createHooks, Hook } from './hooks';
 
 type Unsubscriber = () => void;
 
@@ -22,16 +24,27 @@ type UpdateListener = {
 	[path: string]: ((data: any) => void)[];
 };
 
+export type ClientHooks = {
+	'client:set'?: Hook<{ path: string; value: any }>;
+	'client:firstConnect'?: Hook<void>;
+	'client:reconnect'?: Hook<void>;
+	'client:disconnect'?: Hook<void>;
+};
+
+export type ClientPlugin = Plugin<ClientHooks>;
+
 export function SocketDBClient({
 	url,
 	store = createStore(),
 	socketClient,
 	updateInterval = 50,
+	plugins = [],
 }: {
 	url?: string;
 	store?: Store;
 	socketClient?: SocketClient;
 	updateInterval?: number;
+	plugins?: ClientPlugin[];
 } = {}) {
 	if (!url && !socketClient)
 		url =
@@ -42,6 +55,9 @@ export function SocketDBClient({
 
 	const subscribedPaths: string[] = [];
 	const updateListener: UpdateListener = {};
+	const hooks = createHooks<ClientHooks>();
+
+	registerPlugins(plugins);
 
 	const queueUpdate = createUpdateBatcher((diff) => {
 		socketClient.send('update', { data: diff });
@@ -58,10 +74,26 @@ export function SocketDBClient({
 					socketClient.send('subscribe', { path });
 				}
 			});
+			hooks.call('client:reconnect');
 			connectionLost = false;
+		} else {
+			hooks.call('client:firstConnect');
 		}
 	});
-	socketClient.onDisconnect(() => (connectionLost = true));
+	socketClient.onDisconnect(() => {
+		hooks.call('client:disconnect');
+		connectionLost = true;
+	});
+
+	function registerPlugins(plugins: ClientPlugin[]) {
+		plugins.forEach((plugin) => {
+			Object.entries(plugin.events).forEach(
+				([name, hook]: [keyof ClientHooks, ClientHooks[keyof ClientHooks]]) => {
+					hooks.register(name, hook);
+				}
+			);
+		});
+	}
 
 	function notifySubscriber(diff: Node) {
 		const listener: UpdateListener = { ...updateListener };
@@ -69,8 +101,7 @@ export function SocketDBClient({
 		// should not go through multiple loops
 		traverseNode(diff, (path, data) => {
 			if (listener?.[path]) {
-				let storedData = store.get(path);
-				storedData = mergeDiff(storedData, {}) as Node; // deep copy
+				let storedData = deepClone(store.get(path));
 				listener[path].forEach((listener) => listener(storedData));
 				delete listener[path];
 			}
@@ -80,7 +111,7 @@ export function SocketDBClient({
 				Object.keys(listener).forEach((subscribedPath) => {
 					if (subscribedPath.startsWith(path)) {
 						let storedData = store.get(subscribedPath);
-						storedData = mergeDiff(storedData, {}) as Node; // deep copy
+						storedData = deepClone(storedData);
 						listener[subscribedPath].forEach((listener) =>
 							listener(storedData)
 						);
@@ -189,9 +220,23 @@ export function SocketDBClient({
 			},
 			set(value) {
 				if (!connectionLost) {
-					const diff = store.put(creatUpdate(path, nodeify(value)));
-					if (diff && Object.keys(diff).length > 0) queueUpdate(diff);
-					notifySubscriber(diff);
+					let clonedValue = value;
+					// deep clone only if we have hooks, store.put already does a deep clone
+					if (hooks.count('client:set') > 0) clonedValue = deepClone(value);
+					hooks
+						.call(
+							'client:set',
+							({ path, value }) => {
+								const update = creatUpdate(path, nodeify(value));
+								const diff = store.put(update);
+								if (diff && Object.keys(diff).length > 0) queueUpdate(diff);
+								notifySubscriber(diff);
+							},
+							{ path, value: clonedValue }
+						)
+						.catch((e) => {
+							console.log(e);
+						});
 				}
 				return this;
 			},
