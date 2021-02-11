@@ -32,8 +32,14 @@ export function createHooks<T extends Hooks>() {
 		hooks[name].push(hook);
 	}
 
+	function count(name: K): number {
+		if (!hooks[name]) return 0;
+		return hooks[name].length;
+	}
+
 	return {
 		call,
 		register,
+		count,
 	};
 }

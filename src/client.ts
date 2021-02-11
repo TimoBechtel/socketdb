@@ -2,7 +2,7 @@ import { SocketClient } from './socketAdapter/socketClient';
 import { createWebsocketClient } from './socketAdapter/websocketClient';
 import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
-import { isObject, joinPath, mergeDiff } from './utils';
+import { deepClone, isObject, joinPath, mergeDiff } from './utils';
 import { Node, nodeify, traverseNode, unwrap } from './node';
 import { createUpdateBatcher } from './updateBatcher';
 import { Plugin } from './plugin';
@@ -101,8 +101,7 @@ export function SocketDBClient({
 		// should not go through multiple loops
 		traverseNode(diff, (path, data) => {
 			if (listener?.[path]) {
-				let storedData = store.get(path);
-				storedData = mergeDiff(storedData, {}) as Node; // deep copy
+				let storedData = deepClone(store.get(path));
 				listener[path].forEach((listener) => listener(storedData));
 				delete listener[path];
 			}
@@ -112,7 +111,7 @@ export function SocketDBClient({
 				Object.keys(listener).forEach((subscribedPath) => {
 					if (subscribedPath.startsWith(path)) {
 						let storedData = store.get(subscribedPath);
-						storedData = mergeDiff(storedData, {}) as Node; // deep copy
+						storedData = deepClone(storedData);
 						listener[subscribedPath].forEach((listener) =>
 							listener(storedData)
 						);
@@ -221,6 +220,9 @@ export function SocketDBClient({
 			},
 			set(value) {
 				if (!connectionLost) {
+					let clonedValue = value;
+					// deep clone only if we have hooks, store.put already does a deep clone
+					if (hooks.count('client:set') > 0) clonedValue = deepClone(value);
 					hooks
 						.call(
 							'client:set',
@@ -230,7 +232,7 @@ export function SocketDBClient({
 								if (diff && Object.keys(diff).length > 0) queueUpdate(diff);
 								notifySubscriber(diff);
 							},
-							{ path, value }
+							{ path, value: clonedValue }
 						)
 						.catch((e) => {
 							console.log(e);

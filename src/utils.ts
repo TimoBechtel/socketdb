@@ -28,3 +28,13 @@ export function mergeDiff(
 	}
 	return diff;
 }
+
+/**
+ * deeply clones arrays and objects
+ * @returns
+ */
+export function deepClone<T>(source: T): T {
+	if (!source || typeof source !== 'object') return source;
+	// In my tests, JSON.parse/JSON.stringify seems to be the fastest or equally fast to custom implementation
+	return JSON.parse(JSON.stringify(source));
+}

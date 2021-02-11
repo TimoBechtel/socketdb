@@ -5,7 +5,7 @@ import { SocketServer } from './socketAdapter/socketServer';
 import { createWebsocketServer } from './socketAdapter/websocketServer';
 import { createStore, Store } from './store';
 import { createUpdateBatcher } from './updateBatcher';
-import { isObject, joinPath, mergeDiff } from './utils';
+import { deepClone, isObject, joinPath, mergeDiff } from './utils';
 
 type Subscribtions = {
 	[id: string]: { [path: string]: (data: any) => void };
@@ -55,6 +55,7 @@ export function SocketDBServer({
 	}
 
 	function update(data: Node) {
+		let clonedData: Node = deepClone(data);
 		hooks
 			.call(
 				'server:update',
@@ -62,7 +63,7 @@ export function SocketDBServer({
 					const diff = store.put(data);
 					queue(diff);
 				},
-				{ data }
+				{ data: clonedData }
 			)
 			.catch((e) => {
 				console.log(e);
@@ -136,9 +137,7 @@ export function SocketDBServer({
 	return {
 		update,
 		get: (path: string): Node => {
-			const data = {};
-			mergeDiff(store.get(path), data);
-			return data as Node;
+			return deepClone(store.get(path));
 		},
 	};
 }
