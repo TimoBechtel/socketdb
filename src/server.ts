@@ -55,7 +55,11 @@ export function SocketDBServer({
 	}
 
 	function update(data: Node) {
-		let clonedData: Node = deepClone(data);
+		let clonedData: Node = data;
+		// deep clone only if we have hooks, store.put already does a deep clone
+		if (hooks.count('server:update') > 0) {
+			clonedData = deepClone(data);
+		}
 		hooks
 			.call(
 				'server:update',
