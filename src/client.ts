@@ -4,7 +4,7 @@ import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
 import { deepClone, isObject, joinPath, mergeDiff } from './utils';
 import { Node, nodeify, traverseNode, unwrap } from './node';
-import { createUpdateBatcher } from './updateBatcher';
+import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
 import { Plugin } from './plugin';
 import { createHooks, Hook } from './hooks';
 
@@ -16,6 +16,7 @@ export type ChainReference = {
 	get: (path: string) => ChainReference;
 	each: (callback: (ref: ChainReference, key: string) => void) => Unsubscriber;
 	set: (value: any, meta?: Meta) => ChainReference;
+	delete: () => void;
 	on: (callback: (data: any, meta: Meta) => void) => Unsubscriber;
 	once: (callback: (data: any, meta: Meta) => void) => void;
 };
@@ -122,9 +123,16 @@ export function SocketDBClient({
 	}
 
 	function addSocketPathSubscription(path: string) {
-		socketClient.on(path, ({ data }) => {
-			const diff = store.put(creatUpdate(path, data));
-			notifySubscriber(diff);
+		socketClient.on(path, ({ data }: { data: BatchedUpdate }) => {
+			data.delete?.forEach((path) => {
+				store.del(path);
+				const diff = creatUpdate(path, nodeify(null));
+				notifySubscriber(diff);
+			});
+			if (data.change) {
+				const diff = store.put(creatUpdate(path, data.change));
+				notifySubscriber(diff);
+			}
 		});
 		subscribedPaths.push(path);
 		socketClient.send('subscribe', { path });
@@ -235,7 +243,8 @@ export function SocketDBClient({
 								if (meta) node.meta = meta;
 								const update = creatUpdate(path, node);
 								const diff = store.put(update);
-								if (diff && Object.keys(diff).length > 0) queueUpdate(diff);
+								if (diff && Object.keys(diff).length > 0)
+									queueUpdate({ type: 'change', data: diff });
 								notifySubscriber(diff);
 							},
 							{ path, value: clonedValue, meta }
@@ -245,6 +254,12 @@ export function SocketDBClient({
 						});
 				}
 				return this;
+			},
+			delete() {
+				store.del(path);
+				const diff = creatUpdate(path, nodeify(null));
+				queueUpdate({ type: 'delete', path });
+				notifySubscriber(diff);
 			},
 			on(callback) {
 				const listener = (data: Node) => {

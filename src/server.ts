@@ -1,19 +1,20 @@
 import { createHooks, Hook } from './hooks';
 import { Node, traverseNode } from './node';
+import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
 import { Plugin } from './plugin';
 import { SocketServer } from './socketAdapter/socketServer';
 import { createWebsocketServer } from './socketAdapter/websocketServer';
 import { createStore, Store } from './store';
-import { createUpdateBatcher } from './updateBatcher';
-import { deepClone, isObject, joinPath, mergeDiff } from './utils';
+import { deepClone, isObject, joinPath } from './utils';
 
 type Subscribtions = {
-	[id: string]: { [path: string]: (data: any) => void };
+	[id: string]: { [path: string]: (data: BatchedUpdate) => void };
 };
 
 export type SocketDB = {
 	update: (data: Node) => void;
 	get: (path: string) => Node;
+	delete: (path: string) => void;
 };
 
 export type ServerHooks = {
@@ -65,7 +66,7 @@ export function SocketDBServer({
 				'server:update',
 				({ data }) => {
 					const diff = store.put(data);
-					queue(diff);
+					queue({ type: 'change', data: diff });
 				},
 				{ data: clonedData }
 			)
@@ -74,11 +75,28 @@ export function SocketDBServer({
 			});
 	}
 
-	function notifySubscibers(diff: Node) {
-		Object.values(subscriber).forEach((paths) => {
-			traverseNode(diff, (path, data) => {
-				if (!paths[path]) return;
-				paths[path](data);
+	function del(path: string) {
+		store.del(path);
+		queue({ type: 'delete', path });
+	}
+
+	function notifySubscibers(diff: BatchedUpdate) {
+		Object.values(subscriber).forEach((subscription) => {
+			Object.entries(subscription).forEach(([subscribedPath, callback]) => {
+				let update: BatchedUpdate = {};
+				const deletePaths: string[] = diff.delete?.filter((path) =>
+					path.startsWith(subscribedPath)
+				);
+				if (deletePaths && deletePaths.length > 0) update.delete = deletePaths;
+				if (diff.change) {
+					traverseNode(diff.change, (path, data) => {
+						if (subscribedPath === path) {
+							update.change = data;
+							return true;
+						}
+					});
+				}
+				callback(update);
 			});
 		});
 	}
@@ -86,7 +104,7 @@ export function SocketDBServer({
 	function addSubscriber(
 		id: string,
 		path: string,
-		callback: (diff: Node) => void
+		callback: (diff: BatchedUpdate) => void
 	) {
 		if (!subscriber[id]) subscriber[id] = {};
 		subscriber[id][path] = callback;
@@ -106,11 +124,12 @@ export function SocketDBServer({
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
 			hooks.call('server:clientDisconnect', null, { id });
 		});
-		client.on('update', ({ data }: { data: Node }) => {
-			update(data);
+		client.on('update', ({ data }: { data: BatchedUpdate }) => {
+			data.delete?.forEach(del);
+			if (data.change) update(data.change);
 		});
 		client.on('subscribe', ({ path, once }) => {
-			client.send(path, { data: store.get(path) });
+			client.send(path, { data: { change: store.get(path) } });
 			if (once) return;
 			addSubscriber(id, path, (data) => {
 				client.send(path, { data });
@@ -127,9 +146,9 @@ export function SocketDBServer({
 				keys = Object.keys(data.value);
 				client.send(wildcardPath, { data: keys });
 			}
-			addSubscriber(id + 'wildcard', path, (data: Node) => {
-				if (isObject(data.value)) {
-					const newKeys = Object.keys(data.value).filter(
+			addSubscriber(id + 'wildcard', path, (data: BatchedUpdate) => {
+				if (data.change && isObject(data.change.value)) {
+					const newKeys = Object.keys(data.change.value).filter(
 						(key) => !keys.includes(key)
 					);
 					if (newKeys.length > 0) client.send(wildcardPath, { data: newKeys });
@@ -143,5 +162,6 @@ export function SocketDBServer({
 		get: (path: string): Node => {
 			return deepClone(store.get(path));
 		},
+		delete: del,
 	};
 }

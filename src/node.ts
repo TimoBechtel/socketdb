@@ -40,14 +40,15 @@ export function unwrap(node: Node) {
 
 export function traverseNode(
 	node: Node,
-	callback: (path: string, data: Node) => void
+	callback: (path: string, data: Node) => void | true
 ) {
 	let stack: { node: Node; path: string }[] = [{ node, path: '' }];
 	while (stack.length) {
 		const current = stack.pop();
 		for (let [key, node] of Object.entries(current.node.value)) {
 			const path = joinPath(current.path, key);
-			callback(path, node);
+			const result = callback(path, node);
+			if (result === true) return;
 			if (isObject(node.value)) stack.push({ node, path });
 		}
 	}

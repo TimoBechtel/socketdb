@@ -4,6 +4,7 @@ import { SocketDBServer } from '../src/server';
 import { createStore } from '../src/store';
 import { Socket } from '../src/socketAdapter/socket';
 import { nodeify } from '../src/node';
+import { BatchedUpdate } from '../src/updateBatcher';
 
 test('updates data on manual update', () => {
 	const store = createStore();
@@ -44,18 +45,63 @@ test('updates data on socket request', () => {
 		},
 		'1'
 	);
-
 	notify('update', {
-		data: nodeify({
-			players: {
-				1: {
-					name: 'Peter',
+		data: {
+			change: nodeify({
+				players: {
+					1: {
+						name: 'Peter',
+					},
 				},
-			},
-		}),
+			}),
+			delete: [],
+		},
 	});
 
 	expect(store.get('players/1/name')).toEqual({ value: 'Peter' });
+});
+
+test('deletes data on socket request', () => {
+	const store = createStore();
+	let connect: (client: Socket, id: string) => void;
+	const { addListener, notify } = createEventBroker();
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ store, socketServer });
+
+	connect(
+		{
+			onDisconnect() {},
+			on: addListener,
+			off() {},
+			send() {},
+		},
+		'1'
+	);
+	notify('update', {
+		data: {
+			change: nodeify({
+				players: {
+					1: {
+						x: 0,
+						y: 1,
+					},
+				},
+			}),
+		},
+	});
+	expect(store.get('players/1')).toEqual(nodeify({ x: 0, y: 1 }));
+	notify('update', {
+		data: {
+			delete: ['players/1'],
+		},
+	});
+
+	expect(store.get('players/')).toEqual(nodeify({}));
 });
 
 test('sends data on first subscribe', (done) => {
@@ -86,7 +132,7 @@ test('sends data on first subscribe', (done) => {
 			off: removeListener,
 			send(event, { data }) {
 				if (event === 'players/1') {
-					expect(data).toEqual(nodeify({ name: 'Ralph' }));
+					expect(data).toEqual({ change: nodeify({ name: 'Ralph' }) });
 					done();
 				}
 			},
@@ -118,22 +164,27 @@ test('emits updates to subscriber', (done) => {
 			send(event, { data }) {
 				if (event === 'players/1') {
 					if (count === 1) {
-						expect(data).toEqual(nodeify(null));
+						expect(data).toEqual({ change: nodeify(null) });
 						count++;
 						setTimeout(() => {
 							notify('update', {
-								data: nodeify({
-									players: {
-										1: {
-											name: 'Peter',
+								data: {
+									change: nodeify({
+										players: {
+											1: {
+												name: 'Peter',
+											},
 										},
-									},
-								}),
+									}),
+									delete: [],
+								},
 							});
 							expect(store.get('players/1/name')).toEqual(nodeify('Peter'));
 						}, 100);
 					} else {
-						expect(data).toEqual(nodeify({ name: 'Peter' }));
+						expect(data).toEqual<BatchedUpdate>({
+							change: nodeify({ name: 'Peter' }),
+						});
 						done();
 					}
 				}
@@ -177,16 +228,16 @@ test('only emits changed values', (done) => {
 				if (event === 'players/1') {
 					if (updateCount === 0) {
 						updateCount++;
-						expect(data).toEqual(nodeify({ name: 'Peter' }));
+						expect(data).toEqual({ change: nodeify({ name: 'Peter' }) });
 					} else {
-						expect(data).toEqual(
-							nodeify({
+						expect(data).toEqual({
+							change: nodeify({
 								position: {
 									x: 0,
 									y: 1,
 								},
-							})
-						);
+							}),
+						});
 						done();
 					}
 				}
@@ -197,17 +248,20 @@ test('only emits changed values', (done) => {
 
 	notify('subscribe', { path: 'players/1' });
 	notify('update', {
-		data: nodeify({
-			players: {
-				1: {
-					name: 'Peter',
-					position: {
-						x: 0,
-						y: 1,
+		data: {
+			change: nodeify({
+				players: {
+					1: {
+						name: 'Peter',
+						position: {
+							x: 0,
+							y: 1,
+						},
 					},
 				},
-			},
-		}),
+			}),
+			delete: [],
+		},
 	});
 });
 
@@ -240,13 +294,13 @@ test('emits updates to all subscribers', async () => {
 				off: removeListener,
 				send(event, { data }) {
 					if (event === 'players') {
-						expect(data).toEqual(
-							nodeify({
+						expect(data).toEqual({
+							change: nodeify({
 								1: {
 									name: 'Peter',
 								},
-							})
-						);
+							}),
+						});
 						resolve();
 					}
 				},
@@ -264,7 +318,7 @@ test('emits updates to all subscribers', async () => {
 				off: removeListener,
 				send(event, { data }) {
 					if (event === 'players/1/name') {
-						expect(data).toEqual(nodeify('Peter'));
+						expect(data).toEqual({ change: nodeify('Peter') });
 						resolve();
 					}
 				},
@@ -310,16 +364,18 @@ test('sends keys when entries are added or removed', async () => {
 							expect(data).toEqual(['1']);
 							setTimeout(() => {
 								notify('update', {
-									data: nodeify({
-										players: {
-											1: {
-												name: 'Peter',
+									data: {
+										change: nodeify({
+											players: {
+												1: {
+													name: 'Peter',
+												},
+												2: {
+													name: 'Parker',
+												},
 											},
-											2: {
-												name: 'Parker',
-											},
-										},
-									}),
+										}),
+									},
 								});
 							}, 100);
 						}
@@ -401,10 +457,10 @@ test('should batch updates', (done) => {
 			off: removeListener,
 			send(event, { data }) {
 				if (receivedCount === 0) {
-					expect(data).toEqual(nodeify(null));
+					expect(data).toEqual({ change: nodeify(null) });
 				}
 				if (receivedCount === 1) {
-					expect(data).toEqual(nodeify('b'));
+					expect(data).toEqual({ change: nodeify('b'), delete: ['player/a'] });
 				}
 				receivedCount++;
 			},
@@ -414,12 +470,14 @@ test('should batch updates', (done) => {
 
 	notify('subscribe', { path: 'player' });
 
-	notify('update', { data: nodeify({ player: 'a' }) });
-	notify('update', { data: nodeify({ player: 'b' }) });
+	notify('update', { data: { change: nodeify({ player: 'a' }) } });
+	notify('update', { data: { change: nodeify({ player: 'b' }) } });
+	notify('update', { data: { delete: ['player/a'] } });
 
 	setTimeout(() => {
 		// first: null, second: 'b'
 		expect(receivedCount).toBe(2);
+		expect(store.get()).toEqual(nodeify({ player: 'b' }));
 		done();
 	}, 50);
 });
