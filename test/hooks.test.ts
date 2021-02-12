@@ -61,8 +61,7 @@ test('allow cancelling hook with error message', (done) => {
 	hooks
 		.call(
 			'test:hook',
-			({ message }) => {
-				console.log(message);
+			() => {
 				hooktriggered = true;
 			},
 			{ message: 'hello world' }

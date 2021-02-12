@@ -10,12 +10,12 @@ import { createHooks, Hook } from './hooks';
 
 type Unsubscriber = () => void;
 
-type Meta = { [namespace: string]: any };
+type Meta = Node['meta'];
 
 export type ChainReference = {
 	get: (path: string) => ChainReference;
 	each: (callback: (ref: ChainReference, key: string) => void) => Unsubscriber;
-	set: (value: any) => ChainReference;
+	set: (value: any, meta?: Meta) => ChainReference;
 	on: (callback: (data: any, meta: Meta) => void) => Unsubscriber;
 	once: (callback: (data: any, meta: Meta) => void) => void;
 };
@@ -25,7 +25,7 @@ type UpdateListener = {
 };
 
 export type ClientHooks = {
-	'client:set'?: Hook<{ path: string; value: any }>;
+	'client:set'?: Hook<{ path: string; value: any; meta: Meta }>;
 	'client:firstConnect'?: Hook<void>;
 	'client:reconnect'?: Hook<void>;
 	'client:disconnect'?: Hook<void>;
@@ -218,21 +218,27 @@ export function SocketDBClient({
 					removeSocketPathSubscription(wildcardPath);
 				};
 			},
-			set(value) {
+			set(value, meta) {
 				if (!connectionLost) {
 					let clonedValue = value;
+					let clonedMeta = meta;
 					// deep clone only if we have hooks, store.put already does a deep clone
-					if (hooks.count('client:set') > 0) clonedValue = deepClone(value);
+					if (hooks.count('client:set') > 0) {
+						clonedValue = deepClone(value);
+						clonedMeta = deepClone(meta);
+					}
 					hooks
 						.call(
 							'client:set',
-							({ path, value }) => {
-								const update = creatUpdate(path, nodeify(value));
+							({ path, value, meta }) => {
+								const node = nodeify(value);
+								if (meta) node.meta = meta;
+								const update = creatUpdate(path, node);
 								const diff = store.put(update);
 								if (diff && Object.keys(diff).length > 0) queueUpdate(diff);
 								notifySubscriber(diff);
 							},
-							{ path, value: clonedValue }
+							{ path, value: clonedValue, meta }
 						)
 						.catch((e) => {
 							console.log(e);
