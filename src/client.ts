@@ -27,6 +27,7 @@ type UpdateListener = {
 
 export type ClientHooks = {
 	'client:set'?: Hook<{ path: string; value: any; meta: Meta }>;
+	'client:delete'?: Hook<{ path: string }>;
 	'client:firstConnect'?: Hook<void>;
 	'client:reconnect'?: Hook<void>;
 	'client:disconnect'?: Hook<void>;
@@ -256,10 +257,18 @@ export function SocketDBClient({
 				return this;
 			},
 			delete() {
-				store.del(path);
-				const diff = creatUpdate(path, nodeify(null));
-				queueUpdate({ type: 'delete', path });
-				notifySubscriber(diff);
+				hooks
+					.call(
+						'client:delete',
+						({ path }) => {
+							store.del(path);
+							const diff = creatUpdate(path, nodeify(null));
+							queueUpdate({ type: 'delete', path });
+							notifySubscriber(diff);
+						},
+						{ path }
+					)
+					.catch(console.log);
 			},
 			on(callback) {
 				const listener = (data: Node) => {

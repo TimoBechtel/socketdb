@@ -21,6 +21,7 @@ export type ServerHooks = {
 	'server:clientConnect'?: Hook<{ id: string }>;
 	'server:clientDisconnect'?: Hook<{ id: string }>;
 	'server:update'?: Hook<{ data: Node }>;
+	'server:delete'?: Hook<{ path: string }>;
 };
 
 export type ServerPlugin = Plugin<ServerHooks>;
@@ -76,8 +77,16 @@ export function SocketDBServer({
 	}
 
 	function del(path: string) {
-		store.del(path);
-		queue({ type: 'delete', path });
+		hooks
+			.call(
+				'server:delete',
+				({ path }) => {
+					store.del(path);
+					queue({ type: 'delete', path });
+				},
+				{ path }
+			)
+			.catch(console.log);
 	}
 
 	function notifySubscibers(diff: BatchedUpdate) {
