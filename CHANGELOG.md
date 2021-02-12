@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/TimoBechtel/socketdb/compare/v3.3.0...v3.4.0) (2021-02-12)
+
+
+### Features
+
+* **hooks:** add delete hooks ([3d2cabc](https://github.com/TimoBechtel/socketdb/commit/3d2cabc19386e87fd4fb8e97d26d6a8be76035d0))
+
 # [3.3.0](https://github.com/TimoBechtel/socketdb/compare/v3.2.0...v3.3.0) (2021-02-12)
 
 
