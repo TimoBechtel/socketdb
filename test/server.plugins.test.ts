@@ -15,7 +15,6 @@ test('allows providing hooks via plugins', (done) => {
 				name: 'timestamp',
 				events: {
 					'server:update': ({ data }) => {
-						console.log(data);
 						return {
 							data: {
 								value: data.value,
