@@ -1,6 +1,6 @@
 {
 	"name": "socketdb",
-	"version": "3.0.0",
+	"version": "3.2.0",
 	"description": "Real-time synchronized data storage",
 	"homepage": "https://timobechtel.github.io/socketdb/",
 	"main": "dist/index.js",

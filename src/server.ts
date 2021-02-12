@@ -1,10 +1,11 @@
+import { createHooks, Hook } from './hooks';
 import { Node, traverseNode } from './node';
-import { parsePath } from './parsePath';
+import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
+import { Plugin } from './plugin';
 import { SocketServer } from './socketAdapter/socketServer';
 import { createWebsocketServer } from './socketAdapter/websocketServer';
 import { createStore, Store } from './store';
-import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
-import { isObject, joinPath, mergeDiff } from './utils';
+import { deepClone, isObject, joinPath } from './utils';
 
 type Subscribtions = {
 	[id: string]: { [path: string]: (data: BatchedUpdate) => void };
@@ -16,24 +17,62 @@ export type SocketDB = {
 	delete: (path: string) => void;
 };
 
+export type ServerHooks = {
+	'server:clientConnect'?: Hook<{ id: string }>;
+	'server:clientDisconnect'?: Hook<{ id: string }>;
+	'server:update'?: Hook<{ data: Node }>;
+};
+
+export type ServerPlugin = Plugin<ServerHooks>;
+
 export function SocketDBServer({
 	port = 8080,
 	store = createStore(),
 	updateInterval = 50,
 	socketServer = createWebsocketServer({ port }),
+	plugins = [],
 }: {
 	port?: number;
 	store?: Store;
 	updateInterval?: number;
 	socketServer?: SocketServer;
+	plugins?: ServerPlugin[];
 } = {}): SocketDB {
 	let subscriber: Subscribtions = {};
 
 	const queue = createUpdateBatcher(notifySubscibers, updateInterval);
 
+	const hooks = createHooks<ServerHooks>();
+	registerPlugins(plugins);
+
+	function registerPlugins(plugins: ServerPlugin[]) {
+		plugins.forEach((plugin) => {
+			Object.entries(plugin.events).forEach(
+				([name, hook]: [keyof ServerHooks, ServerHooks[keyof ServerHooks]]) => {
+					hooks.register(name, hook);
+				}
+			);
+		});
+	}
+
 	function update(data: Node) {
-		const diff = store.put(data);
-		queue({ type: 'change', data: diff });
+		let clonedData: Node = data;
+		// deep clone only if we have hooks, store.put already does a deep clone
+		if (hooks.count('server:update') > 0) {
+			clonedData = deepClone(data);
+		}
+		hooks
+			.call(
+				'server:update',
+				({ data }) => {
+					const diff = store.put(data);
+					queue({ type: 'change', data: diff });
+				},
+				{ data: clonedData }
+			)
+			.catch((e) => {
+				console.log(e);
+			});
 	}
 
 	function del(path: string) {
@@ -78,9 +117,12 @@ export function SocketDBServer({
 	}
 
 	socketServer.onConnection((client, id) => {
+		hooks.call('server:clientConnect', null, { id });
+
 		client.onDisconnect(() => {
 			delete subscriber[id];
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
+			hooks.call('server:clientDisconnect', null, { id });
 		});
 		client.on('update', ({ data }: { data: BatchedUpdate }) => {
 			data.delete?.forEach(del);
@@ -118,9 +160,7 @@ export function SocketDBServer({
 	return {
 		update,
 		get: (path: string): Node => {
-			const data = {};
-			mergeDiff(store.get(path), data);
-			return data as Node;
+			return deepClone(store.get(path));
 		},
 		delete: del,
 	};

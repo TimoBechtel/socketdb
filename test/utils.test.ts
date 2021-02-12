@@ -1,4 +1,4 @@
-import { isObject, joinPath } from '../src/utils';
+import { deepClone, isObject, joinPath, mergeDiff } from '../src/utils';
 
 test('detects arrays', () => {
 	expect(isObject([1, 2, 3])).toBe(false);
@@ -16,4 +16,11 @@ test('returns true on any other object', () => {
 test('joins paths', () => {
 	expect(joinPath('', 'sub')).toBe('sub');
 	expect(joinPath('a', 'b')).toBe('a/b');
+});
+
+test('clones array and objects', () => {
+	const exampleData = [1, 2, 3, { d: 'e', f: ['g', 'h'] }];
+	const clone = deepClone(exampleData);
+	expect(clone).toEqual(exampleData);
+	expect(clone === exampleData).toBe(false);
 });

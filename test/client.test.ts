@@ -378,6 +378,25 @@ test('also receives metadata', (done) => {
 		});
 });
 
+test('allows setting metadata', (done) => {
+	const metaExample = { owner: 'Thomas' };
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on() {},
+		send(_, { data }) {
+			expect(data.change.value.players.value[1]).toEqual({
+				value: 'b',
+				meta: metaExample,
+			});
+			done();
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+	client.get('players').get('1').set('b', metaExample);
+});
+
 test('on/once always receives data on first call', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
