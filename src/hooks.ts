@@ -9,14 +9,9 @@ export function createHooks<T extends Hooks>() {
 	type K = keyof T;
 
 	async function call(name: K): Promise<void>;
-	async function call(name: K, callback: () => void): Promise<void>;
-	async function call<A>(name: K, callback: Hook<A>, args: A): Promise<void>;
+	async function call<A>(name: K, args: A): Promise<A>;
 
-	async function call<A>(
-		name: K,
-		callback?: Hook<A> | (() => void),
-		args?: A
-	): Promise<void> {
+	async function call<A>(name: K, args?: A): Promise<void | A> {
 		let result = args;
 		if (hooks[name]) {
 			for (const hook of hooks[name]) {
@@ -24,7 +19,7 @@ export function createHooks<T extends Hooks>() {
 				if (res) result = res;
 			}
 		}
-		callback?.(result);
+		return result;
 	}
 
 	function register(name: K, hook: T[K]) {

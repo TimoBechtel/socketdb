@@ -20,8 +20,10 @@ test('updates data on manual update', () => {
 			players: { 1: { name: 'Arnold' } },
 		})
 	);
-
-	expect(store.get('players/1/name')).toEqual({ value: 'Arnold' });
+	// update will call hooks asynchonously so, we need a little delay here:
+	setTimeout(() => {
+		expect(store.get('players/1/name')).toEqual({ value: 'Arnold' });
+	});
 });
 
 test('updates data on socket request', () => {
@@ -58,10 +60,12 @@ test('updates data on socket request', () => {
 		},
 	});
 
-	expect(store.get('players/1/name')).toEqual({ value: 'Peter' });
+	setTimeout(() => {
+		expect(store.get('players/1/name')).toEqual({ value: 'Peter' });
+	});
 });
 
-test('deletes data on socket request', () => {
+test('deletes data on socket request', (done) => {
 	const store = createStore();
 	let connect: (client: Socket, id: string) => void;
 	const { addListener, notify } = createEventBroker();
@@ -94,14 +98,19 @@ test('deletes data on socket request', () => {
 			}),
 		},
 	});
-	expect(store.get('players/1')).toEqual(nodeify({ x: 0, y: 1 }));
-	notify('update', {
-		data: {
-			delete: ['players/1'],
-		},
-	});
+	setTimeout(() => {
+		expect(store.get('players/1')).toEqual(nodeify({ x: 0, y: 1 }));
+		notify('update', {
+			data: {
+				delete: ['players/1'],
+			},
+		});
 
-	expect(store.get('players/')).toEqual(nodeify({}));
+		setTimeout(() => {
+			expect(store.get('players/')).toEqual(nodeify({}));
+			done();
+		});
+	});
 });
 
 test('sends data on first subscribe', (done) => {
@@ -179,7 +188,9 @@ test('emits updates to subscriber', (done) => {
 									delete: [],
 								},
 							});
-							expect(store.get('players/1/name')).toEqual(nodeify('Peter'));
+							setTimeout(() => {
+								expect(store.get('players/1/name')).toEqual(nodeify('Peter'));
+							});
 						}, 100);
 					} else {
 						expect(data).toEqual<BatchedUpdate>({

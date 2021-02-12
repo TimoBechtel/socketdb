@@ -63,29 +63,21 @@ export function SocketDBServer({
 			clonedData = deepClone(data);
 		}
 		hooks
-			.call(
-				'server:update',
-				({ data }) => {
-					const diff = store.put(data);
-					queue({ type: 'change', data: diff });
-				},
-				{ data: clonedData }
-			)
-			.catch((e) => {
-				console.log(e);
-			});
+			.call('server:update', { data: clonedData })
+			.then(({ data }) => {
+				const diff = store.put(data);
+				queue({ type: 'change', data: diff });
+			})
+			.catch(console.log);
 	}
 
 	function del(path: string) {
 		hooks
-			.call(
-				'server:delete',
-				({ path }) => {
-					store.del(path);
-					queue({ type: 'delete', path });
-				},
-				{ path }
-			)
+			.call('server:delete', { path })
+			.then(({ path }) => {
+				store.del(path);
+				queue({ type: 'delete', path });
+			})
 			.catch(console.log);
 	}
 
@@ -126,12 +118,12 @@ export function SocketDBServer({
 	}
 
 	socketServer.onConnection((client, id) => {
-		hooks.call('server:clientConnect', null, { id });
+		hooks.call('server:clientConnect', { id });
 
 		client.onDisconnect(() => {
 			delete subscriber[id];
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
-			hooks.call('server:clientDisconnect', null, { id });
+			hooks.call('server:clientDisconnect', { id });
 		});
 		client.on('update', ({ data }: { data: BatchedUpdate }) => {
 			data.delete?.forEach(del);

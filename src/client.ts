@@ -237,37 +237,29 @@ export function SocketDBClient({
 						clonedMeta = deepClone(meta);
 					}
 					hooks
-						.call(
-							'client:set',
-							({ path, value, meta }) => {
-								const node = nodeify(value);
-								if (meta) node.meta = meta;
-								const update = creatUpdate(path, node);
-								const diff = store.put(update);
-								if (diff && Object.keys(diff).length > 0)
-									queueUpdate({ type: 'change', data: diff });
-								notifySubscriber(diff);
-							},
-							{ path, value: clonedValue, meta }
-						)
-						.catch((e) => {
-							console.log(e);
-						});
+						.call('client:set', { path, value: clonedValue, meta })
+						.then(({ path, value, meta }) => {
+							const node = nodeify(value);
+							if (meta) node.meta = meta;
+							const update = creatUpdate(path, node);
+							const diff = store.put(update);
+							if (diff && Object.keys(diff).length > 0)
+								queueUpdate({ type: 'change', data: diff });
+							notifySubscriber(diff);
+						})
+						.catch(console.log);
 				}
 				return this;
 			},
 			delete() {
 				hooks
-					.call(
-						'client:delete',
-						({ path }) => {
-							store.del(path);
-							const diff = creatUpdate(path, nodeify(null));
-							queueUpdate({ type: 'delete', path });
-							notifySubscriber(diff);
-						},
-						{ path }
-					)
+					.call('client:delete', { path })
+					.then(({ path }) => {
+						store.del(path);
+						const diff = creatUpdate(path, nodeify(null));
+						queueUpdate({ type: 'delete', path });
+						notifySubscriber(diff);
+					})
 					.catch(console.log);
 			},
 			on(callback) {

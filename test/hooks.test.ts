@@ -37,14 +37,11 @@ test('allow changing passed data', (done) => {
 			message: `/// ${message} ///`,
 		};
 	});
-	hooks.call(
-		'test:hook',
-		({ message }) => {
-			expect(message).toEqual('/// -- hello world -- ///');
-			done();
-		},
-		{ message: 'hello world' }
-	);
+
+	hooks.call('test:hook', { message: 'hello world' }).then(({ message }) => {
+		expect(message).toEqual('/// -- hello world -- ///');
+		done();
+	});
 });
 
 test('allow cancelling hook with error message', (done) => {
@@ -59,13 +56,10 @@ test('allow cancelling hook with error message', (done) => {
 		throw new Error('hook failed');
 	});
 	hooks
-		.call(
-			'test:hook',
-			() => {
-				hooktriggered = true;
-			},
-			{ message: 'hello world' }
-		)
+		.call('test:hook', { message: 'hello world' })
+		.then(() => {
+			hooktriggered = true;
+		})
 		.catch(({ message }) => {
 			expect(message).toEqual('hook failed');
 		});
