@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/TimoBechtel/socketdb/compare/v3.2.0...v3.3.0) (2021-02-12)
+
+
+### Features
+
+* add delete function ([9ffd25f](https://github.com/TimoBechtel/socketdb/commit/9ffd25fc05db1bf9477c7c11d945c37922f97244)), closes [#9](https://github.com/TimoBechtel/socketdb/issues/9)
+
 # [3.2.0](https://github.com/TimoBechtel/socketdb/compare/v3.1.0...v3.2.0) (2021-02-12)
 
 
