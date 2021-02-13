@@ -6,10 +6,12 @@ function SocketDBServer(config?: {
 	store?: Store;
 	updateInterval?: number;
 	socketServer?: SocketServer;
+	plugins?: ServerPlugin[];
 }): SocketDB;
 
 type SocketDB = {
-	update: (data: any) => void;
-	get: (path: string) => any;
+	update: (data: Node) => void;
+	get: (path: string) => Node;
+	delete: (path: string) => void;
 };
 ```
