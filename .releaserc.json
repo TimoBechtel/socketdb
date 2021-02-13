@@ -13,6 +13,17 @@
 		"@semantic-release/changelog",
 		"@semantic-release/npm",
 		"@semantic-release/git",
-		"@semantic-release/github"
+		[
+			"@semantic-release/github",
+			{
+				"assets": [
+					{
+						"path": "browser/socketdb.min.js",
+						"name": "SocketDBClient-${nextRelease.gitTag}.min.js",
+						"label": "SocketDBClient minified UMD"
+					}
+				]
+			}
+		]
 	]
 }
