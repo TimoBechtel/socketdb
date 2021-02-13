@@ -1,3 +1,10 @@
+# [3.5.0](https://github.com/TimoBechtel/socketdb/compare/v3.4.0...v3.5.0) (2021-02-13)
+
+
+### Features
+
+* **browser:** add browser bundle ([cd070eb](https://github.com/TimoBechtel/socketdb/commit/cd070ebb40cd9bd8f6b05ae5cbcd43bc736d74ad)), closes [#13](https://github.com/TimoBechtel/socketdb/issues/13)
+
 # [3.4.0](https://github.com/TimoBechtel/socketdb/compare/v3.3.0...v3.4.0) (2021-02-12)
 
 
