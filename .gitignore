@@ -13,6 +13,7 @@ coverage
 
 # build files
 dist
+/browser
 
 # documentation page
 /public

@@ -1,68 +1,125 @@
+import { Node, nodeify } from '../src/node';
 import { createStore } from '../src/store';
 
 test('returns null, if key does not exist', () => {
 	const store = createStore();
-	expect(store.get('some/value/that/doesnt/exist')).toBe(null);
+	expect(store.get('some/value/that/doesnt/exist')).toEqual(nodeify(null));
 });
 
 test('returns null, if parent key is no object', () => {
 	const store = createStore();
-	store.put({ some: { value: [] } });
-	expect(store.get('some/value/that/doesnt/exist')).toBe(null);
-	store.put({ some: { value: { that: '' } } });
-	expect(store.get('some/value/that/doesnt/exist')).toBe(null);
-	store.put({ some: { value: { that: { doesnt: null } } } });
-	expect(store.get('some/value/that/doesnt/exist')).toBe(null);
+	store.put({
+		value: { some: { value: { myvalue: { value: 'a' } } } },
+	});
+	expect(store.get('some/value/that/doesnt/exist')).toEqual(nodeify(null));
+	store.put({
+		value: { some: { value: { that: { value: '' } } } },
+	});
+	expect(store.get('some/value/that/doesnt/exist')).toEqual(nodeify(null));
+	store.put({
+		value: {
+			some: {
+				value: {
+					myvalue: { value: { that: { value: { doesnt: { value: null } } } } },
+				},
+			},
+		},
+	});
+	expect(store.get('some/value/that/doesnt/exist')).toEqual(nodeify(null));
 });
 
 test('returns requested values', () => {
 	const store = createStore();
 	store.put({
-		players: {
-			a: {
-				name: 'Patrick',
-				position: {
-					x: 0,
-					y: 1,
+		value: {
+			players: {
+				value: {
+					a: {
+						value: {
+							name: {
+								value: 'Patrick',
+							},
+							position: {
+								value: {
+									x: {
+										value: 0,
+									},
+									y: { value: 1 },
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 	});
 
-	expect(store.get('players/a/position/x')).toBe(0);
+	expect(store.get('players/a/position/x')).toEqual({ value: 0 });
 });
 
 test('successfully merges data', () => {
 	const store = createStore();
 	store.put({
-		players: {
-			a: {
-				name: 'Patrick',
-				position: {
-					x: 0,
-					y: 1,
+		value: {
+			players: {
+				value: {
+					a: {
+						value: {
+							name: {
+								value: 'Patrick',
+							},
+							position: {
+								value: {
+									x: { value: 0 },
+									y: { value: 1 },
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 	});
 
 	store.put({
-		players: {
-			a: {
-				position: {
-					x: 1,
+		value: {
+			players: {
+				value: {
+					a: {
+						value: {
+							position: {
+								value: {
+									x: { value: 1 },
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 	});
 
 	expect(store.get()).toEqual({
-		players: {
-			a: {
-				name: 'Patrick',
-				position: {
-					x: 1,
-					y: 1,
+		value: {
+			players: {
+				value: {
+					a: {
+						value: {
+							name: {
+								value: 'Patrick',
+							},
+							position: {
+								value: {
+									x: {
+										value: 1,
+									},
+									y: {
+										value: 1,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -71,27 +128,52 @@ test('successfully merges data', () => {
 
 test('successfully merges empty data', () => {
 	const store = createStore();
+
 	store.put({
-		players: {
-			a: {
-				name: 'Patrick',
-				position: {
-					x: 0,
-					y: 1,
+		value: {
+			players: {
+				value: {
+					a: {
+						value: {
+							name: {
+								value: 'Patrick',
+							},
+							position: {
+								value: {
+									x: { value: 0 },
+									y: { value: 1 },
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 	});
 
-	store.put({});
+	store.put({ value: {} });
 
 	expect(store.get()).toEqual({
-		players: {
-			a: {
-				name: 'Patrick',
-				position: {
-					x: 0,
-					y: 1,
+		value: {
+			players: {
+				value: {
+					a: {
+						value: {
+							name: {
+								value: 'Patrick',
+							},
+							position: {
+								value: {
+									x: {
+										value: 0,
+									},
+									y: {
+										value: 1,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -100,47 +182,90 @@ test('successfully merges empty data', () => {
 
 test('returns a diff containing all changed values', () => {
 	const store = createStore();
+
 	store.put({
-		players: {
-			a: {
-				name: 'Patrick',
-				position: {
-					x: 0,
-					y: 1,
-				},
-			},
-			b: {
-				name: 'Someone',
-				position: {
-					x: 2,
-					y: 4,
+		value: {
+			players: {
+				value: {
+					a: {
+						value: {
+							name: {
+								value: 'Patrick',
+							},
+							position: {
+								value: {
+									x: { value: 0 },
+									y: { value: 1 },
+								},
+							},
+						},
+					},
+					b: {
+						value: {
+							name: {
+								value: 'Someone',
+							},
+							position: {
+								value: {
+									x: { value: 2 },
+									y: { value: 4 },
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 	});
 
 	const diff = store.put({
-		players: {
-			a: {
-				name: 'John',
-				position: {
-					x: 0,
-					y: 1,
+		value: {
+			players: {
+				value: {
+					a: {
+						value: {
+							name: {
+								value: 'John',
+							},
+							position: {
+								value: {
+									x: { value: 0 },
+									y: { value: 1 },
+								},
+							},
+						},
+					},
+					c: {
+						value: {
+							name: {
+								value: 'Peter Parker',
+							},
+						},
+					},
 				},
-			},
-			c: {
-				name: 'Peter Parker',
 			},
 		},
 	});
 
 	expect(diff).toEqual({
-		players: {
-			a: {
-				name: 'John',
-			},
-			c: {
-				name: 'Peter Parker',
+		value: {
+			players: {
+				value: {
+					a: {
+						value: {
+							name: {
+								value: 'John',
+							},
+						},
+					},
+					c: {
+						value: {
+							name: {
+								value: 'Peter Parker',
+							},
+						},
+					},
+				},
 			},
 		},
 	});
@@ -149,21 +274,53 @@ test('returns a diff containing all changed values', () => {
 test('should recognize changes when passed as reference', () => {
 	const store = createStore();
 
-	const data = {
-		a: {
-			b: 'c',
+	const data: Node = {
+		value: {
+			a: {
+				value: {
+					b: {
+						value: 'c',
+					},
+				},
+			},
+			d: {
+				value: 0,
+			},
 		},
-		d: 0,
 	};
 	store.put(data);
 
-	data.a.b = 'e';
+	(data.value as any).a.value.b.value = 'e';
 
 	const diff = store.put(data);
 
 	expect(diff).toEqual({
-		a: {
-			b: 'e',
+		value: {
+			a: {
+				value: {
+					b: {
+						value: 'e',
+					},
+				},
+			},
 		},
 	});
+});
+
+test('can delete data', () => {
+	const store = createStore();
+	store.put(nodeify({ player: { a: { position: { x: 0, y: 1 } } } }));
+	expect(store.get('player/a/position')).toEqual(nodeify({ x: 0, y: 1 }));
+
+	store.del('player/a/position');
+	expect(store.get('player/a/position')).toEqual(nodeify(null));
+});
+
+test('can delete root data', () => {
+	const store = createStore();
+	store.put(nodeify({ player: { a: { position: { x: 0, y: 1 } } } }));
+	expect(store.get('player/a/position')).toEqual(nodeify({ x: 0, y: 1 }));
+
+	store.del('player');
+	expect(store.get('player/a/position')).toEqual(nodeify(null));
 });

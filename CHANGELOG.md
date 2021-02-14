@@ -1,3 +1,51 @@
+# [3.5.0](https://github.com/TimoBechtel/socketdb/compare/v3.4.0...v3.5.0) (2021-02-13)
+
+
+### Features
+
+* **browser:** add browser bundle ([cd070eb](https://github.com/TimoBechtel/socketdb/commit/cd070ebb40cd9bd8f6b05ae5cbcd43bc736d74ad)), closes [#13](https://github.com/TimoBechtel/socketdb/issues/13)
+
+# [3.4.0](https://github.com/TimoBechtel/socketdb/compare/v3.3.0...v3.4.0) (2021-02-12)
+
+
+### Features
+
+* **hooks:** add delete hooks ([3d2cabc](https://github.com/TimoBechtel/socketdb/commit/3d2cabc19386e87fd4fb8e97d26d6a8be76035d0))
+
+# [3.3.0](https://github.com/TimoBechtel/socketdb/compare/v3.2.0...v3.3.0) (2021-02-12)
+
+
+### Features
+
+* add delete function ([9ffd25f](https://github.com/TimoBechtel/socketdb/commit/9ffd25fc05db1bf9477c7c11d945c37922f97244)), closes [#9](https://github.com/TimoBechtel/socketdb/issues/9)
+
+# [3.2.0](https://github.com/TimoBechtel/socketdb/compare/v3.1.0...v3.2.0) (2021-02-12)
+
+
+### Features
+
+* **client:** allow setting metadata ([f35131b](https://github.com/TimoBechtel/socketdb/commit/f35131b2ee93fbfd881431a7f576bd61ff125e15)), closes [#7](https://github.com/TimoBechtel/socketdb/issues/7)
+
+# [3.1.0](https://github.com/TimoBechtel/socketdb/compare/v3.0.0...v3.1.0) (2021-02-11)
+
+
+### Features
+
+* **plugins:** add hook based plugin system ([a40b61a](https://github.com/TimoBechtel/socketdb/commit/a40b61ab69d9846146dfff9c845adbfc3ef5a2ff)), closes [#8](https://github.com/TimoBechtel/socketdb/issues/8)
+
+# [3.0.0](https://github.com/TimoBechtel/socketdb/compare/v2.2.0...v3.0.0) (2021-01-30)
+
+
+### Code Refactoring
+
+* store nodes as objects ([d754093](https://github.com/TimoBechtel/socketdb/commit/d75409333e65e06812d8d737131a1d1439b6ad90))
+
+
+### BREAKING CHANGES
+
+* store api has changed. it now returns and accepts only node object types. this also
+changes the server api, as the update and get methods now also require data as node types.
+
 # [2.2.0](https://github.com/TimoBechtel/socketdb/compare/v2.1.2...v2.2.0) (2021-01-21)
 
 

@@ -81,7 +81,7 @@ module.exports = {
 				{
 					title: 'Guide',
 					collapsable: false,
-					children: ['', 'quick-start'],
+					children: ['', 'quick-start', 'client', 'server'],
 				},
 				{
 					title: 'Advanced',
@@ -89,7 +89,7 @@ module.exports = {
 				},
 				{
 					title: 'Extensions',
-					children: ['custom-store'],
+					children: ['plugins', 'custom-store'],
 				},
 			],
 			'/api/': [
@@ -111,7 +111,7 @@ module.exports = {
 		[
 			'vuepress-plugin-seo',
 			{
-				twitterCard: _ => 'summary',
+				twitterCard: (_) => 'summary',
 			},
 		],
 		[

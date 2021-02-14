@@ -10,6 +10,16 @@ export const createWebsocketClient = ({
 	protocols?: string[];
 	reconnectTimeout?: number;
 }): SocketClient => {
+	if (typeof WebSocket === 'undefined') {
+		console.error(
+			'Error: You tried to use the default WebsocketClient in a non-browser environment.',
+			'This is currently not supported.'
+		);
+		console.error(
+			'To use the SocketDBClient in a node environment, you need to provide your own WebsocketClient.'
+		);
+	}
+
 	const messageEvents = createEventBroker();
 	const connectionClosedListener = [];
 	const connectionOpenedListener = [];

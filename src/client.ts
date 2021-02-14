@@ -2,33 +2,51 @@ import { SocketClient } from './socketAdapter/socketClient';
 import { createWebsocketClient } from './socketAdapter/websocketClient';
 import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
-import { isObject, joinPath, mergeDiff, traverseData } from './utils';
-import { createUpdateBatcher } from './updateBatcher';
+import { deepClone, isObject, joinPath, mergeDiff } from './utils';
+import { Node, nodeify, traverseNode, unwrap } from './node';
+import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
+import { Plugin } from './plugin';
+import { createHooks, Hook } from './hooks';
 
 type Unsubscriber = () => void;
+
+type Meta = Node['meta'];
 
 export type ChainReference = {
 	get: (path: string) => ChainReference;
 	each: (callback: (ref: ChainReference, key: string) => void) => Unsubscriber;
-	set: (value: any) => ChainReference;
-	on: (callback: (data: any) => void) => Unsubscriber;
-	once: (callback: (data: any) => void) => void;
+	set: (value: any, meta?: Meta) => ChainReference;
+	delete: () => void;
+	on: (callback: (data: any, meta: Meta) => void) => Unsubscriber;
+	once: (callback: (data: any, meta: Meta) => void) => void;
 };
 
 type UpdateListener = {
 	[path: string]: ((data: any) => void)[];
 };
 
+export type ClientHooks = {
+	'client:set'?: Hook<{ path: string; value: any; meta: Meta }>;
+	'client:delete'?: Hook<{ path: string }>;
+	'client:firstConnect'?: Hook<void>;
+	'client:reconnect'?: Hook<void>;
+	'client:disconnect'?: Hook<void>;
+};
+
+export type ClientPlugin = Plugin<ClientHooks>;
+
 export function SocketDBClient({
 	url,
 	store = createStore(),
 	socketClient,
 	updateInterval = 50,
+	plugins = [],
 }: {
 	url?: string;
 	store?: Store;
 	socketClient?: SocketClient;
 	updateInterval?: number;
+	plugins?: ClientPlugin[];
 } = {}) {
 	if (!url && !socketClient)
 		url =
@@ -39,6 +57,9 @@ export function SocketDBClient({
 
 	const subscribedPaths: string[] = [];
 	const updateListener: UpdateListener = {};
+	const hooks = createHooks<ClientHooks>();
+
+	registerPlugins(plugins);
 
 	const queueUpdate = createUpdateBatcher((diff) => {
 		socketClient.send('update', { data: diff });
@@ -55,29 +76,44 @@ export function SocketDBClient({
 					socketClient.send('subscribe', { path });
 				}
 			});
+			hooks.call('client:reconnect');
 			connectionLost = false;
+		} else {
+			hooks.call('client:firstConnect');
 		}
 	});
-	socketClient.onDisconnect(() => (connectionLost = true));
+	socketClient.onDisconnect(() => {
+		hooks.call('client:disconnect');
+		connectionLost = true;
+	});
 
-	function notifySubscriber(diff: any) {
+	function registerPlugins(plugins: ClientPlugin[]) {
+		plugins.forEach((plugin) => {
+			Object.entries(plugin.hooks).forEach(
+				([name, hook]: [keyof ClientHooks, ClientHooks[keyof ClientHooks]]) => {
+					hooks.register(name, hook);
+				}
+			);
+		});
+	}
+
+	function notifySubscriber(diff: Node) {
 		const listener: UpdateListener = { ...updateListener };
 		// TODO: make this thing more efficient,
 		// should not go through multiple loops
-		traverseData(diff, (path, data) => {
+		traverseNode(diff, (path, data) => {
 			if (listener?.[path]) {
-				let storedData = store.get(path);
-				if (isObject(storedData)) storedData = mergeDiff(storedData, {});
+				let storedData = deepClone(store.get(path));
 				listener[path].forEach((listener) => listener(storedData));
 				delete listener[path];
 			}
 			// if a path is subscribed but has no data, we still need to inform subscribers
 			// this has the issue, that it notifies even if data has not changed
-			if (!isObject(data)) {
+			if (!isObject(data.value)) {
 				Object.keys(listener).forEach((subscribedPath) => {
 					if (subscribedPath.startsWith(path)) {
 						let storedData = store.get(subscribedPath);
-						if (isObject(storedData)) storedData = mergeDiff(storedData, {});
+						storedData = deepClone(storedData);
 						listener[subscribedPath].forEach((listener) =>
 							listener(storedData)
 						);
@@ -88,9 +124,16 @@ export function SocketDBClient({
 	}
 
 	function addSocketPathSubscription(path: string) {
-		socketClient.on(path, ({ data }) => {
-			const diff = store.put(creatUpdate(path, data));
-			notifySubscriber(diff);
+		socketClient.on(path, ({ data }: { data: BatchedUpdate }) => {
+			data.delete?.forEach((path) => {
+				store.del(path);
+				const diff = creatUpdate(path, nodeify(null));
+				notifySubscriber(diff);
+			});
+			if (data.change) {
+				const diff = store.put(creatUpdate(path, data.change));
+				notifySubscriber(diff);
+			}
 		});
 		subscribedPaths.push(path);
 		socketClient.send('subscribe', { path });
@@ -131,7 +174,7 @@ export function SocketDBClient({
 			}, []);
 	}
 
-	function subscribe(path: string, callback: (data: any) => void) {
+	function subscribe(path: string, callback: (data: Node) => void) {
 		if (!updateListener[path]) updateListener[path] = [];
 		updateListener[path].push(callback);
 
@@ -147,11 +190,11 @@ export function SocketDBClient({
 			  in both cases we dont need to notify user on first request
 			*/
 			const cachedData = store.get(path);
-			if (cachedData !== null) callback(cachedData);
+			if (cachedData.value !== null) callback(cachedData);
 		}
 	}
 
-	function unsubscribe(path: string, callback: (data: any) => void) {
+	function unsubscribe(path: string, callback: (data: Node) => void) {
 		const listenersForPath = updateListener[path];
 		listenersForPath.splice(listenersForPath.indexOf(callback), 1);
 
@@ -184,17 +227,44 @@ export function SocketDBClient({
 					removeSocketPathSubscription(wildcardPath);
 				};
 			},
-			set(value) {
+			set(value, meta) {
 				if (!connectionLost) {
-					const diff = store.put(creatUpdate(path, value));
-					if (diff && Object.keys(diff).length > 0) queueUpdate(diff);
-					notifySubscriber(diff);
+					let clonedValue = value;
+					let clonedMeta = meta;
+					// deep clone only if we have hooks, store.put already does a deep clone
+					if (hooks.count('client:set') > 0) {
+						clonedValue = deepClone(value);
+						clonedMeta = deepClone(meta);
+					}
+					hooks
+						.call('client:set', { path, value: clonedValue, meta })
+						.then(({ path, value, meta }) => {
+							const node = nodeify(value);
+							if (meta) node.meta = meta;
+							const update = creatUpdate(path, node);
+							const diff = store.put(update);
+							if (diff && Object.keys(diff).length > 0)
+								queueUpdate({ type: 'change', data: diff });
+							notifySubscriber(diff);
+						})
+						.catch(console.log);
 				}
 				return this;
 			},
+			delete() {
+				hooks
+					.call('client:delete', { path })
+					.then(({ path }) => {
+						store.del(path);
+						const diff = creatUpdate(path, nodeify(null));
+						queueUpdate({ type: 'delete', path });
+						notifySubscriber(diff);
+					})
+					.catch(console.log);
+			},
 			on(callback) {
-				const listener = (data) => {
-					callback(data);
+				const listener = (data: Node) => {
+					callback(unwrap(data), data.meta);
 				};
 				subscribe(path, listener);
 				return () => {
@@ -206,7 +276,7 @@ export function SocketDBClient({
 					// maybe should use subscribe {once: true} ?
 					// and not send "unsubscribe" back
 					unsubscribe(path, listener);
-					callback(data);
+					callback(unwrap(data), data.meta);
 				});
 			},
 		};
@@ -217,16 +287,16 @@ export function SocketDBClient({
 	};
 }
 
-function creatUpdate(path: string, data: any) {
-	const diff = {};
+function creatUpdate(path: string, data: Node): Node {
+	const diff: Node = { value: {} };
 	let current = diff;
 	const keys = parsePath(path);
 	keys.forEach((key, i) => {
 		if (i === keys.length - 1) {
-			current[key] = data;
+			current.value[key] = data;
 			return;
 		}
-		current = current[key] = {};
+		current = current.value[key] = { value: {} };
 	});
 	return diff;
 }

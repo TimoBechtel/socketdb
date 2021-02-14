@@ -6,21 +6,9 @@ export function joinPath(path: string, subpath: string): string {
 	return `${path ? path + '/' : ''}${subpath}`;
 }
 
-export function traverseData(
-	data: { [key: string]: any },
-	callback: (path: string, data: any) => void
-) {
-	let stack: { data: any; path: string }[] = [{ data, path: '' }];
-	while (stack.length) {
-		const current = stack.pop();
-		for (let [key, value] of Object.entries(current.data)) {
-			const path = joinPath(current.path, key);
-			callback(path, value);
-			if (isObject(value)) stack.push({ data: value, path });
-		}
-	}
-}
-
+/**
+ * merges source to target and returns only changes
+ */
 export function mergeDiff(
 	source: { [key: string]: any },
 	target: { [key: string]: any }
@@ -39,4 +27,14 @@ export function mergeDiff(
 		}
 	}
 	return diff;
+}
+
+/**
+ * deeply clones arrays and objects
+ * @returns
+ */
+export function deepClone<T>(source: T): T {
+	if (!source || typeof source !== 'object') return source;
+	// In my tests, JSON.parse/JSON.stringify seems to be the fastest or equally fast to custom implementation
+	return JSON.parse(JSON.stringify(source));
 }

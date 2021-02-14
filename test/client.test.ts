@@ -2,6 +2,7 @@ import { SocketDBClient } from '../src/client';
 import { createStore } from '../src/store';
 import { SocketClient } from '../src/socketAdapter/socketClient';
 import { createEventBroker } from '../src/socketAdapter/eventBroker';
+import { nodeify } from '../src/node';
 
 test('emits update object for path', (done) => {
 	const socketClient: SocketClient = {
@@ -12,11 +13,13 @@ test('emits update object for path', (done) => {
 		send(event, { data }) {
 			expect(event).toEqual('update');
 			expect(data).toEqual({
-				players: {
-					1: {
-						name: 'Patrick',
+				change: nodeify({
+					players: {
+						1: {
+							name: 'Patrick',
+						},
 					},
-				},
+				}),
 			});
 			done();
 		},
@@ -24,6 +27,43 @@ test('emits update object for path', (done) => {
 	const client = SocketDBClient({ socketClient });
 
 	client.get('players').get('1').get('name').set('Patrick');
+});
+
+test('deletes data and notifies local subscribers', (done) => {
+	const store = createStore();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on() {},
+		send(event, { data }) {},
+	};
+	const client = SocketDBClient({ socketClient, store });
+
+	let updateCount = 0;
+	client
+		.get('players')
+		.get('1')
+		.get('name')
+		.on((data) => {
+			if (updateCount === 0) {
+				expect(data).toEqual('Patrick');
+			} else if (updateCount === 1) {
+				expect(data).toEqual(null);
+				setTimeout(done, 100);
+			}
+			updateCount++;
+		});
+
+	client.get('players').get('1').get('name').set('Patrick');
+	// set will call hooks asynchonously so, we need a little delay here:
+	setTimeout(() => {
+		expect(store.get('players/1')).toEqual(nodeify({ name: 'Patrick' }));
+		client.get('players').get('1').delete();
+		setTimeout(() => {
+			expect(store.get('players/1')).toEqual(nodeify(null));
+		});
+	});
 });
 
 test('should batch updates', (done) => {
@@ -36,12 +76,15 @@ test('should batch updates', (done) => {
 		send(event, { data }) {
 			expect(event).toEqual('update');
 			expect(data).toEqual({
-				players: {
-					1: {
-						name: 'Star',
-						hp: 100,
+				change: nodeify({
+					players: {
+						1: {
+							name: 'Star',
+							hp: 100,
+						},
 					},
-				},
+				}),
+				delete: ['players/1/name'],
 			});
 			sendCount++;
 		},
@@ -49,6 +92,7 @@ test('should batch updates', (done) => {
 	const client = SocketDBClient({ socketClient, updateInterval: 10 });
 
 	client.get('players').get('1').get('name').set('Patrick');
+	client.get('players').get('1').get('name').delete();
 	client.get('players').get('1').get('name').set('Star');
 	client.get('players').get('1').get('hp').set(100);
 
@@ -79,13 +123,15 @@ test('merges data on update', (done) => {
 		.get('1')
 		.on((data) => {
 			if (updateCount === 2) {
-				expect(store.get('players/1')).toEqual({
-					name: 'Peter',
-					position: {
-						x: 1,
-						y: 1,
-					},
-				});
+				expect(store.get('players/1')).toEqual(
+					nodeify({
+						name: 'Peter',
+						position: {
+							x: 1,
+							y: 1,
+						},
+					})
+				);
 				expect(data).toEqual({
 					name: 'Peter',
 					position: {
@@ -100,18 +146,22 @@ test('merges data on update', (done) => {
 
 	notify('players/1', {
 		data: {
-			name: 'Peter',
-			position: {
-				x: 0,
-				y: 1,
-			},
+			change: nodeify({
+				name: 'Peter',
+				position: {
+					x: 0,
+					y: 1,
+				},
+			}),
 		},
 	});
 	notify('players/1', {
 		data: {
-			position: {
-				x: 1,
-			},
+			change: nodeify({
+				position: {
+					x: 1,
+				},
+			}),
 		},
 	});
 });
@@ -127,24 +177,28 @@ test('can subscribe to path', (done) => {
 			expect(event).toEqual('subscribe');
 			expect(path).toBe('players/1');
 			expect(once).not.toBe(true);
-			notify('players/1', { data: { name: 'Thomas' } });
-			notify('players/1', { data: { name: 'Thomas2' } });
+			notify('players/1', { data: { change: nodeify({ name: 'Thomas' }) } });
+			notify('players/1', { data: { change: nodeify({ name: 'Thomas2' }) } });
+			notify('players/1', { data: { delete: ['players/1'] } });
 		},
 	};
 	const client = SocketDBClient({ socketClient });
 
-	let updateCount = 1;
+	let updateCount = 0;
+
 	client
 		.get('players')
 		.get('1')
 		.on((data) => {
-			if (updateCount === 1) {
+			if (updateCount === 0) {
 				expect(data).toEqual({ name: 'Thomas' });
-				updateCount++;
-			} else {
+			} else if (updateCount === 1) {
 				expect(data).toEqual({ name: 'Thomas2' });
+			} else {
+				expect(data).toEqual(null);
 				done();
 			}
+			updateCount++;
 		});
 });
 
@@ -162,9 +216,13 @@ test('can unsubscribe from path', (done) => {
 			if (event === 'subscribe') {
 				subscribeCount++;
 				setTimeout(() => {
-					notify('players/1', { data: { name: 'Thomas' } });
+					notify('players/1', {
+						data: { change: nodeify({ name: 'Thomas' }) },
+					});
 					unsubscribe();
-					notify('players/1', { data: { name: 'Thomas2' } });
+					notify('players/1', {
+						data: { change: nodeify({ name: 'Thomas2' }) },
+					});
 				}, 10);
 			} else if (event === 'unsubscribe') {
 				unsubscribeCount++;
@@ -198,7 +256,7 @@ test('can subscribe to path once', (done) => {
 		send(event, { path }) {
 			if (event === 'subscribe') {
 				expect(path).toBe('players/1');
-				notify('players/1', { data: 'test' });
+				notify('players/1', { data: { change: nodeify('test') } });
 			}
 		},
 	};
@@ -265,7 +323,7 @@ test('can unsubscribe from keys of path', (done) => {
 	});
 	setTimeout(() => {
 		unsubscribe();
-		notify('players/*', { data: ['2', '3'] });
+		notify('players/*', { data: nodeify(['2', '3']) });
 		expect(updateCount).toBe(1);
 		done();
 	}, 100);
@@ -298,6 +356,52 @@ test('received data should not be passed as reference', (done) => {
 	client.get('data').set(testData);
 });
 
+test('also receives metadata', (done) => {
+	const metaExample = { owner: 'Thomas' };
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event) {
+			if (event === 'subscribe') {
+				notify('players/1', {
+					data: { change: { meta: metaExample, value: 'Thomas' } },
+				});
+			}
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+
+	client
+		.get('players')
+		.get('1')
+		.on((_, meta) => {
+			expect(meta).toEqual(metaExample);
+			done();
+		});
+});
+
+test('allows setting metadata', (done) => {
+	const metaExample = { owner: 'Thomas' };
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on() {},
+		send(_, { data }) {
+			expect(data.change.value.players.value[1]).toEqual({
+				value: 'b',
+				meta: metaExample,
+			});
+			done();
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+	client.get('players').get('1').set('b', metaExample);
+});
+
 test('on/once always receives data on first call', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
@@ -307,12 +411,13 @@ test('on/once always receives data on first call', (done) => {
 		on: addListener,
 		send(event) {
 			if (event === 'subscribe') {
-				notify('players/1', { data: { name: 'Thomas' } });
+				notify('players/1', { data: { change: nodeify({ name: 'Thomas' }) } });
 				client
 					.get('players')
 					.get('1')
 					.on(() => {
 						updateCount++;
+						expect(updateCount).toBe(2);
 						done();
 					});
 			}
@@ -320,7 +425,7 @@ test('on/once always receives data on first call', (done) => {
 	};
 	const client = SocketDBClient({ socketClient });
 
-	let updateCount = 1;
+	let updateCount = 0;
 	client
 		.get('players')
 		.get('1')
@@ -371,7 +476,7 @@ test('only subscribes once for every root path', (done) => {
 		expect(subscribtionCount).toBe(1);
 		// we dont have data yet
 		expect(updateCount).toBe(0);
-		notify('players', { data: { 1: { name: 'Paul' } } });
+		notify('players', { data: { change: nodeify({ 1: { name: 'Paul' } }) } });
 
 		setTimeout(() => {
 			expect(updateCount).toBe(4);
@@ -434,10 +539,12 @@ test('always subscribe to highest level path', (done) => {
 	});
 	notify('players', {
 		data: {
-			1: {
-				name: 'a',
-			},
-			2: null,
+			change: nodeify({
+				1: {
+					name: 'a',
+				},
+				2: null,
+			}),
 		},
 	});
 
@@ -501,17 +608,21 @@ test('if data is null, should notify every subpath', (done) => {
 
 	let updateCount = 0;
 
+	let testString = '';
 	client.get('players').on(() => {
 		updateCount++;
+		testString += 'a';
 	});
 	client.get('players').once(() => {
 		updateCount++;
+		testString += 'b';
 	});
 	client
 		.get('players')
 		.get('1')
 		.on(() => {
 			updateCount++;
+			testString += 'c';
 		});
 	client
 		.get('players')
@@ -519,12 +630,14 @@ test('if data is null, should notify every subpath', (done) => {
 		.get('name')
 		.on(() => {
 			updateCount++;
+			testString += 'd';
 		});
 
-	notify('players', { data: null });
+	notify('players', { data: { change: nodeify(null) } });
 
 	setTimeout(() => {
 		expect(subscribtionCount).toBe(1);
+		expect(testString).toBe('abcd');
 		expect(updateCount).toBe(4);
 		done();
 	}, 500);
@@ -550,7 +663,7 @@ test('subscribes again after reconnect', (done) => {
 			expect(path).toBe('players/1');
 			expect(once).not.toBe(true);
 			if (subscribeCount === 1) {
-				notify('players/1', { data: { name: 'Thomas' } });
+				notify('players/1', { data: nodeify({ name: 'Thomas' }) });
 				disconnect();
 				connect();
 			} else {
