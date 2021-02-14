@@ -89,7 +89,7 @@ export function SocketDBClient({
 
 	function registerPlugins(plugins: ClientPlugin[]) {
 		plugins.forEach((plugin) => {
-			Object.entries(plugin.events).forEach(
+			Object.entries(plugin.hooks).forEach(
 				([name, hook]: [keyof ClientHooks, ClientHooks[keyof ClientHooks]]) => {
 					hooks.register(name, hook);
 				}

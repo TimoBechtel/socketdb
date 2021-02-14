@@ -13,7 +13,7 @@ test('allows providing hooks via plugins', (done) => {
 		plugins: [
 			{
 				name: 'timestamp',
-				events: {
+				hooks: {
 					'server:update': ({ data }) => {
 						return {
 							data: {

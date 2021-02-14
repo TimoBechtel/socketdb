@@ -19,7 +19,7 @@ test('allow providing hooks via plugins', (done) => {
 		plugins: [
 			{
 				name: 'myplugin',
-				events: {
+				hooks: {
 					'client:firstConnect': () => {
 						expect(true);
 					},

@@ -48,7 +48,7 @@ export function SocketDBServer({
 
 	function registerPlugins(plugins: ServerPlugin[]) {
 		plugins.forEach((plugin) => {
-			Object.entries(plugin.events).forEach(
+			Object.entries(plugin.hooks).forEach(
 				([name, hook]: [keyof ServerHooks, ServerHooks[keyof ServerHooks]]) => {
 					hooks.register(name, hook);
 				}

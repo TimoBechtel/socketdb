@@ -11,7 +11,7 @@ const client = SocketDBClient({
 	plugins: [
 		{
 			name: 'myplugin',
-			events: {
+			hooks: {
 				'client:set': ({ path, value, meta }) => {
 					meta.updated = new Date().getTime();
 					return {
