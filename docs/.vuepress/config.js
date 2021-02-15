@@ -58,7 +58,7 @@ module.exports = {
 		repo: 'https://github.com/TimoBechtel/socketdb',
 		editLinks: true,
 		docsDir: 'docs',
-		docsBranch: 'next',
+		docsBranch: 'main',
 		editLinkText: '',
 		lastUpdated: true,
 		logo: '/logo.png',
