@@ -1,3 +1,10 @@
+# [3.6.0](https://github.com/TimoBechtel/socketdb/compare/v3.5.1...v3.6.0) (2021-02-15)
+
+
+### Features
+
+* **client:** add disconnnect function ([2c26ec4](https://github.com/TimoBechtel/socketdb/commit/2c26ec47676f96d7f46eb017398788be08e9f55c))
+
 ## [3.5.1](https://github.com/TimoBechtel/socketdb/compare/v3.5.0...v3.5.1) (2021-02-15)
 
 
