@@ -237,7 +237,7 @@ export function SocketDBClient({
 						clonedMeta = deepClone(meta);
 					}
 					hooks
-						.call('client:set', { path, value: clonedValue, meta })
+						.call('client:set', { path, value: clonedValue, meta: clonedMeta })
 						.then(({ path, value, meta }) => {
 							const node = nodeify(value);
 							if (meta) node.meta = meta;
