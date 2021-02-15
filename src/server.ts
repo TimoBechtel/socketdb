@@ -57,13 +57,8 @@ export function SocketDBServer({
 	}
 
 	function update(data: Node) {
-		let clonedData: Node = data;
-		// deep clone only if we have hooks, store.put already does a deep clone
-		if (hooks.count('server:update') > 0) {
-			clonedData = deepClone(data);
-		}
 		hooks
-			.call('server:update', { data: clonedData })
+			.call('server:update', { data })
 			.then(({ data }) => {
 				const diff = store.put(data);
 				queue({ type: 'change', data: diff });
@@ -73,7 +68,7 @@ export function SocketDBServer({
 
 	function del(path: string) {
 		hooks
-			.call('server:delete', { path })
+			.call('server:delete', { path }, { asRef: true })
 			.then(({ path }) => {
 				store.del(path);
 				queue({ type: 'delete', path });
@@ -118,12 +113,12 @@ export function SocketDBServer({
 	}
 
 	socketServer.onConnection((client, id) => {
-		hooks.call('server:clientConnect', { id });
+		hooks.call('server:clientConnect', { id }, { asRef: true });
 
 		client.onDisconnect(() => {
 			delete subscriber[id];
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
-			hooks.call('server:clientDisconnect', { id });
+			hooks.call('server:clientDisconnect', { id }, { asRef: true });
 		});
 		client.on('update', ({ data }: { data: BatchedUpdate }) => {
 			data.delete?.forEach(del);

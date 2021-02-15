@@ -229,15 +229,8 @@ export function SocketDBClient({
 			},
 			set(value, meta) {
 				if (!connectionLost) {
-					let clonedValue = value;
-					let clonedMeta = meta;
-					// deep clone only if we have hooks, store.put already does a deep clone
-					if (hooks.count('client:set') > 0) {
-						clonedValue = deepClone(value);
-						clonedMeta = deepClone(meta);
-					}
 					hooks
-						.call('client:set', { path, value: clonedValue, meta: clonedMeta })
+						.call('client:set', { path, value, meta })
 						.then(({ path, value, meta }) => {
 							const node = nodeify(value);
 							if (meta) node.meta = meta;
@@ -253,7 +246,7 @@ export function SocketDBClient({
 			},
 			delete() {
 				hooks
-					.call('client:delete', { path })
+					.call('client:delete', { path }, { asRef: true })
 					.then(({ path }) => {
 						store.del(path);
 						const diff = creatUpdate(path, nodeify(null));

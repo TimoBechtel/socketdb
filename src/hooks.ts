@@ -1,3 +1,5 @@
+import { deepClone } from './utils';
+
 export type Hook<T> = (args: T) => void | T | Promise<void | T>;
 
 type Hooks = {
@@ -9,11 +11,25 @@ export function createHooks<T extends Hooks>() {
 	type K = keyof T;
 
 	async function call(name: K): Promise<void>;
-	async function call<A>(name: K, args: A): Promise<A>;
+	async function call<A>(
+		name: K,
+		args: A,
+		config?: { asRef?: boolean }
+	): Promise<A>;
 
-	async function call<A>(name: K, args?: A): Promise<void | A> {
+	/**
+	 * calls hook
+	 * this function will clone passed arguments by default
+	 * as this might be an intensive task, this can be disabled by setting "asRef" to true
+	 */
+	async function call<A>(
+		name: K,
+		args?: A,
+		{ asRef = false } = {}
+	): Promise<void | A> {
 		let result = args;
 		if (hooks[name]) {
+			if (!asRef && args) result = deepClone(args);
 			for (const hook of hooks[name]) {
 				const res = await hook(result);
 				if (res) result = res;
@@ -27,14 +43,8 @@ export function createHooks<T extends Hooks>() {
 		hooks[name].push(hook);
 	}
 
-	function count(name: K): number {
-		if (!hooks[name]) return 0;
-		return hooks[name].length;
-	}
-
 	return {
 		call,
 		register,
-		count,
 	};
 }
