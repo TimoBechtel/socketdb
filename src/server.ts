@@ -11,11 +11,17 @@ type Subscribtions = {
 	[id: string]: { [path: string]: (data: BatchedUpdate) => void };
 };
 
-export type SocketDB = {
+export type SocketDBServerAPI = {
 	update: (data: Node) => void;
 	get: (path: string) => Node;
 	delete: (path: string) => void;
 };
+
+/**
+ * Deprecated. Use SocketDBServerAPI instead.
+ * Type alias will be removed in a future update.
+ */
+export type SocketDB = SocketDBServerAPI;
 
 export type ServerHooks = {
 	'server:clientConnect'?: Hook<{ id: string }>;
@@ -38,7 +44,7 @@ export function SocketDBServer({
 	updateInterval?: number;
 	socketServer?: SocketServer;
 	plugins?: ServerPlugin[];
-} = {}): SocketDB {
+} = {}): SocketDBServerAPI {
 	let subscriber: Subscribtions = {};
 
 	const queue = createUpdateBatcher(notifySubscibers, updateInterval);

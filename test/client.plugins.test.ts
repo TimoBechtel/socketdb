@@ -11,6 +11,7 @@ test('allow providing hooks via plugins', (done) => {
 		off() {},
 		on() {},
 		send() {},
+		close() {},
 	};
 	const store = createStore();
 	const client = SocketDBClient({

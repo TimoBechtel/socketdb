@@ -44,6 +44,7 @@ test('updates data on socket request', () => {
 			on: addListener,
 			off() {},
 			send() {},
+			close() {},
 		},
 		'1'
 	);
@@ -83,6 +84,7 @@ test('deletes data on socket request', (done) => {
 			on: addListener,
 			off() {},
 			send() {},
+			close() {},
 		},
 		'1'
 	);
@@ -145,6 +147,7 @@ test('sends data on first subscribe', (done) => {
 					done();
 				}
 			},
+			close() {},
 		},
 		'1'
 	);
@@ -200,6 +203,7 @@ test('emits updates to subscriber', (done) => {
 					}
 				}
 			},
+			close() {},
 		},
 		'1'
 	);
@@ -253,6 +257,7 @@ test('only emits changed values', (done) => {
 					}
 				}
 			},
+			close() {},
 		},
 		'1'
 	);
@@ -315,6 +320,7 @@ test('emits updates to all subscribers', async () => {
 						resolve();
 					}
 				},
+				close() {},
 			},
 			'1'
 		);
@@ -333,6 +339,7 @@ test('emits updates to all subscribers', async () => {
 						resolve();
 					}
 				},
+				close() {},
 			},
 			'2'
 		);
@@ -397,6 +404,7 @@ test('sends keys when entries are added or removed', async () => {
 						count++;
 					}
 				},
+				close() {},
 			},
 			'1'
 		);
@@ -427,6 +435,7 @@ test('only send data if client is subscribed', (done) => {
 					receivedCount++;
 				}
 			},
+			close() {},
 		},
 		'1'
 	);
@@ -475,6 +484,7 @@ test('should batch updates', (done) => {
 				}
 				receivedCount++;
 			},
+			close() {},
 		},
 		'1'
 	);

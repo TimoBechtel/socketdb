@@ -1,7 +1,7 @@
 export { SocketDBClient } from './client';
-export type { ChainReference } from './client';
+export type { ChainReference, SocketDBClientAPI } from './client';
 export { SocketDBServer } from './server';
-export type { SocketDB } from './server';
+export type { SocketDB, SocketDBServerAPI } from './server';
 export { createWebsocketClient } from './socketAdapter/websocketClient';
 export { createWebsocketServer } from './socketAdapter/websocketServer';
 export type { SocketClient as NetworkingClient } from './socketAdapter/socketClient';

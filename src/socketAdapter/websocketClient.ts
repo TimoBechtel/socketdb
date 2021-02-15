@@ -23,6 +23,7 @@ export const createWebsocketClient = ({
 	const messageEvents = createEventBroker();
 	const connectionClosedListener = [];
 	const connectionOpenedListener = [];
+	let manuallyClosed = false;
 
 	let socket: Promise<WebSocket>;
 
@@ -41,6 +42,11 @@ export const createWebsocketClient = ({
 		});
 	}
 
+	async function disconnect() {
+		manuallyClosed = true;
+		(await socket).close();
+	}
+
 	function onOpen() {
 		connectionOpenedListener.forEach((callback) => callback());
 	}
@@ -57,9 +63,10 @@ export const createWebsocketClient = ({
 
 	function onClose() {
 		connectionClosedListener.forEach((callback) => callback());
-		setTimeout(() => {
-			connect();
-		}, reconnectTimeout);
+		if (!manuallyClosed)
+			setTimeout(() => {
+				connect();
+			}, reconnectTimeout);
 	}
 
 	async function sendMessage(message: string) {
@@ -77,6 +84,9 @@ export const createWebsocketClient = ({
 		off: messageEvents.removeListener,
 		send(event: string, data: any) {
 			sendMessage(JSON.stringify({ event, data }));
+		},
+		close() {
+			disconnect();
 		},
 	};
 };

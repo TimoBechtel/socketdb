@@ -8,8 +8,11 @@ import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
 import { Plugin } from './plugin';
 import { createHooks, Hook } from './hooks';
 
-type Unsubscriber = () => void;
+export type SocketDBClientAPI = {
+	disconnect: () => void;
+} & ChainReference;
 
+type Unsubscriber = () => void;
 type Meta = Node['meta'];
 
 export type ChainReference = {
@@ -47,7 +50,7 @@ export function SocketDBClient({
 	socketClient?: SocketClient;
 	updateInterval?: number;
 	plugins?: ClientPlugin[];
-} = {}) {
+} = {}): SocketDBClientAPI {
 	if (!url && !socketClient)
 		url =
 			typeof window !== 'undefined'
@@ -277,6 +280,9 @@ export function SocketDBClient({
 
 	return {
 		...get(''),
+		disconnect() {
+			socketClient.close();
+		},
 	};
 }
 

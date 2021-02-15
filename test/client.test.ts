@@ -23,6 +23,7 @@ test('emits update object for path', (done) => {
 			});
 			done();
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -37,6 +38,7 @@ test('deletes data and notifies local subscribers', (done) => {
 		off() {},
 		on() {},
 		send(event, { data }) {},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient, store });
 
@@ -88,6 +90,7 @@ test('should batch updates', (done) => {
 			});
 			sendCount++;
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient, updateInterval: 10 });
 
@@ -113,6 +116,7 @@ test('merges data on update', (done) => {
 		off() {},
 		on: addListener,
 		send(event, { data }) {},
+		close() {},
 	};
 
 	const client = SocketDBClient({ store, socketClient });
@@ -181,6 +185,7 @@ test('can subscribe to path', (done) => {
 			notify('players/1', { data: { change: nodeify({ name: 'Thomas2' }) } });
 			notify('players/1', { data: { delete: ['players/1'] } });
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -228,6 +233,7 @@ test('can unsubscribe from path', (done) => {
 				unsubscribeCount++;
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -259,6 +265,7 @@ test('can subscribe to path once', (done) => {
 				notify('players/1', { data: { change: nodeify('test') } });
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -291,6 +298,7 @@ test('can subscribe to keys of path', (done) => {
 				notify('players/*', { data: ['1', '2'] });
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -313,6 +321,7 @@ test('can unsubscribe from keys of path', (done) => {
 				notify('players/*', { data: ['1'] });
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -337,6 +346,7 @@ test('received data should not be passed as reference', (done) => {
 		off() {},
 		on() {},
 		send() {},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient, store });
 
@@ -371,6 +381,7 @@ test('also receives metadata', (done) => {
 				});
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -397,6 +408,7 @@ test('allows setting metadata', (done) => {
 			});
 			done();
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 	client.get('players').get('1').set('b', metaExample);
@@ -422,6 +434,7 @@ test('on/once always receives data on first call', (done) => {
 					});
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -446,6 +459,7 @@ test('only subscribes once for every root path', (done) => {
 				subscribtionCount++;
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -502,6 +516,7 @@ test('always subscribe to highest level path', (done) => {
 				unsubscribtionCount++;
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -601,6 +616,7 @@ test('if data is null, should notify every subpath', (done) => {
 				subscribtionCount++;
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -671,6 +687,7 @@ test('subscribes again after reconnect', (done) => {
 				done();
 			}
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 	connect();
@@ -701,6 +718,7 @@ test('should not update local cache on connection lost', (done) => {
 		send() {
 			updateCount++;
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 	disconnect();
@@ -709,4 +727,20 @@ test('should not update local cache on connection lost', (done) => {
 		expect(updateCount).toBe(0);
 		done();
 	}, 10);
+});
+
+test('can disconnect', (done) => {
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on() {},
+		send() {},
+		close() {
+			expect(true);
+			done();
+		},
+	};
+	const client = SocketDBClient({ socketClient });
+	client.disconnect();
 });

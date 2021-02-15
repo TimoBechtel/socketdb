@@ -14,6 +14,7 @@ test('client receives updated data', (done) => {
 		off: clientEventBroker.removeListener,
 		on: clientEventBroker.addListener,
 		send: serverEventBroker.notify,
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -31,6 +32,7 @@ test('client receives updated data', (done) => {
 			on: serverEventBroker.addListener,
 			off: serverEventBroker.removeListener,
 			send: clientEventBroker.notify,
+			close() {},
 		},
 		'1'
 	);
@@ -65,6 +67,7 @@ test('all clients receive data on update', async () => {
 			off: client1EventBroker.removeListener,
 			on: client1EventBroker.addListener,
 			send: serverEventBroker.notify,
+			close() {},
 		},
 	});
 	const client2 = SocketDBClient({
@@ -74,6 +77,7 @@ test('all clients receive data on update', async () => {
 			off: client2EventBroker.removeListener,
 			on: client2EventBroker.addListener,
 			send: serverEventBroker.notify,
+			close() {},
 		},
 	});
 
@@ -92,6 +96,7 @@ test('all clients receive data on update', async () => {
 			on: serverEventBroker.addListener,
 			off: serverEventBroker.removeListener,
 			send: client1EventBroker.notify,
+			close() {},
 		},
 		'1'
 	);
@@ -101,6 +106,7 @@ test('all clients receive data on update', async () => {
 			on: serverEventBroker.addListener,
 			off: serverEventBroker.removeListener,
 			send: client2EventBroker.notify,
+			close() {},
 		},
 		'2'
 	);
@@ -161,6 +167,7 @@ test('only sends data once for every update on same root path', (done) => {
 			emitCount++;
 			serverEventBroker.notify(event, data);
 		},
+		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
@@ -178,6 +185,7 @@ test('only sends data once for every update on same root path', (done) => {
 			on: serverEventBroker.addListener,
 			off: serverEventBroker.removeListener,
 			send: clientEventBroker.notify,
+			close() {},
 		},
 		'1'
 	);

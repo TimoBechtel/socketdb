@@ -32,6 +32,9 @@ export const createWebsocketServer = (
 								console.error(error);
 							}
 						},
+						close() {
+							socket.close();
+						},
 					},
 					ids++ + ''
 				);
