@@ -1,3 +1,10 @@
+## [3.5.1](https://github.com/TimoBechtel/socketdb/compare/v3.5.0...v3.5.1) (2021-02-15)
+
+
+### Bug Fixes
+
+* **hooks:** passing metadata as reference ([3f4cff7](https://github.com/TimoBechtel/socketdb/commit/3f4cff73987985918a84fc0e572fdac509522c10))
+
 # [3.5.0](https://github.com/TimoBechtel/socketdb/compare/v3.4.0...v3.5.0) (2021-02-13)
 
 
