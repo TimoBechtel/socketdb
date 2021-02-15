@@ -7,7 +7,11 @@ function SocketDBClient(config?: {
 	socketClient?: SocketClient;
 	updateInterval?: number;
 	plugins?: ClientPlugin[];
-}): ChainReference;
+}): SocketDBClientAPI;
+
+type SocketDBClientAPI = {
+	disconnect: () => void;
+} & ChainReference;
 
 type ChainReference = {
 	get: (path: string) => ChainReference;

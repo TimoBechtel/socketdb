@@ -140,3 +140,9 @@ db.get('bitcoin/wallet')
 After deleting a node, it is still possible to set data for the same path or subpath.  
 So make sure to not update its child nodes after deleting, or otherwise you might end up with partial data!
 :::
+
+## disconnect
+
+`disconnect: () => void`
+
+Closes connection to server.

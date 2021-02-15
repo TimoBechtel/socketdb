@@ -58,7 +58,7 @@ There are two ways you can use SocketDB.
 
 ### Using script tag
 
-Download minified browser bundle from latest [release](https://github.com/TimoBechtel/socketdb/releases).
+Download `SocketDBClient minified UMD` from latest [release](https://github.com/TimoBechtel/socketdb/releases).
 
 Link it in your html head:
 
