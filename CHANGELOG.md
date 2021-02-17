@@ -1,3 +1,10 @@
+## [3.6.1](https://github.com/TimoBechtel/socketdb/compare/v3.6.0...v3.6.1) (2021-02-17)
+
+
+### Bug Fixes
+
+* **client:** once cancels other subscriptions ([7e68a87](https://github.com/TimoBechtel/socketdb/commit/7e68a87c23973c4eeb4800345c5903d76a0aa8e6)), closes [#20](https://github.com/TimoBechtel/socketdb/issues/20)
+
 # [3.6.0](https://github.com/TimoBechtel/socketdb/compare/v3.5.1...v3.6.0) (2021-02-15)
 
 
