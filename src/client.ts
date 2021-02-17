@@ -58,7 +58,7 @@ export function SocketDBClient({
 				: 'ws://localhost:8080';
 	if (!socketClient) socketClient = createWebsocketClient({ url });
 
-	const subscribedPaths: string[] = [];
+	let subscribedPaths: string[] = [];
 	const updateListener: UpdateListener = {};
 	const hooks = createHooks<ClientHooks>();
 
@@ -145,7 +145,7 @@ export function SocketDBClient({
 	function removeSocketPathSubscription(path: string) {
 		if (subscribedPaths.indexOf(path) !== -1) {
 			socketClient.off(path);
-			subscribedPaths.splice(subscribedPaths.indexOf(path), 1);
+			subscribedPaths = subscribedPaths.filter((p) => p !== path);
 			socketClient.send('unsubscribe', { path });
 		}
 	}
@@ -198,10 +198,9 @@ export function SocketDBClient({
 	}
 
 	function unsubscribe(path: string, callback: (data: Node) => void) {
-		const listenersForPath = updateListener[path];
-		listenersForPath.splice(listenersForPath.indexOf(callback), 1);
+		updateListener[path] = updateListener[path].filter((l) => l !== callback);
 
-		if (listenersForPath.length < 1) {
+		if (updateListener[path].length < 1) {
 			delete updateListener[path];
 			removeSocketPathSubscription(path);
 			const nextPaths = findNextHighestLevelPaths(path);

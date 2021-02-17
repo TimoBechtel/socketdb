@@ -285,6 +285,38 @@ test('can subscribe to path once', (done) => {
 	}, 100);
 });
 
+test('unsubcribing does not cancel other subscriptions', (done) => {
+	// see: https://github.com/TimoBechtel/socketdb/issues/20
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event, { path }) {},
+		close() {},
+	};
+	const client = SocketDBClient({ socketClient });
+
+	let updateCount = 0;
+
+	const unsubscribe = client.get('path').on(() => {
+		updateCount++;
+		unsubscribe();
+	});
+	client.get('path').on(() => {
+		updateCount++;
+	});
+
+	client.get('path').set('test');
+
+	setTimeout(() => {
+		// both once subscriptions should be called once
+		expect(updateCount).toBe(2);
+		done();
+	}, 100);
+});
+
 test('can subscribe to keys of path', (done) => {
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
