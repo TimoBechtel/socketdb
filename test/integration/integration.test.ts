@@ -207,3 +207,50 @@ test('only sends data once for every update on same root path', (done) => {
 		done();
 	}, 100);
 });
+
+test('on/once always receives data on first call, even when not subscribed to before', (done) => {
+	const clientEventBroker = createEventBroker();
+	const serverEventBroker = createEventBroker();
+
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: clientEventBroker.removeListener,
+		on: clientEventBroker.addListener,
+		send: serverEventBroker.notify,
+		close() {},
+	};
+	const client = SocketDBClient({ socketClient, updateInterval: 5 });
+
+	let connect: (client: Socket, id: string) => void;
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ socketServer, updateInterval: 5 });
+	connect(
+		{
+			onDisconnect() {},
+			on: serverEventBroker.addListener,
+			off: serverEventBroker.removeListener,
+			send: clientEventBroker.notify,
+			close() {},
+		},
+		'1'
+	);
+
+	client.get('players').get('1').set({ name: 'Test' });
+
+	setTimeout(() => {
+		client.get('players').on((data) => {
+			expect(data).toEqual({
+				1: {
+					name: 'Test',
+				},
+			});
+			done();
+		});
+	}, 15);
+});

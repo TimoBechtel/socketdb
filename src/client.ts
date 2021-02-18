@@ -147,6 +147,16 @@ export function SocketDBClient({
 			socketClient.off(path);
 			subscribedPaths = subscribedPaths.filter((p) => p !== path);
 			socketClient.send('unsubscribe', { path });
+			/*
+			 * delete data when unscubscribing from path
+			 * this is a workaround for the issue, that when rescrubscribing,
+			 * the received initial data is not different from the stored data
+			 * and therefore functions like "once/on" will not be triggered.
+			 * Drawback is, that lower level path listeners might be triggered multiple times with the same value
+			 * (as the value was deleted before and now seems to be new)
+			 * TODO: this will be changed in the next major release
+			 */
+			store.del(path);
 		}
 	}
 
@@ -236,11 +246,12 @@ export function SocketDBClient({
 						.then(({ path, value, meta }) => {
 							const node = nodeify(value);
 							if (meta) node.meta = meta;
-							const update = creatUpdate(path, node);
-							const diff = store.put(update);
-							if (diff && Object.keys(diff).length > 0)
-								queueUpdate({ type: 'change', data: diff });
-							notifySubscriber(diff);
+							let update = creatUpdate(path, node);
+							if (isSameOrHigherLevelPathSubscribed(path))
+								update = store.put(update);
+							if (update && Object.keys(update).length > 0)
+								queueUpdate({ type: 'change', data: update });
+							notifySubscriber(update);
 						})
 						.catch(console.log);
 				}
