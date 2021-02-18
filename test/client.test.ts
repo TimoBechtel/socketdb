@@ -3,6 +3,7 @@ import { createStore } from '../src/store';
 import { SocketClient } from '../src/socketAdapter/socketClient';
 import { createEventBroker } from '../src/socketAdapter/eventBroker';
 import { nodeify } from '../src/node';
+import { BatchedUpdate } from '../src/updateBatcher';
 
 test('emits update object for path', (done) => {
 	const socketClient: SocketClient = {
@@ -32,15 +33,42 @@ test('emits update object for path', (done) => {
 
 test('deletes data and notifies local subscribers', (done) => {
 	const store = createStore();
+	const { addListener, removeListener, notify } = createEventBroker();
+
 	const socketClient: SocketClient = {
 		onConnect() {},
 		onDisconnect() {},
-		off() {},
-		on() {},
-		send(event, { data }) {},
+		off: removeListener,
+		on: addListener,
+		send(event, { data }: { data: BatchedUpdate }) {
+			if (event === 'update') {
+				if (data.change) {
+					expect(data.change).toEqual(
+						nodeify({
+							players: {
+								1: {
+									name: 'Patrick',
+								},
+							},
+						})
+					);
+					notify('players/1/name', {
+						data: {
+							change: nodeify('Patrick'),
+						},
+					});
+				} else {
+					notify('players/1/name', {
+						data: {
+							delete: data.delete,
+						},
+					});
+				}
+			}
+		},
 		close() {},
 	};
-	const client = SocketDBClient({ socketClient, store });
+	const client = SocketDBClient({ socketClient, store, updateInterval: 5 });
 
 	let updateCount = 0;
 	client
@@ -52,20 +80,18 @@ test('deletes data and notifies local subscribers', (done) => {
 				expect(data).toEqual('Patrick');
 			} else if (updateCount === 1) {
 				expect(data).toEqual(null);
+				expect(store.get('players/1')).toEqual(nodeify(null));
 				setTimeout(done, 100);
 			}
 			updateCount++;
 		});
 
 	client.get('players').get('1').get('name').set('Patrick');
-	// set will call hooks asynchonously so, we need a little delay here:
+	// timeout to make sure, updates are not batched
 	setTimeout(() => {
 		expect(store.get('players/1')).toEqual(nodeify({ name: 'Patrick' }));
 		client.get('players').get('1').delete();
-		setTimeout(() => {
-			expect(store.get('players/1')).toEqual(nodeify(null));
-		});
-	});
+	}, 10);
 });
 
 test('should batch updates', (done) => {
@@ -293,7 +319,14 @@ test('unsubcribing does not cancel other subscriptions', (done) => {
 		onDisconnect() {},
 		off: removeListener,
 		on: addListener,
-		send(event, { path }) {},
+		send(event, { data }) {
+			if (event === 'update') {
+				expect(data).toEqual({
+					change: nodeify({ path: 'test' }),
+				});
+				notify('path', { data: { change: nodeify('test') } });
+			}
+		},
 		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
@@ -371,13 +404,18 @@ test('can unsubscribe from keys of path', (done) => {
 });
 
 test('received data should not be passed as reference', (done) => {
+	const { addListener, removeListener, notify } = createEventBroker();
 	const store = createStore();
 	const socketClient: SocketClient = {
 		onConnect() {},
 		onDisconnect() {},
-		off() {},
-		on() {},
-		send() {},
+		off: removeListener,
+		on: addListener,
+		send(event, { data }) {
+			if (event === 'update') {
+				notify('data', { data: { change: data.change.value.data } });
+			}
+		},
 		close() {},
 	};
 	const client = SocketDBClient({ socketClient, store });

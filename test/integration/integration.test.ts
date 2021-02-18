@@ -58,7 +58,8 @@ test('client receives updated data', (done) => {
 test('all clients receive data on update', async () => {
 	const client1EventBroker = createEventBroker();
 	const client2EventBroker = createEventBroker();
-	const serverEventBroker = createEventBroker();
+	const serverEventBrokerC1 = createEventBroker();
+	const serverEventBrokerC2 = createEventBroker();
 
 	const client1 = SocketDBClient({
 		socketClient: {
@@ -66,7 +67,7 @@ test('all clients receive data on update', async () => {
 			onDisconnect() {},
 			off: client1EventBroker.removeListener,
 			on: client1EventBroker.addListener,
-			send: serverEventBroker.notify,
+			send: serverEventBrokerC1.notify,
 			close() {},
 		},
 	});
@@ -76,7 +77,7 @@ test('all clients receive data on update', async () => {
 			onDisconnect() {},
 			off: client2EventBroker.removeListener,
 			on: client2EventBroker.addListener,
-			send: serverEventBroker.notify,
+			send: serverEventBrokerC2.notify,
 			close() {},
 		},
 	});
@@ -93,8 +94,8 @@ test('all clients receive data on update', async () => {
 	connect(
 		{
 			onDisconnect() {},
-			on: serverEventBroker.addListener,
-			off: serverEventBroker.removeListener,
+			on: serverEventBrokerC1.addListener,
+			off: serverEventBrokerC1.removeListener,
 			send: client1EventBroker.notify,
 			close() {},
 		},
@@ -103,8 +104,8 @@ test('all clients receive data on update', async () => {
 	connect(
 		{
 			onDisconnect() {},
-			on: serverEventBroker.addListener,
-			off: serverEventBroker.removeListener,
+			on: serverEventBrokerC2.addListener,
+			off: serverEventBrokerC2.removeListener,
 			send: client2EventBroker.notify,
 			close() {},
 		},

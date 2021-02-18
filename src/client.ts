@@ -134,8 +134,9 @@ export function SocketDBClient({
 				notifySubscriber(diff);
 			});
 			if (data.change) {
-				const diff = store.put(creatUpdate(path, data.change));
-				notifySubscriber(diff);
+				const update = creatUpdate(path, data.change);
+				store.put(update);
+				notifySubscriber(update);
 			}
 		});
 		subscribedPaths.push(path);
@@ -147,16 +148,6 @@ export function SocketDBClient({
 			socketClient.off(path);
 			subscribedPaths = subscribedPaths.filter((p) => p !== path);
 			socketClient.send('unsubscribe', { path });
-			/*
-			 * delete data when unscubscribing from path
-			 * this is a workaround for the issue, that when rescrubscribing,
-			 * the received initial data is not different from the stored data
-			 * and therefore functions like "once/on" will not be triggered.
-			 * Drawback is, that lower level path listeners might be triggered multiple times with the same value
-			 * (as the value was deleted before and now seems to be new)
-			 * TODO: this will be changed in the next major release
-			 */
-			store.del(path);
 		}
 	}
 
@@ -246,12 +237,10 @@ export function SocketDBClient({
 						.then(({ path, value, meta }) => {
 							const node = nodeify(value);
 							if (meta) node.meta = meta;
-							let update = creatUpdate(path, node);
-							if (isSameOrHigherLevelPathSubscribed(path))
-								update = store.put(update);
-							if (update && Object.keys(update).length > 0)
-								queueUpdate({ type: 'change', data: update });
-							notifySubscriber(update);
+							const update = creatUpdate(path, node);
+							const diff = mergeDiff(update, deepClone(store.get())) as Node;
+							if (diff && Object.keys(diff).length > 0)
+								queueUpdate({ type: 'change', data: diff });
 						})
 						.catch(console.log);
 				}
@@ -261,10 +250,7 @@ export function SocketDBClient({
 				hooks
 					.call('client:delete', { path }, { asRef: true })
 					.then(({ path }) => {
-						store.del(path);
-						const diff = creatUpdate(path, nodeify(null));
 						queueUpdate({ type: 'delete', path });
-						notifySubscriber(diff);
 					})
 					.catch(console.log);
 			},
