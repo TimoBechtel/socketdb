@@ -83,6 +83,7 @@ export function SocketDBServer({
 	}
 
 	function notifySubscibers(diff: BatchedUpdate) {
+		if (!diff.change && !diff.delete) return;
 		Object.values(subscriber).forEach((subscription) => {
 			Object.entries(subscription).forEach(([subscribedPath, callback]) => {
 				let update: BatchedUpdate = {};
@@ -98,7 +99,7 @@ export function SocketDBServer({
 						}
 					});
 				}
-				callback(update);
+				if (update.change || update.delete) callback(update);
 			});
 		});
 	}
