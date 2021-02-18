@@ -5,6 +5,20 @@ import { createEventBroker } from '../src/socketAdapter/eventBroker';
 import { nodeify } from '../src/node';
 import { BatchedUpdate } from '../src/updateBatcher';
 
+test('throws error when using * as pathname', () => {
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off() {},
+		on() {},
+		send() {},
+		close() {},
+	};
+	const client = SocketDBClient({ socketClient });
+
+	expect(() => client.get('players').get('1*').get('name')).toThrowError();
+});
+
 test('emits update object for path', (done) => {
 	const socketClient: SocketClient = {
 		onConnect() {},
@@ -367,9 +381,16 @@ test('can subscribe to keys of path', (done) => {
 	};
 	const client = SocketDBClient({ socketClient });
 
-	client.get('players').each((ref) => {
+	let keysCount = 0;
+	client.get('players').each((ref, key) => {
 		expect(ref).toHaveProperty('get');
-		done();
+		if (keysCount === 0) {
+			expect(key).toBe('1');
+		} else {
+			expect(key).toBe('2');
+			done();
+		}
+		keysCount++;
 	});
 });
 
@@ -397,7 +418,7 @@ test('can unsubscribe from keys of path', (done) => {
 	});
 	setTimeout(() => {
 		unsubscribe();
-		notify('players/*', { data: nodeify(['2', '3']) });
+		notify('players/*', { data: ['2', '3'] });
 		expect(updateCount).toBe(1);
 		done();
 	}, 100);
@@ -672,6 +693,42 @@ test('always subscribe to highest level path', (done) => {
 		expect(updateReceivedCount).toBe(3);
 		done();
 	}, 100);
+});
+
+test('does not resubscribe to keys if higher level path is already subscribed', (done) => {
+	const { addListener, removeListener, notify } = createEventBroker();
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: removeListener,
+		on: addListener,
+		send(event, { path }) {
+			if (event === 'subscribeKeys') {
+				fail('should not subscribe to keys');
+			}
+			if (event === 'subscribe') {
+				expect(path).toBe('players');
+				notify('players', {
+					data: { change: nodeify({ 1: 'test1', 2: 'test2' }) },
+				});
+			}
+		},
+		close() {},
+	};
+	const client = SocketDBClient({ socketClient });
+
+	let keysCount = 0;
+	client.get('players').on(() => {});
+	client.get('players').each((ref, key) => {
+		expect(ref).toHaveProperty('get');
+		if (keysCount === 0) {
+			expect(key).toBe('1');
+		} else {
+			expect(key).toBe('2');
+			done();
+		}
+		keysCount++;
+	});
 });
 
 test('if data is null, should notify every subpath', (done) => {

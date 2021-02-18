@@ -1,6 +1,6 @@
 import { SocketClient } from './socketAdapter/socketClient';
 import { createWebsocketClient } from './socketAdapter/websocketClient';
-import { isWildcardPath, parsePath } from './path';
+import { isWildcardPath, parsePath, trimWildcard } from './path';
 import { createStore, Store } from './store';
 import { deepClone, isObject, mergeDiff } from './utils';
 import { joinPath } from './path';
@@ -75,7 +75,7 @@ export function SocketDBClient({
 			// reattach subscriptions on every reconnect
 			subscribedPaths.forEach((path) => {
 				if (isWildcardPath(path)) {
-					socketClient.send('subscribeKeys', { path });
+					socketClient.send('subscribeKeys', { path: trimWildcard(path) });
 				} else {
 					socketClient.send('subscribe', { path });
 				}
@@ -106,7 +106,7 @@ export function SocketDBClient({
 		// TODO: make this thing more efficient,
 		// should not go through multiple loops
 		traverseNode(diff, (path, data) => {
-			if (listener?.[path]) {
+			if (listener[path]) {
 				let storedData = deepClone(store.get(path));
 				listener[path].forEach((listener) => listener(storedData));
 				delete listener[path];
@@ -128,20 +128,30 @@ export function SocketDBClient({
 	}
 
 	function addSocketPathSubscription(path: string) {
-		socketClient.on(path, ({ data }: { data: BatchedUpdate }) => {
-			data.delete?.forEach((path) => {
-				store.del(path);
-				const diff = creatUpdate(path, nodeify(null));
-				notifySubscriber(diff);
+		if (isWildcardPath(path)) {
+			socketClient.on(path, ({ data: keys }: { data: string[] }) => {
+				const update = {};
+				keys.forEach((key) => (update[key] = null));
+				updateListener[path].forEach((callback) => callback(nodeify(update)));
 			});
-			if (data.change) {
-				const update = creatUpdate(path, data.change);
-				store.put(update);
-				notifySubscriber(update);
-			}
-		});
-		subscribedPaths.push(path);
-		socketClient.send('subscribe', { path });
+			subscribedPaths.push(path);
+			socketClient.send('subscribeKeys', { path: trimWildcard(path) });
+		} else {
+			socketClient.on(path, ({ data }: { data: BatchedUpdate }) => {
+				data.delete?.forEach((path) => {
+					store.del(path);
+					const diff = creatUpdate(path, nodeify(null));
+					notifySubscriber(diff);
+				});
+				if (data.change) {
+					const update = creatUpdate(path, data.change);
+					store.put(update);
+					notifySubscriber(update);
+				}
+			});
+			subscribedPaths.push(path);
+			socketClient.send('subscribe', { path });
+		}
 	}
 
 	function removeSocketPathSubscription(path: string) {
@@ -194,7 +204,7 @@ export function SocketDBClient({
 			   b) data does not exist on server yet/anymore
 			  in both cases we dont need to notify user on first request
 			*/
-			const cachedData = store.get(path);
+			const cachedData = store.get(trimWildcard(path));
 			if (cachedData.value !== null) callback(cachedData);
 		}
 	}
@@ -214,21 +224,21 @@ export function SocketDBClient({
 		const rootPath = path;
 		return {
 			get(path: string): ChainReference {
+				if (isWildcardPath(path))
+					throw new Error('You cannot use * (wildcard) as a pathname.');
 				return get(joinPath(rootPath, path));
 			},
 			each(callback) {
 				const wildcardPath = joinPath(path, '*');
-				const onKeysReceived = ({ data }) => {
-					data.forEach((key) => {
+				const onKeysReceived = (node: Node) => {
+					Object.keys(node.value).forEach((key) => {
 						const refpath = joinPath(path, key);
 						callback(get(refpath), key);
 					});
 				};
-				socketClient.on(wildcardPath, onKeysReceived);
-				socketClient.send('subscribeKeys', { path });
-				subscribedPaths.push(wildcardPath);
+				subscribe(wildcardPath, onKeysReceived);
 				return () => {
-					removeSocketPathSubscription(wildcardPath);
+					unsubscribe(wildcardPath, onKeysReceived);
 				};
 			},
 			set(value, meta) {
