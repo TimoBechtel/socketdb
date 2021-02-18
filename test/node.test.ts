@@ -1,4 +1,4 @@
-import { Node, nodeify, traverseNode, unwrap } from '../src/node';
+import { isNode, Node, nodeify, traverseNode, unwrap } from '../src/node';
 
 test('wraps object with nodes', () => {
 	const obj = {
@@ -82,4 +82,12 @@ test('traverses node until true was returned', () => {
 		if (path === 'player/1/position') return true;
 	});
 	expect(loopcount).toBe(4);
+});
+
+test('checks if value is node', () => {
+	expect(isNode({})).toBe(false);
+	expect(isNode('')).toBe(false);
+	expect(isNode(0)).toBe(false);
+	expect(isNode(undefined)).toBe(false);
+	expect(isNode(null)).toBe(false);
 });

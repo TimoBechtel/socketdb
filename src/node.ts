@@ -6,7 +6,7 @@ export type Node = {
 };
 
 export function isNode(value: any): value is Node {
-	return (value as Node).value !== undefined;
+	return (value as Node)?.value !== undefined;
 }
 
 export function nodeify(data: any): Node {

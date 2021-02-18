@@ -9,24 +9,25 @@ export function joinPath(path: string, subpath: string): string {
 /**
  * merges source to target and returns only changes
  */
-export function mergeDiff(
-	source: { [key: string]: any },
-	target: { [key: string]: any }
-): { [key: string]: any } {
-	let diff = {};
+type ObjectType = { [key: string]: ObjectType | any };
+export function mergeDiff<Source extends ObjectType, Target extends ObjectType>(
+	source: Source,
+	target: Target
+): Partial<Source> {
+	let diff: ObjectType = {};
 	for (const [key, value] of Object.entries(source)) {
 		if (isObject(value)) {
-			if (!isObject(target[key])) target[key] = {};
+			if (!isObject(target[key])) target[key as keyof Target] = {} as any;
 			const subdiff = mergeDiff(value, target[key]);
 			if (Object.keys(subdiff).length > 0) diff[key] = subdiff;
 		} else {
 			if (target[key] !== value) {
-				target[key] = value;
+				target[key as keyof Target] = value;
 				diff[key] = value;
 			}
 		}
 	}
-	return diff;
+	return diff as Partial<Source>;
 }
 
 /**

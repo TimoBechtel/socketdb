@@ -3,7 +3,7 @@ import { createWebsocketClient } from './socketAdapter/websocketClient';
 import { parsePath } from './parsePath';
 import { createStore, Store } from './store';
 import { deepClone, isObject, joinPath, mergeDiff } from './utils';
-import { Node, nodeify, traverseNode, unwrap } from './node';
+import { isNode, Node, nodeify, traverseNode, unwrap } from './node';
 import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
 import { Plugin } from './plugin';
 import { createHooks, Hook } from './hooks';
@@ -238,9 +238,8 @@ export function SocketDBClient({
 							const node = nodeify(value);
 							if (meta) node.meta = meta;
 							const update = creatUpdate(path, node);
-							const diff = mergeDiff(update, deepClone(store.get())) as Node;
-							if (diff && Object.keys(diff).length > 0)
-								queueUpdate({ type: 'change', data: diff });
+							const diff = mergeDiff(update, deepClone(store.get()));
+							if (isNode(diff)) queueUpdate({ type: 'change', data: diff });
 						})
 						.catch(console.log);
 				}
