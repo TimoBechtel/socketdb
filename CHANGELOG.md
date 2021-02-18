@@ -1,3 +1,10 @@
+## [3.6.2](https://github.com/TimoBechtel/socketdb/compare/v3.6.1...v3.6.2) (2021-02-18)
+
+
+### Bug Fixes
+
+* **client:** first subscription sometimes not receiving value ([6100494](https://github.com/TimoBechtel/socketdb/commit/61004949405b78cd8015b5ae82d605fc31def9cb)), closes [#19](https://github.com/TimoBechtel/socketdb/issues/19)
+
 ## [3.6.1](https://github.com/TimoBechtel/socketdb/compare/v3.6.0...v3.6.1) (2021-02-17)
 
 
