@@ -1,4 +1,5 @@
-import { isObject, joinPath } from './utils';
+import { joinPath } from './path';
+import { isObject } from './utils';
 
 export type Node = {
 	meta?: { [namespace: string]: any };

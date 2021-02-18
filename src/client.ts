@@ -1,8 +1,9 @@
 import { SocketClient } from './socketAdapter/socketClient';
 import { createWebsocketClient } from './socketAdapter/websocketClient';
-import { parsePath } from './parsePath';
+import { isWildcardPath, parsePath } from './path';
 import { createStore, Store } from './store';
-import { deepClone, isObject, joinPath, mergeDiff } from './utils';
+import { deepClone, isObject, mergeDiff } from './utils';
+import { joinPath } from './path';
 import { isNode, Node, nodeify, traverseNode, unwrap } from './node';
 import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
 import { Plugin } from './plugin';
@@ -73,7 +74,7 @@ export function SocketDBClient({
 		if (connectionLost) {
 			// reattach subscriptions on every reconnect
 			subscribedPaths.forEach((path) => {
-				if (path.endsWith('*')) {
+				if (isWildcardPath(path)) {
 					socketClient.send('subscribeKeys', { path });
 				} else {
 					socketClient.send('subscribe', { path });

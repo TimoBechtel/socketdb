@@ -1,4 +1,5 @@
-import { deepClone, isObject, joinPath, mergeDiff } from '../src/utils';
+import { deepClone, isObject } from '../src/utils';
+import { joinPath } from '../src/path';
 
 test('detects arrays', () => {
 	expect(isObject([1, 2, 3])).toBe(false);

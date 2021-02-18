@@ -1,5 +1,5 @@
 import { isNode, Node, nodeify } from './node';
-import { parsePath } from './parsePath';
+import { parsePath } from './path';
 import { isObject, mergeDiff } from './utils';
 
 export type Store = {

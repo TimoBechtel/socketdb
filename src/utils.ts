@@ -2,10 +2,6 @@ export function isObject(value: any) {
 	return typeof value === 'object' && !!value && !Array.isArray(value);
 }
 
-export function joinPath(path: string, subpath: string): string {
-	return `${path ? path + '/' : ''}${subpath}`;
-}
-
 /**
  * merges source to target and returns only changes
  */

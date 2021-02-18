@@ -5,7 +5,8 @@ import { Plugin } from './plugin';
 import { SocketServer } from './socketAdapter/socketServer';
 import { createWebsocketServer } from './socketAdapter/websocketServer';
 import { createStore, Store } from './store';
-import { deepClone, isObject, joinPath } from './utils';
+import { deepClone, isObject } from './utils';
+import { joinPath } from './path';
 
 type Subscribtions = {
 	[id: string]: { [path: string]: (data: BatchedUpdate) => void };
