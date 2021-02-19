@@ -1,3 +1,10 @@
+# [3.7.0](https://github.com/TimoBechtel/socketdb/compare/v3.6.3...v3.7.0) (2021-02-19)
+
+
+### Features
+
+* **hooks:** add hooks context ([c12e6c7](https://github.com/TimoBechtel/socketdb/commit/c12e6c7668224c41bcac8cbb7b225d6fdc92b9f9))
+
 ## [3.6.3](https://github.com/TimoBechtel/socketdb/compare/v3.6.2...v3.6.3) (2021-02-19)
 
 
