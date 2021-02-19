@@ -68,7 +68,7 @@ test('allow cancelling hook with error message', (done) => {
 		'test:hook': Hook<{ message: string }>;
 	};
 	const hooks = createHooks<Hooks>();
-	let hooktriggered = false;
+	let hookTriggered = false;
 
 	hooks.register('test:hook', ({ message }) => {
 		expect(message).toEqual('hello world');
@@ -77,14 +77,14 @@ test('allow cancelling hook with error message', (done) => {
 	hooks
 		.call('test:hook', { args: { message: 'hello world' } })
 		.then(() => {
-			hooktriggered = true;
+			hookTriggered = true;
 		})
 		.catch(({ message }) => {
 			expect(message).toEqual('hook failed');
 		});
 
 	setTimeout(() => {
-		expect(hooktriggered).toBe(false);
+		expect(hookTriggered).toBe(false);
 		done();
 	}, 10);
 });

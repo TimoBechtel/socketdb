@@ -1,7 +1,7 @@
 # Introduction
 
-SocketDB is an easy to use data storage that syncs accross browsers in realtime
-and allows you to focus on your application without worring about networking.
+SocketDB is an easy to use data storage that syncs across browsers in realtime
+and allows you to focus on your application without worrying about networking.
 
 It features:
 

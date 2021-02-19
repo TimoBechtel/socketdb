@@ -8,7 +8,7 @@ import { createStore, Store } from './store';
 import { deepClone, isObject } from './utils';
 import { joinPath } from './path';
 
-type Subscribtions = {
+type Subscriptions = {
 	[id: string]: { [path: string]: (data: BatchedUpdate) => void };
 };
 
@@ -46,9 +46,9 @@ export function SocketDBServer({
 	socketServer?: SocketServer;
 	plugins?: ServerPlugin[];
 } = {}): SocketDBServerAPI {
-	let subscriber: Subscribtions = {};
+	let subscriber: Subscriptions = {};
 
-	const queue = createUpdateBatcher(notifySubscibers, updateInterval);
+	const queue = createUpdateBatcher(notifySubscribers, updateInterval);
 
 	const hooks = createHooks<ServerHooks>();
 	registerPlugins(plugins);
@@ -87,7 +87,7 @@ export function SocketDBServer({
 			.catch(console.log);
 	}
 
-	function notifySubscibers(diff: BatchedUpdate) {
+	function notifySubscribers(diff: BatchedUpdate) {
 		if (!diff.change && !diff.delete) return;
 		Object.values(subscriber).forEach((subscription) => {
 			Object.entries(subscription).forEach(([subscribedPath, callback]) => {

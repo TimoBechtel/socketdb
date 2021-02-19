@@ -38,7 +38,7 @@ function myCustomStore() {
 		get,
 		del,
 		put(diff) {
-			console.log('udpated data', diff);
+			console.log('updated data', diff);
 			return put(diff);
 		},
 	};

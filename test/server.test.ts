@@ -20,7 +20,7 @@ test('updates data on manual update', () => {
 			players: { 1: { name: 'Arnold' } },
 		})
 	);
-	// update will call hooks asynchonously so, we need a little delay here:
+	// update will call hooks asynchronously so, we need a little delay here:
 	setTimeout(() => {
 		expect(store.get('players/1/name')).toEqual({ value: 'Arnold' });
 	});

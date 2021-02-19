@@ -325,7 +325,7 @@ test('can subscribe to path once', (done) => {
 	}, 100);
 });
 
-test('unsubcribing does not cancel other subscriptions', (done) => {
+test('unsubscribing does not cancel other subscriptions', (done) => {
 	// see: https://github.com/TimoBechtel/socketdb/issues/20
 	const { addListener, removeListener, notify } = createEventBroker();
 	const socketClient: SocketClient = {
@@ -547,14 +547,14 @@ test('only subscribes once for every root path', (done) => {
 		on: addListener,
 		send(event) {
 			if (event === 'subscribe') {
-				subscribtionCount++;
+				subscriptionCount++;
 			}
 		},
 		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
-	let subscribtionCount = 0;
+	let subscriptionCount = 0;
 	let updateCount = 0;
 
 	client.get('players').on(() => {
@@ -578,8 +578,8 @@ test('only subscribes once for every root path', (done) => {
 		});
 
 	setTimeout(() => {
-		expect(subscribtionCount).toBe(1);
-		// we dont have data yet
+		expect(subscriptionCount).toBe(1);
+		// we don't have data yet
 		expect(updateCount).toBe(0);
 		notify('players', { data: { change: nodeify({ 1: { name: 'Paul' } }) } });
 
@@ -599,26 +599,26 @@ test('always subscribe to highest level path', (done) => {
 		on: addListener,
 		send(event, { path }) {
 			if (event === 'subscribe') {
-				subscribtionCount++;
-				if (subscribtionCount === 2) {
+				subscriptionCount++;
+				if (subscriptionCount === 2) {
 					expect(path).toBe('players');
 				}
 			} else if (event === 'unsubscribe') {
-				unsubscribtionCount++;
+				unsubscriptionCount++;
 			}
 		},
 		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
-	let subscribtionCount = 0;
-	let unsubscribtionCount = 0;
+	let subscriptionCount = 0;
+	let unsubscriptionCount = 0;
 
 	let updateReceivedCount = 0;
 
 	/**
 	 * should subscribe to /players/2
-	 * subscribtionCount = 1
+	 * subscriptionCount = 1
 	 */
 	client
 		.get('players')
@@ -630,9 +630,9 @@ test('always subscribe to highest level path', (done) => {
 
 	/**
 	 * should unsubscribe from /players/2
-	 * unsubscribtionCount = 1
+	 * unsubscriptionCount = 1
 	 * should subscribe to /players
-	 * subscribtionCount = 2
+	 * subscriptionCount = 2
 	 */
 	const unsubscribePlayers = client.get('players').on((data) => {
 		expect(data).toEqual({
@@ -657,8 +657,8 @@ test('always subscribe to highest level path', (done) => {
 	/**
 	 * should not subscribe to anything,
 	 * as there is already /players subscribed
-	 * unsubscribtionCount = 1
-	 * subscribtionCount = 2
+	 * unsubscriptionCount = 1
+	 * subscriptionCount = 2
 	 */
 	client
 		.get('players')
@@ -671,25 +671,25 @@ test('always subscribe to highest level path', (done) => {
 
 	/**
 	 * should unsubscribe from /players
-	 * unsubscribtionCount = 2
+	 * unsubscriptionCount = 2
 	 * should subscribe to /players/2
 	 * should subscribe to /players/1/name
-	 * subscribtionCount = 4
+	 * subscriptionCount = 4
 	 */
 	unsubscribePlayers();
 
 	/**
 	 * should unsubscribe from /players/2
 	 * should unsubscribe from /players/1/name
-	 * unsubscribtionCount = 4
+	 * unsubscriptionCount = 4
 	 * should subscribe to /players
-	 * subscribtionCount = 5
+	 * subscriptionCount = 5
 	 */
 	client.get('players').on(() => {});
 
 	setTimeout(() => {
-		expect(unsubscribtionCount).toBe(4);
-		expect(subscribtionCount).toBe(5);
+		expect(unsubscriptionCount).toBe(4);
+		expect(subscriptionCount).toBe(5);
 		expect(updateReceivedCount).toBe(3);
 		done();
 	}, 100);
@@ -740,14 +740,14 @@ test('if data is null, should notify every subpath', (done) => {
 		on: addListener,
 		send(event, { path }) {
 			if (event === 'subscribe') {
-				subscribtionCount++;
+				subscriptionCount++;
 			}
 		},
 		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
 
-	let subscribtionCount = 0;
+	let subscriptionCount = 0;
 
 	let updateCount = 0;
 
@@ -779,7 +779,7 @@ test('if data is null, should notify every subpath', (done) => {
 	notify('players', { data: { change: nodeify(null) } });
 
 	setTimeout(() => {
-		expect(subscribtionCount).toBe(1);
+		expect(subscriptionCount).toBe(1);
 		expect(testString).toBe('abcd');
 		expect(updateCount).toBe(4);
 		done();

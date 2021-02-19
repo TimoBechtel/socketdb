@@ -37,7 +37,7 @@ Subscribe to a specific path.
 Every time a value in this path gets updated, the provided function
 will be called with the current value and metadata for that path.
 
-`on` will return an unscubscriber function that allows you to unscubscribe from changes.
+`on` will return an unsubscriber function that allows you to unsubscribe from changes.
 
 ::: warning Note
 If no data is available or was deleted, `data` (or `meta`) will be `null`.  
@@ -45,7 +45,7 @@ So you need to check for a `null` value.
 :::
 
 ```js
-const unscubscribe = db.get('friends/status').on((data, meta) => {
+const unsubscribe = db.get('friends/status').on((data, meta) => {
 	console.log(data, meta);
 });
 ```
@@ -71,7 +71,7 @@ db.get('meaning-of')
 
 Allows you to subscribe to sub-nodes of a path.
 
-It will be called everytime a new node was added to a path.
+It will be called every time a new node was added to a path.
 
 The new node's path will be passed as first argument and its name as second.
 

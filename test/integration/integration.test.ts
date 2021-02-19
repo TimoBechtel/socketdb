@@ -257,7 +257,7 @@ test('on/once always receives data on first call, even when not subscribed to be
 	}, 15);
 });
 
-test('should notifiy client on deletion', (done) => {
+test('should notify client on deletion', (done) => {
 	const clientEventBroker = createEventBroker();
 	const serverEventBroker = createEventBroker();
 	const store = createStore();

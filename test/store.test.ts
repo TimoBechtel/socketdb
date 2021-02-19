@@ -9,7 +9,7 @@ test('returns null, if key does not exist', () => {
 test('returns null, if parent key is no object', () => {
 	const store = createStore();
 	store.put({
-		value: { some: { value: { myvalue: { value: 'a' } } } },
+		value: { some: { value: { myValue: { value: 'a' } } } },
 	});
 	expect(store.get('some/value/that/doesnt/exist')).toEqual(nodeify(null));
 	store.put({
@@ -20,7 +20,7 @@ test('returns null, if parent key is no object', () => {
 		value: {
 			some: {
 				value: {
-					myvalue: { value: { that: { value: { doesnt: { value: null } } } } },
+					myValue: { value: { that: { value: { doesnt: { value: null } } } } },
 				},
 			},
 		},

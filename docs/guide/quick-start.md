@@ -87,5 +87,5 @@ db.get('some').set({ path: 'Hello World' });
 
 :::tip Typescript
 SocketDB has full typescript support. I recommend using typescript with SocketDB
-to get the benefits of code completition and type checking.
+to get the benefits of code completion and type checking.
 :::

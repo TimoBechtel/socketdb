@@ -202,7 +202,7 @@ export function SocketDBClient({
 			  if cached data is null, it either means:
 			   a) we have no data yet, or:
 			   b) data does not exist on server yet/anymore
-			  in both cases we dont need to notify user on first request
+			  in both cases we don't need to notify user on first request
 			*/
 			const cachedData = store.get(trimWildcard(path));
 			if (cachedData.value !== null) callback(cachedData);

@@ -68,7 +68,7 @@ test('unwraps node', () => {
 	});
 });
 
-test('unwraps node with a sinlge string', () => {
+test('unwraps node with a single string', () => {
 	expect(unwrap({ value: 'string' })).toEqual('string');
 });
 
@@ -76,12 +76,12 @@ test('traverses node until true was returned', () => {
 	const node: Node = nodeify({
 		player: { 1: { position: { x: 0, y: 1 } }, 2: {} },
 	});
-	let loopcount = 0;
+	let loopCount = 0;
 	traverseNode(node, (path) => {
-		loopcount++;
+		loopCount++;
 		if (path === 'player/1/position') return true;
 	});
-	expect(loopcount).toBe(4);
+	expect(loopCount).toBe(4);
 });
 
 test('checks if value is node', () => {
