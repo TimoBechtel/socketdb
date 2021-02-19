@@ -1,6 +1,5 @@
 # Quick Start
 
-<ClientOnly>
 <code-group>
 <code-block title="YARN">
 ```bash
@@ -15,13 +14,11 @@ npm install socketdb
 </code-block>
 
 </code-group>
-</ClientOnly>
 
 ## Setup Server
 
 Create new project:
 
-<ClientOnly>
 <code-group>
 <code-block title="YARN">
 ```bash
@@ -40,7 +37,6 @@ npm install socketdb
 </code-block>
 
 </code-group>
-</ClientOnly>
 
 Create `index.js` file with:
 
