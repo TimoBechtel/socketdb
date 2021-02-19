@@ -88,8 +88,9 @@ export function SocketDBServer({
 		Object.values(subscriber).forEach((subscription) => {
 			Object.entries(subscription).forEach(([subscribedPath, callback]) => {
 				let update: BatchedUpdate = {};
-				const deletePaths: string[] = diff.delete?.filter((path) =>
-					path.startsWith(subscribedPath)
+				const deletePaths: string[] = diff.delete?.filter(
+					(path) =>
+						path.startsWith(subscribedPath) || subscribedPath.startsWith(path)
 				);
 				if (deletePaths && deletePaths.length > 0) update.delete = deletePaths;
 				if (diff.change) {

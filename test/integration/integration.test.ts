@@ -1,4 +1,5 @@
-import { SocketDBClient, SocketDBServer } from '../../src/index';
+import { createStore, SocketDBClient, SocketDBServer } from '../../src/index';
+import { nodeify } from '../../src/node';
 import { createEventBroker } from '../../src/socketAdapter/eventBroker';
 import { Socket } from '../../src/socketAdapter/socket';
 import { SocketClient } from '../../src/socketAdapter/socketClient';
@@ -254,4 +255,58 @@ test('on/once always receives data on first call, even when not subscribed to be
 			done();
 		});
 	}, 15);
+});
+
+test('should notifiy client on deletion', (done) => {
+	const clientEventBroker = createEventBroker();
+	const serverEventBroker = createEventBroker();
+	const store = createStore();
+
+	const socketClient: SocketClient = {
+		onConnect() {},
+		onDisconnect() {},
+		off: clientEventBroker.removeListener,
+		on: clientEventBroker.addListener,
+		send: serverEventBroker.notify,
+		close() {},
+	};
+	const client = SocketDBClient({ socketClient, updateInterval: 5 });
+
+	let connect: (client: Socket, id: string) => void;
+
+	const socketServer: SocketServer = {
+		onConnection(callback) {
+			connect = callback;
+		},
+	};
+	SocketDBServer({ socketServer, updateInterval: 5, store });
+	connect(
+		{
+			onDisconnect() {},
+			on: serverEventBroker.addListener,
+			off: serverEventBroker.removeListener,
+			send: clientEventBroker.notify,
+			close() {},
+		},
+		'1'
+	);
+
+	store.put(nodeify({ players: { 1: { name: 'Test' } } }));
+
+	let updateCount = 0;
+	client
+		.get('players')
+		.get('1')
+		.get('name')
+		.on((data) => {
+			if (updateCount === 0) {
+				expect(data).toEqual('Test');
+			} else {
+				expect(data).toEqual(null);
+				done();
+			}
+			updateCount++;
+		});
+
+	client.get('players').get('1').delete();
 });
