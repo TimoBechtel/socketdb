@@ -1,3 +1,11 @@
+## [3.6.3](https://github.com/TimoBechtel/socketdb/compare/v3.6.2...v3.6.3) (2021-02-19)
+
+
+### Bug Fixes
+
+* **server:** issue that server wont send update on deletion ([f5d30a1](https://github.com/TimoBechtel/socketdb/commit/f5d30a1a64923d5bb16250a3a10b3f22e6d09daa))
+* **server:** issue with sending empty updates ([c270da2](https://github.com/TimoBechtel/socketdb/commit/c270da2ad31a83bdb79240b6480716d8a25023a0))
+
 ## [3.6.2](https://github.com/TimoBechtel/socketdb/compare/v3.6.1...v3.6.2) (2021-02-18)
 
 
