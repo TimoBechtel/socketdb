@@ -25,10 +25,10 @@ export type SocketDBServerAPI = {
 export type SocketDB = SocketDBServerAPI;
 
 export type ServerHooks = {
-	'server:clientConnect'?: Hook<{ id: string }>;
-	'server:clientDisconnect'?: Hook<{ id: string }>;
-	'server:update'?: Hook<{ data: Node }>;
-	'server:delete'?: Hook<{ path: string }>;
+	'server:clientConnect'?: Hook<{ id: string }, { client: { id: string } }>;
+	'server:clientDisconnect'?: Hook<{ id: string }, { client: { id: string } }>;
+	'server:update'?: Hook<{ data: Node }, { client: { id: string } }>;
+	'server:delete'?: Hook<{ path: string }, { client: { id: string } }>;
 };
 
 export type ServerPlugin = Plugin<ServerHooks>;
@@ -63,9 +63,9 @@ export function SocketDBServer({
 		});
 	}
 
-	function update(data: Node) {
+	function update(data: Node, id: string = null) {
 		hooks
-			.call('server:update', { data })
+			.call('server:update', { args: { data }, context: { client: { id } } })
 			.then(({ data }) => {
 				const diff = store.put(data);
 				queue({ type: 'change', data: diff });
@@ -73,9 +73,13 @@ export function SocketDBServer({
 			.catch(console.log);
 	}
 
-	function del(path: string) {
+	function del(path: string, id: string = null) {
 		hooks
-			.call('server:delete', { path }, { asRef: true })
+			.call(
+				'server:delete',
+				{ args: { path }, context: { client: { id } } },
+				{ asRef: true }
+			)
 			.then(({ path }) => {
 				store.del(path);
 				queue({ type: 'delete', path });
@@ -122,16 +126,27 @@ export function SocketDBServer({
 	}
 
 	socketServer.onConnection((client, id) => {
-		hooks.call('server:clientConnect', { id }, { asRef: true });
+		hooks.call(
+			'server:clientConnect',
+			{
+				args: { id },
+				context: { client: { id } },
+			},
+			{ asRef: true }
+		);
 
 		client.onDisconnect(() => {
 			delete subscriber[id];
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
-			hooks.call('server:clientDisconnect', { id }, { asRef: true });
+			hooks.call(
+				'server:clientDisconnect',
+				{ args: { id }, context: { client: { id } } },
+				{ asRef: true }
+			);
 		});
 		client.on('update', ({ data }: { data: BatchedUpdate }) => {
-			data.delete?.forEach(del);
-			if (data.change) update(data.change);
+			data.delete?.forEach((path) => del(path, id));
+			if (data.change) update(data.change, id);
 		});
 		client.on('subscribe', ({ path, once }) => {
 			client.send(path, { data: { change: store.get(path) } });

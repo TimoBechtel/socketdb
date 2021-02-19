@@ -14,7 +14,9 @@ test('allows providing hooks via plugins', (done) => {
 			{
 				name: 'timestamp',
 				hooks: {
-					'server:update': ({ data }) => {
+					'server:update': ({ data }, { client }) => {
+						// when update is called manually, client has no id
+						expect(client.id).toBe(null);
 						return {
 							data: {
 								value: data.value,
@@ -37,6 +39,7 @@ test('allows providing hooks via plugins', (done) => {
 	);
 
 	setTimeout(() => {
+		// Note: jest errors are catched by socketdb and prevent the store from being updated
 		expect(store.get('players/1/name')).toEqual({ value: 'Arnold' });
 		expect(store.get().meta).toEqual({ updated: time });
 		done();

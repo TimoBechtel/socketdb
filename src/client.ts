@@ -32,9 +32,9 @@ type UpdateListener = {
 export type ClientHooks = {
 	'client:set'?: Hook<{ path: string; value: any; meta: Meta }>;
 	'client:delete'?: Hook<{ path: string }>;
-	'client:firstConnect'?: Hook<void>;
-	'client:reconnect'?: Hook<void>;
-	'client:disconnect'?: Hook<void>;
+	'client:firstConnect'?: Hook;
+	'client:reconnect'?: Hook;
+	'client:disconnect'?: Hook;
 };
 
 export type ClientPlugin = Plugin<ClientHooks>;
@@ -244,7 +244,7 @@ export function SocketDBClient({
 			set(value, meta) {
 				if (!connectionLost) {
 					hooks
-						.call('client:set', { path, value, meta })
+						.call('client:set', { args: { path, value, meta } })
 						.then(({ path, value, meta }) => {
 							const node = nodeify(value);
 							if (meta) node.meta = meta;
@@ -258,7 +258,7 @@ export function SocketDBClient({
 			},
 			delete() {
 				hooks
-					.call('client:delete', { path }, { asRef: true })
+					.call('client:delete', { args: { path } }, { asRef: true })
 					.then(({ path }) => {
 						queueUpdate({ type: 'delete', path });
 					})

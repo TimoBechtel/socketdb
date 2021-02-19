@@ -38,10 +38,12 @@ test('allow changing passed data', (done) => {
 		};
 	});
 
-	hooks.call('test:hook', { message: 'hello world' }).then(({ message }) => {
-		expect(message).toEqual('/// -- hello world -- ///');
-		done();
-	});
+	hooks
+		.call('test:hook', { args: { message: 'hello world' } })
+		.then(({ message }) => {
+			expect(message).toEqual('/// -- hello world -- ///');
+			done();
+		});
 });
 
 test('arguments are cloned by default', (done) => {
@@ -56,7 +58,7 @@ test('arguments are cloned by default', (done) => {
 		expect(data).not.toBe(exampleData.data);
 	});
 
-	hooks.call('test:hook', exampleData).then(({ data }) => {
+	hooks.call('test:hook', { args: exampleData }).then(({ data }) => {
 		done();
 	});
 });
@@ -73,7 +75,7 @@ test('allow cancelling hook with error message', (done) => {
 		throw new Error('hook failed');
 	});
 	hooks
-		.call('test:hook', { message: 'hello world' })
+		.call('test:hook', { args: { message: 'hello world' } })
 		.then(() => {
 			hooktriggered = true;
 		})
