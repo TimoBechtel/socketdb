@@ -37,21 +37,27 @@ and finally processed internally instead of the initial arguments.
 type ClientHooks = {
 	'client:set'?: Hook<{ path: string; value: any; meta: Meta }>;
 	'client:delete'?: Hook<{ path: string }>;
-	'client:firstConnect'?: Hook<void>;
-	'client:reconnect'?: Hook<void>;
-	'client:disconnect'?: Hook<void>;
+	'client:firstConnect'?: Hook;
+	'client:reconnect'?: Hook;
+	'client:disconnect'?: Hook;
 };
-type Hook<T> = (args: T) => void | T | Promise<void | T>;
+type Hook<Arguments = void, Context = void> = (
+	args: Arguments,
+	cxt: Context
+) => void | Arguments | Promise<void | Arguments>;
 ```
 
 ### Server
 
 ```ts
 type ServerHooks = {
-	'server:clientConnect'?: Hook<{ id: string }>;
-	'server:clientDisconnect'?: Hook<{ id: string }>;
-	'server:update'?: Hook<{ data: Node }>;
-	'server:delete'?: Hook<{ path: string }>;
+	'server:clientConnect'?: Hook<{ id: string }, { client: { id: string } }>;
+	'server:clientDisconnect'?: Hook<{ id: string }, { client: { id: string } }>;
+	'server:update'?: Hook<{ data: Node }, { client: { id: string } }>;
+	'server:delete'?: Hook<{ path: string }, { client: { id: string } }>;
 };
-type Hook<T> = (args: T) => void | T | Promise<void | T>;
+type Hook<Arguments = void, Context = void> = (
+	args: Arguments,
+	cxt: Context
+) => void | Arguments | Promise<void | Arguments>;
 ```
