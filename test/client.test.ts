@@ -708,9 +708,13 @@ test('does not resubscribe to keys if higher level path is already subscribed', 
 			}
 			if (event === 'subscribe') {
 				expect(path).toBe('players');
-				notify('players', {
-					data: { change: nodeify({ 1: 'test1', 2: 'test2' }) },
-				});
+				// simulate coming from server + make sure, "each" is called before
+				// checks if each will receive updates coming from server
+				setTimeout(() => {
+					notify('players', {
+						data: { change: nodeify({ 1: 'test1', 2: 'test2' }) },
+					});
+				}, 10);
 			}
 		},
 		close() {},

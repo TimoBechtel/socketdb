@@ -106,10 +106,17 @@ export function SocketDBClient({
 		// TODO: make this thing more efficient,
 		// should not go through multiple loops
 		traverseNode(diff, (path, data) => {
-			if (listener[path]) {
+			const wildcardPath = joinPath(path, '*');
+			if (listener[path] || listener[wildcardPath]) {
 				let storedData = deepClone(store.get(path));
-				listener[path].forEach((listener) => listener(storedData));
-				delete listener[path];
+				if (listener[path]) {
+					listener[path].forEach((listener) => listener(storedData));
+					delete listener[path];
+				}
+				if (listener[wildcardPath]) {
+					listener[wildcardPath].forEach((listener) => listener(storedData));
+					delete listener[wildcardPath];
+				}
 			}
 			// if a path is subscribed but has no data, we still need to inform subscribers
 			// this has the issue, that it notifies even if data has not changed
