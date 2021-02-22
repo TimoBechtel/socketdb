@@ -1,3 +1,10 @@
+## [3.7.1](https://github.com/TimoBechtel/socketdb/compare/v3.7.0...v3.7.1) (2021-02-22)
+
+
+### Bug Fixes
+
+* **client:** not notifying "each" when higher path is subscribed ([2da5a9c](https://github.com/TimoBechtel/socketdb/commit/2da5a9ce6487397ae3de529a92ff66523b4e3d4a))
+
 # [3.7.0](https://github.com/TimoBechtel/socketdb/compare/v3.6.3...v3.7.0) (2021-02-19)
 
 
