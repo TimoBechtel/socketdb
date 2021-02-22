@@ -237,11 +237,18 @@ export function SocketDBClient({
 			},
 			each(callback) {
 				const wildcardPath = joinPath(path, '*');
+				let keys = [];
 				const onKeysReceived = (node: Node) => {
-					Object.keys(node.value).forEach((key) => {
-						const refpath = joinPath(path, key);
-						callback(get(refpath), key);
-					});
+					if (isObject(node.value)) {
+						const newKeys = Object.keys(node.value).filter(
+							(key) => !keys.includes(key)
+						);
+						newKeys.forEach((key) => {
+							const refpath = joinPath(path, key);
+							callback(get(refpath), key);
+						});
+						keys = [...keys, ...newKeys];
+					}
 				};
 				subscribe(wildcardPath, onKeysReceived);
 				return () => {
