@@ -1,3 +1,10 @@
+## [3.7.2](https://github.com/TimoBechtel/socketdb/compare/v3.7.1...v3.7.2) (2021-02-22)
+
+
+### Bug Fixes
+
+* **client:** each called multiple times ([09451f6](https://github.com/TimoBechtel/socketdb/commit/09451f6669e7bcf5e4c30eb1399be2d8e237d00c))
+
 ## [3.7.1](https://github.com/TimoBechtel/socketdb/compare/v3.7.0...v3.7.1) (2021-02-22)
 
 
