@@ -1,12 +1,12 @@
 import { createHooks, Hook } from './hooks';
 import { Node, traverseNode } from './node';
-import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
+import { joinPath } from './path';
 import { Plugin } from './plugin';
 import { SocketServer } from './socketAdapter/socketServer';
 import { createWebsocketServer } from './socketAdapter/websocketServer';
 import { createStore, Store } from './store';
+import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
 import { deepClone, isObject } from './utils';
-import { joinPath } from './path';
 
 type Subscriptions = {
 	[id: string]: { [path: string]: (data: BatchedUpdate) => void };
@@ -25,10 +25,22 @@ export type SocketDBServerAPI = {
 export type SocketDB = SocketDBServerAPI;
 
 export type ServerHooks = {
-	'server:clientConnect'?: Hook<{ id: string }, { client: { id: string } }>;
-	'server:clientDisconnect'?: Hook<{ id: string }, { client: { id: string } }>;
-	'server:update'?: Hook<{ data: Node }, { client: { id: string } }>;
-	'server:delete'?: Hook<{ path: string }, { client: { id: string } }>;
+	'server:clientConnect'?: Hook<
+		{ id: string },
+		{ client: { id: string }; api: SocketDBServerAPI }
+	>;
+	'server:clientDisconnect'?: Hook<
+		{ id: string },
+		{ client: { id: string }; api: SocketDBServerAPI }
+	>;
+	'server:update'?: Hook<
+		{ data: Node },
+		{ client: { id: string }; api: SocketDBServerAPI }
+	>;
+	'server:delete'?: Hook<
+		{ path: string },
+		{ client: { id: string }; api: SocketDBServerAPI }
+	>;
 };
 
 export type ServerPlugin = Plugin<ServerHooks>;
@@ -48,6 +60,14 @@ export function SocketDBServer({
 } = {}): SocketDBServerAPI {
 	let subscriber: Subscriptions = {};
 
+	const api: SocketDBServerAPI = {
+		update,
+		get: (path: string): Node => {
+			return deepClone(store.get(path));
+		},
+		delete: del,
+	};
+
 	const queue = createUpdateBatcher(notifySubscribers, updateInterval);
 
 	const hooks = createHooks<ServerHooks>();
@@ -65,7 +85,13 @@ export function SocketDBServer({
 
 	function update(data: Node, id: string = null) {
 		hooks
-			.call('server:update', { args: { data }, context: { client: { id } } })
+			.call('server:update', {
+				args: { data },
+				context: {
+					client: { id },
+					api,
+				},
+			})
 			.then(({ data }) => {
 				const diff = store.put(data);
 				queue({ type: 'change', data: diff });
@@ -77,7 +103,7 @@ export function SocketDBServer({
 		hooks
 			.call(
 				'server:delete',
-				{ args: { path }, context: { client: { id } } },
+				{ args: { path }, context: { client: { id }, api } },
 				{ asRef: true }
 			)
 			.then(({ path }) => {
@@ -130,7 +156,7 @@ export function SocketDBServer({
 			'server:clientConnect',
 			{
 				args: { id },
-				context: { client: { id } },
+				context: { client: { id }, api },
 			},
 			{ asRef: true }
 		);
@@ -140,7 +166,7 @@ export function SocketDBServer({
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
 			hooks.call(
 				'server:clientDisconnect',
-				{ args: { id }, context: { client: { id } } },
+				{ args: { id }, context: { client: { id }, api } },
 				{ asRef: true }
 			);
 		});
@@ -177,11 +203,5 @@ export function SocketDBServer({
 			});
 		});
 	});
-	return {
-		update,
-		get: (path: string): Node => {
-			return deepClone(store.get(path));
-		},
-		delete: del,
-	};
+	return api;
 }
