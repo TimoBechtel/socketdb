@@ -14,11 +14,13 @@ export function createStore(): Store {
 		let current = store;
 		for (let key of parsePath(path)) {
 			if (
+				!isObject(current.value) ||
 				current.value[key] === undefined ||
 				current.value[key].value === null
 			) {
 				return nodeify(null);
 			}
+			current.value;
 			current = current.value[key];
 		}
 		return current;

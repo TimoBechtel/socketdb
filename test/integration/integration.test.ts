@@ -27,6 +27,7 @@ test('client receives updated data', (done) => {
 		},
 	};
 	SocketDBServer({ socketServer });
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -92,6 +93,7 @@ test('all clients receive data on update', async () => {
 	};
 	SocketDBServer({ socketServer });
 
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -102,6 +104,7 @@ test('all clients receive data on update', async () => {
 		},
 		'1'
 	);
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -181,6 +184,7 @@ test('only sends data once for every update on same root path', (done) => {
 		},
 	};
 	SocketDBServer({ socketServer });
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -232,6 +236,7 @@ test('on/once always receives data on first call, even when not subscribed to be
 		},
 	};
 	SocketDBServer({ socketServer, updateInterval: 5 });
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -280,6 +285,7 @@ test('should notify client on deletion', (done) => {
 		},
 	};
 	SocketDBServer({ socketServer, updateInterval: 5, store });
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},

@@ -1,5 +1,6 @@
 import { Node } from './node';
 import { createStore } from './store';
+import { isObject } from './utils';
 
 type Queue = (update: Change | Deletion) => void;
 
@@ -33,7 +34,7 @@ export function createUpdateBatcher(
 
 	let diff = createStore();
 	let deletions: Set<string> = new Set();
-	let pendingUpdate = null;
+	let pendingUpdate: NodeJS.Timeout | null = null;
 
 	return (update: Change | Deletion) => {
 		if (!pendingUpdate) {
@@ -43,8 +44,9 @@ export function createUpdateBatcher(
 				pendingUpdate = null;
 				const update: BatchedUpdate = {};
 				if (deletions.size > 0) update.delete = Array.from(deletions);
-				if (Object.keys(diff.get().value).length > 0)
-					update.change = diff.get();
+				const node = diff.get();
+				if (isObject(node.value) && Object.keys(node.value).length > 0)
+					update.change = node;
 				flush(update);
 			}, updateInterval);
 		}

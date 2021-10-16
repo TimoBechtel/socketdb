@@ -1,4 +1,4 @@
-export function isObject(value: any) {
+export function isObject(value: any): value is Record<string, unknown> {
 	return typeof value === 'object' && !!value && !Array.isArray(value);
 }
 

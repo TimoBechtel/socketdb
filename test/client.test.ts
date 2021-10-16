@@ -1,8 +1,8 @@
 import { SocketDBClient } from '../src/client';
-import { createStore } from '../src/store';
-import { SocketClient } from '../src/socketAdapter/socketClient';
-import { createEventBroker } from '../src/socketAdapter/eventBroker';
 import { nodeify } from '../src/node';
+import { createEventBroker } from '../src/socketAdapter/eventBroker';
+import { SocketClient } from '../src/socketAdapter/socketClient';
+import { createStore } from '../src/store';
 import { BatchedUpdate } from '../src/updateBatcher';
 
 test('throws error when using * as pathname', () => {
@@ -794,7 +794,7 @@ test('subscribes again after reconnect', (done) => {
 	const { addListener, notify } = createEventBroker();
 	let subscribeCount = 0;
 
-	let connect, disconnect;
+	let connect: () => void, disconnect: () => void;
 	const socketClient: SocketClient = {
 		onConnect(callback) {
 			connect = callback;
@@ -821,6 +821,7 @@ test('subscribes again after reconnect', (done) => {
 		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect();
 
 	let updateCount = 1;
@@ -838,7 +839,7 @@ test('subscribes again after reconnect', (done) => {
 test('should not update local cache on connection lost', (done) => {
 	let updateCount = 0;
 
-	let disconnect;
+	let disconnect: () => void;
 	const socketClient: SocketClient = {
 		onConnect() {},
 		onDisconnect(callback) {
@@ -852,6 +853,7 @@ test('should not update local cache on connection lost', (done) => {
 		close() {},
 	};
 	const client = SocketDBClient({ socketClient });
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	disconnect();
 	client.get('players').get('1').set({ name: 'Thomas' });
 	setTimeout(() => {

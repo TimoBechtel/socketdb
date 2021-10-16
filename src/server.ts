@@ -35,11 +35,13 @@ export type ServerHooks = {
 	>;
 	'server:update'?: Hook<
 		{ data: Node },
-		{ client: { id: string }; api: SocketDBServerAPI }
+		// if client id is null, it means the update comes from the server
+		{ client: { id: string | null }; api: SocketDBServerAPI }
 	>;
 	'server:delete'?: Hook<
 		{ path: string },
-		{ client: { id: string }; api: SocketDBServerAPI }
+		// if client id is null, it means the deletion comes from the server
+		{ client: { id: string | null }; api: SocketDBServerAPI }
 	>;
 };
 
@@ -76,14 +78,14 @@ export function SocketDBServer({
 	function registerPlugins(plugins: ServerPlugin[]) {
 		plugins.forEach((plugin) => {
 			Object.entries(plugin.hooks).forEach(
-				([name, hook]: [keyof ServerHooks, ServerHooks[keyof ServerHooks]]) => {
-					hooks.register(name, hook);
+				([name, hook]: [string, ServerHooks[keyof ServerHooks]]) => {
+					hooks.register(name as keyof ServerHooks, hook);
 				}
 			);
 		});
 	}
 
-	function update(data: Node, id: string = null) {
+	function update(data: Node, id: string | null = null) {
 		hooks
 			.call('server:update', {
 				args: { data },
@@ -99,7 +101,7 @@ export function SocketDBServer({
 			.catch(console.log);
 	}
 
-	function del(path: string, id: string = null) {
+	function del(path: string, id: string | null = null) {
 		hooks
 			.call(
 				'server:delete',
@@ -118,10 +120,11 @@ export function SocketDBServer({
 		Object.values(subscriber).forEach((subscription) => {
 			Object.entries(subscription).forEach(([subscribedPath, callback]) => {
 				let update: BatchedUpdate = {};
-				const deletePaths: string[] = diff.delete?.filter(
-					(path) =>
-						path.startsWith(subscribedPath) || subscribedPath.startsWith(path)
-				);
+				const deletePaths: string[] =
+					diff.delete?.filter(
+						(path) =>
+							path.startsWith(subscribedPath) || subscribedPath.startsWith(path)
+					) || [];
 				if (deletePaths && deletePaths.length > 0) update.delete = deletePaths;
 				if (diff.change) {
 					traverseNode(diff.change, (path, data) => {
@@ -187,7 +190,7 @@ export function SocketDBServer({
 		client.on('subscribeKeys', ({ path }) => {
 			const data = store.get(path);
 			const wildcardPath = joinPath(path, '*');
-			let keys = [];
+			let keys: string[] = [];
 			if (isObject(data.value)) {
 				keys = Object.keys(data.value);
 				client.send(wildcardPath, { data: keys });

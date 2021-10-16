@@ -1,9 +1,9 @@
-import { createEventBroker } from '../src/socketAdapter/eventBroker';
-import { SocketServer } from '../src/socketAdapter/socketServer';
-import { SocketDBServer } from '../src/server';
-import { createStore } from '../src/store';
-import { Socket } from '../src/socketAdapter/socket';
 import { nodeify } from '../src/node';
+import { SocketDBServer } from '../src/server';
+import { createEventBroker } from '../src/socketAdapter/eventBroker';
+import { Socket } from '../src/socketAdapter/socket';
+import { SocketServer } from '../src/socketAdapter/socketServer';
+import { createStore } from '../src/store';
 import { BatchedUpdate } from '../src/updateBatcher';
 
 test('updates data on manual update', () => {
@@ -38,6 +38,7 @@ test('updates data on socket request', () => {
 	};
 	SocketDBServer({ store, socketServer });
 
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -78,6 +79,7 @@ test('deletes data on socket request', (done) => {
 	};
 	SocketDBServer({ store, socketServer });
 
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -136,6 +138,8 @@ test('sends data on first subscribe', (done) => {
 		},
 	};
 	SocketDBServer({ store, socketServer });
+
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -168,6 +172,8 @@ test('emits updates to subscriber', (done) => {
 	SocketDBServer({ store, socketServer });
 
 	let count = 1;
+
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -234,6 +240,8 @@ test('only emits changed values', (done) => {
 	SocketDBServer({ store, socketServer });
 
 	let updateCount = 0;
+
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -425,6 +433,8 @@ test('only send data if client is subscribed', (done) => {
 	const server = SocketDBServer({ store, socketServer });
 
 	let receivedCount = 0;
+
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},
@@ -470,6 +480,8 @@ test('should batch updates', (done) => {
 	SocketDBServer({ store, socketServer, updateInterval: 10 });
 
 	let receivedCount = 0;
+
+	// @ts-ignore - connect is set when the server is created above (synchronously)
 	connect(
 		{
 			onDisconnect() {},

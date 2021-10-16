@@ -1,13 +1,12 @@
+import { createHooks, Hook } from './hooks';
+import { isNode, Node, nodeify, traverseNode, unwrap } from './node';
+import { isWildcardPath, joinPath, parsePath, trimWildcard } from './path';
+import { Plugin } from './plugin';
 import { SocketClient } from './socketAdapter/socketClient';
 import { createWebsocketClient } from './socketAdapter/websocketClient';
-import { isWildcardPath, parsePath, trimWildcard } from './path';
 import { createStore, Store } from './store';
-import { deepClone, isObject, mergeDiff } from './utils';
-import { joinPath } from './path';
-import { isNode, Node, nodeify, traverseNode, unwrap } from './node';
 import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
-import { Plugin } from './plugin';
-import { createHooks, Hook } from './hooks';
+import { deepClone, isObject, mergeDiff } from './utils';
 
 export type SocketDBClientAPI = {
 	disconnect: () => void;
@@ -40,9 +39,9 @@ export type ClientHooks = {
 export type ClientPlugin = Plugin<ClientHooks>;
 
 export function SocketDBClient({
-	url,
+	url: _url,
 	store = createStore(),
-	socketClient,
+	socketClient: _socketClient,
 	updateInterval = 50,
 	plugins = [],
 }: {
@@ -52,12 +51,15 @@ export function SocketDBClient({
 	updateInterval?: number;
 	plugins?: ClientPlugin[];
 } = {}): SocketDBClientAPI {
-	if (!url && !socketClient)
-		url =
-			typeof window !== 'undefined'
-				? `ws://${window.location.hostname}:${window.location.port}`
-				: 'ws://localhost:8080';
-	if (!socketClient) socketClient = createWebsocketClient({ url });
+	let url: string =
+		_url ||
+		(typeof window !== 'undefined'
+			? `ws${window.location.protocol === 'https:' ? 's' : ''}://${
+					window.location.hostname
+			  }:${window.location.port}`
+			: 'ws://localhost:8080');
+	let socketClient: SocketClient =
+		_socketClient || createWebsocketClient({ url });
 
 	let subscribedPaths: string[] = [];
 	const updateListener: UpdateListener = {};
@@ -94,8 +96,8 @@ export function SocketDBClient({
 	function registerPlugins(plugins: ClientPlugin[]) {
 		plugins.forEach((plugin) => {
 			Object.entries(plugin.hooks).forEach(
-				([name, hook]: [keyof ClientHooks, ClientHooks[keyof ClientHooks]]) => {
-					hooks.register(name, hook);
+				([name, hook]: [string, ClientHooks[keyof ClientHooks]]) => {
+					hooks.register(name as keyof ClientHooks, hook);
 				}
 			);
 		});
@@ -137,7 +139,7 @@ export function SocketDBClient({
 	function addSocketPathSubscription(path: string) {
 		if (isWildcardPath(path)) {
 			socketClient.on(path, ({ data: keys }: { data: string[] }) => {
-				const update = {};
+				const update: { [key: string]: any } = {};
 				keys.forEach((key) => (update[key] = null));
 				updateListener[path].forEach((callback) => callback(nodeify(update)));
 			});
@@ -237,7 +239,7 @@ export function SocketDBClient({
 			},
 			each(callback) {
 				const wildcardPath = joinPath(path, '*');
-				let keys = [];
+				let keys: string[] = [];
 				const onKeysReceived = (node: Node) => {
 					if (isObject(node.value)) {
 						const newKeys = Object.keys(node.value).filter(
@@ -307,7 +309,7 @@ export function SocketDBClient({
 }
 
 function creatUpdate(path: string, data: Node): Node {
-	const diff: Node = { value: {} };
+	const diff: { value: { [key: string]: Node } } = { value: {} };
 	let current = diff;
 	const keys = parsePath(path);
 	keys.forEach((key, i) => {

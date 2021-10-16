@@ -2,8 +2,6 @@
 	"compilerOptions": {
 		"target": "ES2020",
 		"module": "commonjs",
-		"outDir": "dist",
-		"rootDir": "src",
 		"declaration": true,
 		"moduleResolution": "Node",
 		"esModuleInterop": true,
@@ -16,7 +14,5 @@
 		"strictPropertyInitialization": true,
 		"noUnusedLocals": true,
 		"noFallthroughCasesInSwitch": true
-	},
-	"include": ["src"],
-	"exclude": ["node_modules", "src/browser"]
+	}
 }

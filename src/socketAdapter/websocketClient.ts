@@ -21,8 +21,8 @@ export const createWebsocketClient = ({
 	}
 
 	const messageEvents = createEventBroker();
-	const connectionClosedListener = [];
-	const connectionOpenedListener = [];
+	const connectionClosedListener: (() => void)[] = [];
+	const connectionOpenedListener: (() => void)[] = [];
 	let manuallyClosed = false;
 
 	let socket: Promise<WebSocket>;
@@ -51,12 +51,12 @@ export const createWebsocketClient = ({
 		connectionOpenedListener.forEach((callback) => callback());
 	}
 
-	function onMessage({ data: packet }) {
+	function onMessage({ data: packet }: MessageEvent) {
 		const { event, data } = JSON.parse(packet);
 		messageEvents.notify(event, data);
 	}
 
-	async function onError(error) {
+	async function onError(error: Event) {
 		console.log(error);
 		(await socket).close();
 	}

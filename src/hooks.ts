@@ -51,19 +51,22 @@ export function createHooks<T extends Hooks>() {
 		{ asRef = false } = {}
 	): Promise<void | ExtractArguments<T[Key]>> {
 		let result = args;
-		if (hooks[name]) {
-			if (!asRef && args) result = deepClone(args);
-			for (const hook of hooks[name]) {
-				const res = await hook(result, context);
-				if (res) result = res;
-			}
+		const registeredHooks = hooks[name];
+		if (!registeredHooks) return result;
+
+		if (!asRef && args) result = deepClone(args);
+		for (let i = 0; i < registeredHooks.length; i++) {
+			const hook = registeredHooks[i];
+			const res = await hook(result, context);
+			if (res) result = res;
 		}
+
 		return result;
 	}
 
 	function register(name: K, hook: T[K]) {
 		if (!hooks[name]) hooks[name] = [];
-		hooks[name].push(hook);
+		hooks[name]?.push(hook);
 	}
 
 	return {
