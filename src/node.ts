@@ -1,9 +1,11 @@
 import { joinPath } from './path';
 import { isObject } from './utils';
 
+export type Value = string | number | boolean | null | Value[];
+
 export type Node = {
 	meta?: { [namespace: string]: any };
-	value: { [key: string]: Node } | null | string | number | any[];
+	value: { [key: string]: Node } | Value;
 };
 
 export function isNode(value: any): value is Node {

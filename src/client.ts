@@ -1,5 +1,5 @@
 import { createHooks, Hook } from './hooks';
-import { isNode, Node, nodeify, traverseNode, unwrap } from './node';
+import { isNode, Node, nodeify, traverseNode, unwrap, Value } from './node';
 import { isWildcardPath, joinPath, parsePath, trimWildcard } from './path';
 import { Plugin } from './plugin';
 import { SocketClient } from './socketAdapter/socketClient';
@@ -8,20 +8,33 @@ import { createStore, Store } from './store';
 import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
 import { deepClone, isObject, mergeDiff } from './utils';
 
-export type SocketDBClientAPI = {
+export type SocketDBClientAPI<Schema extends SchemaDefinition> = {
 	disconnect: () => void;
-} & ChainReference;
+} & ChainReference<Schema>;
 
 type Unsubscriber = () => void;
 type Meta = Node['meta'];
 
-export type ChainReference = {
-	get: (path: string) => ChainReference;
-	each: (callback: (ref: ChainReference, key: string) => void) => Unsubscriber;
-	set: (value: any, meta?: Meta) => ChainReference;
+type KeyValue = { [key: string]: Value | KeyValue };
+
+type SchemaDefinition = KeyValue | Value;
+
+export type ChainReference<Schema extends SchemaDefinition> = {
+	get<Key extends keyof Schema>(
+		path: Key
+	): ChainReference<Schema extends KeyValue ? Schema[Key] : never>;
+	each: (
+		callback: (
+			ref: ChainReference<
+				Schema extends KeyValue ? Schema[keyof Schema] : never
+			>,
+			key: keyof Schema
+		) => void
+	) => Unsubscriber;
+	set: (value: Schema, meta?: Meta) => ChainReference<Schema>;
 	delete: () => void;
-	on: (callback: (data: any, meta: Meta) => void) => Unsubscriber;
-	once: (callback: (data: any, meta: Meta) => void) => void;
+	on: (callback: (data: Schema | null, meta: Meta) => void) => Unsubscriber;
+	once: (callback: (data: Schema | null, meta: Meta) => void) => void;
 };
 
 type UpdateListener = {
@@ -38,7 +51,7 @@ export type ClientHooks = {
 
 export type ClientPlugin = Plugin<ClientHooks>;
 
-export function SocketDBClient({
+export function SocketDBClient<Schema extends SchemaDefinition = any>({
 	url: _url,
 	store = createStore(),
 	socketClient: _socketClient,
@@ -50,7 +63,7 @@ export function SocketDBClient({
 	socketClient?: SocketClient;
 	updateInterval?: number;
 	plugins?: ClientPlugin[];
-} = {}): SocketDBClientAPI {
+} = {}): SocketDBClientAPI<Schema> {
 	let url: string =
 		_url ||
 		(typeof window !== 'undefined'
@@ -229,13 +242,15 @@ export function SocketDBClient({
 		}
 	}
 
-	function get(path: string): ChainReference {
+	function get<Schema extends SchemaDefinition>(
+		path: string
+	): ChainReference<Schema> {
 		const rootPath = path;
 		return {
-			get(path: string): ChainReference {
-				if (isWildcardPath(path))
+			get(path) {
+				if (isWildcardPath(path + ''))
 					throw new Error('You cannot use * (wildcard) as a pathname.');
-				return get(joinPath(rootPath, path));
+				return get(joinPath(rootPath, path + ''));
 			},
 			each(callback) {
 				const wildcardPath = joinPath(path, '*');
@@ -247,7 +262,7 @@ export function SocketDBClient({
 						);
 						newKeys.forEach((key) => {
 							const refpath = joinPath(path, key);
-							callback(get(refpath), key);
+							callback(get(refpath), key as keyof Schema);
 						});
 						keys = [...keys, ...newKeys];
 					}
@@ -282,7 +297,7 @@ export function SocketDBClient({
 			},
 			on(callback) {
 				const listener = (data: Node) => {
-					callback(unwrap(data), data.meta);
+					callback(unwrap(data) as Schema, data.meta);
 				};
 				subscribe(path, listener);
 				return () => {
@@ -294,7 +309,7 @@ export function SocketDBClient({
 					// maybe should use subscribe {once: true} ?
 					// and not send "unsubscribe" back
 					unsubscribe(path, listener);
-					callback(unwrap(data), data.meta);
+					callback(unwrap(data) as Schema, data.meta);
 				});
 			},
 		};

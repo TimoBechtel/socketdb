@@ -14,7 +14,10 @@ test('throws error when using * as pathname', () => {
 		send() {},
 		close() {},
 	};
-	const client = SocketDBClient({ socketClient });
+	type Schema = {
+		players: { [key: string]: { name: string } };
+	};
+	const client = SocketDBClient<Schema>({ socketClient });
 
 	expect(() => client.get('players').get('1*').get('name')).toThrowError();
 });
@@ -109,6 +112,10 @@ test('deletes data and notifies local subscribers', (done) => {
 });
 
 test('should batch updates', (done) => {
+	type Schema = {
+		players: { [key: string]: { name: string; hp: number } };
+	};
+
 	let sendCount = 0;
 	const socketClient: SocketClient = {
 		onConnect() {},
@@ -132,7 +139,7 @@ test('should batch updates', (done) => {
 		},
 		close() {},
 	};
-	const client = SocketDBClient({ socketClient, updateInterval: 10 });
+	const client = SocketDBClient<Schema>({ socketClient, updateInterval: 10 });
 
 	client.get('players').get('1').get('name').set('Patrick');
 	client.get('players').get('1').get('name').delete();
