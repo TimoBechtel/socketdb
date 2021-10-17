@@ -1,3 +1,10 @@
+## [3.8.1](https://github.com/TimoBechtel/socketdb/compare/v3.8.0...v3.8.1) (2021-10-17)
+
+
+### Bug Fixes
+
+* **typescript:** allow using types without providing a generic type ([a973a93](https://github.com/TimoBechtel/socketdb/commit/a973a93c6a530eb927ad146e90776285049ad0d7))
+
 # [3.8.0](https://github.com/TimoBechtel/socketdb/compare/v3.7.2...v3.8.0) (2021-10-17)
 
 
