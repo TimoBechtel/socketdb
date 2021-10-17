@@ -17,7 +17,7 @@ import { createStore, Store } from './store';
 import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
 import { deepClone, isObject, mergeDiff } from './utils';
 
-export type SocketDBClientAPI<Schema extends SchemaDefinition> = {
+export type SocketDBClientAPI<Schema extends SchemaDefinition = any> = {
 	disconnect: () => void;
 } & ChainReference<Schema>;
 
@@ -25,7 +25,7 @@ type Unsubscriber = () => void;
 
 type SchemaDefinition = KeyValue | Value;
 
-export type ChainReference<Schema extends SchemaDefinition> = {
+export type ChainReference<Schema extends SchemaDefinition = any> = {
 	get<Key extends keyof Schema>(
 		path: Schema extends KeyValue ? Key : never
 	): ChainReference<Schema extends KeyValue ? Schema[Key] : never>;
