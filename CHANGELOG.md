@@ -1,3 +1,11 @@
+# [3.8.0](https://github.com/TimoBechtel/socketdb/compare/v3.7.2...v3.8.0) (2021-10-17)
+
+
+### Features
+
+* **plugins:** add server api to plugin context ([35e6d76](https://github.com/TimoBechtel/socketdb/commit/35e6d767dc40c76e40d6659daebce319a8a0f4cd))
+* **typescript:** add type checking by using a data schema ([aeb93c4](https://github.com/TimoBechtel/socketdb/commit/aeb93c4c9d3b3b60c6a385a5a046f2c18125cf83))
+
 ## [3.7.2](https://github.com/TimoBechtel/socketdb/compare/v3.7.1...v3.7.2) (2021-02-22)
 
 
