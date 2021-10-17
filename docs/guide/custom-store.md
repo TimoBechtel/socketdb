@@ -1,7 +1,7 @@
 # Custom Store
 
 You can use your own store for the [SocketDBClient](/api/client) as well as [SocketDBServer](/api/server).
-This allows you to, for example, to add persistence to your application.
+This allows you to, for example, add persistence to your application.
 
 Simply write a function that returns an object with these functions:
 

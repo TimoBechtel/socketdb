@@ -3,21 +3,34 @@ import { isObject } from './utils';
 
 export type Value = string | number | boolean | null | Value[];
 
-export type Node = {
-	meta?: { [namespace: string]: any };
-	value: { [key: string]: Node } | Value;
+// might be extended by external socketdb plugins
+export interface Meta {
+	[namespace: string]: any;
+}
+
+export type KeyValue = {
+	[key: string]: Value | KeyValue;
+};
+
+export type Node<Schema extends KeyValue | Value = any> = {
+	meta?: Meta;
+	value: Schema extends KeyValue
+		? { [Key in keyof Schema]: Node<Schema[Key]> }
+		: Value;
 };
 
 export function isNode(value: any): value is Node {
 	return (value as Node)?.value !== undefined;
 }
 
-export function nodeify(data: any): Node {
-	const node: { value: { [key: string]: Node } } = { value: {} };
+export function nodeify<Schema extends KeyValue | Value>(
+	data: Schema
+): Node<Schema> {
+	const node: { value: any } = { value: {} };
 	if (isObject(data)) {
 		Object.entries(data).forEach(([key, value]) => {
 			if (isObject(value)) {
-				node.value[key] = nodeify(value);
+				node.value[key] = nodeify(value as KeyValue);
 			} else {
 				node.value[key] = { value: value as any };
 			}
@@ -28,16 +41,20 @@ export function nodeify(data: any): Node {
 	return node;
 }
 
-export function unwrap(node: Node) {
+export function unwrap<Schema extends KeyValue | Value>(
+	node: Node<Schema>
+): Schema {
 	if (isObject(node.value)) {
 		const data: { [key: string]: any } = {};
-		Object.entries(node.value).forEach(([key, node]) => {
-			if (isObject(node.value)) data[key] = unwrap(node);
-			else data[key] = node.value;
-		});
-		return data;
+		Object.entries<Node<Value | KeyValue>>(node.value).forEach(
+			([key, node]) => {
+				if (isObject(node.value)) data[key] = unwrap(node);
+				else data[key] = node.value;
+			}
+		);
+		return data as Schema;
 	} else {
-		return node.value;
+		return node.value as unknown as Schema;
 	}
 }
 

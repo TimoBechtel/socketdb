@@ -19,7 +19,7 @@ export type SocketDBServerAPI = {
 };
 
 /**
- * Deprecated. Use SocketDBServerAPI instead.
+ * @deprecated. Use SocketDBServerAPI instead.
  * Type alias will be removed in a future update.
  */
 export type SocketDB = SocketDBServerAPI;

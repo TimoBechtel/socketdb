@@ -493,6 +493,12 @@ test('also receives metadata', (done) => {
 });
 
 test('allows setting metadata', (done) => {
+	type Schema = {
+		players: {
+			[key: string]: string;
+		};
+	};
+
 	const metaExample = { owner: 'Thomas' };
 	const socketClient: SocketClient = {
 		onConnect() {},
@@ -508,7 +514,7 @@ test('allows setting metadata', (done) => {
 		},
 		close() {},
 	};
-	const client = SocketDBClient({ socketClient });
+	const client = SocketDBClient<Schema>({ socketClient });
 	client.get('players').get('1').set('b', metaExample);
 });
 

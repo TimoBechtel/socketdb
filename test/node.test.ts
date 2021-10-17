@@ -73,7 +73,7 @@ test('unwraps node with a single string', () => {
 });
 
 test('traverses node until true was returned', () => {
-	const node: Node = nodeify({
+	const node = nodeify({
 		player: { 1: { position: { x: 0, y: 1 } }, 2: {} },
 	});
 	let loopCount = 0;

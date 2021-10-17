@@ -1,5 +1,14 @@
 import { createHooks, Hook } from './hooks';
-import { isNode, Node, nodeify, traverseNode, unwrap, Value } from './node';
+import {
+	isNode,
+	KeyValue,
+	Meta,
+	Node,
+	nodeify,
+	traverseNode,
+	unwrap,
+	Value,
+} from './node';
 import { isWildcardPath, joinPath, parsePath, trimWildcard } from './path';
 import { Plugin } from './plugin';
 import { SocketClient } from './socketAdapter/socketClient';
@@ -13,15 +22,12 @@ export type SocketDBClientAPI<Schema extends SchemaDefinition> = {
 } & ChainReference<Schema>;
 
 type Unsubscriber = () => void;
-type Meta = Node['meta'];
-
-type KeyValue = { [key: string]: Value | KeyValue };
 
 type SchemaDefinition = KeyValue | Value;
 
 export type ChainReference<Schema extends SchemaDefinition> = {
 	get<Key extends keyof Schema>(
-		path: Key
+		path: Schema extends KeyValue ? Key : never
 	): ChainReference<Schema extends KeyValue ? Schema[Key] : never>;
 	each: (
 		callback: (
@@ -31,10 +37,17 @@ export type ChainReference<Schema extends SchemaDefinition> = {
 			key: keyof Schema
 		) => void
 	) => Unsubscriber;
+	/**
+	 * Save data and optionally add meta data.
+	 *
+	 * When passing an empty object as value, it will be ignored.
+	 * This is useful for just setting meta data without changing any data itself.
+	 * Note: This behavior might change in the future.
+	 */
 	set: (value: Schema, meta?: Meta) => ChainReference<Schema>;
 	delete: () => void;
-	on: (callback: (data: Schema | null, meta: Meta) => void) => Unsubscriber;
-	once: (callback: (data: Schema | null, meta: Meta) => void) => void;
+	on: (callback: (data: Schema | null, meta?: Meta) => void) => Unsubscriber;
+	once: (callback: (data: Schema | null, meta?: Meta) => void) => void;
 };
 
 type UpdateListener = {
@@ -42,7 +55,11 @@ type UpdateListener = {
 };
 
 export type ClientHooks = {
-	'client:set'?: Hook<{ path: string; value: any; meta: Meta }>;
+	'client:set'?: Hook<{
+		path: string;
+		value: SchemaDefinition;
+		meta?: Meta;
+	}>;
 	'client:delete'?: Hook<{ path: string }>;
 	'client:firstConnect'?: Hook;
 	'client:reconnect'?: Hook;
@@ -297,7 +314,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 			},
 			on(callback) {
 				const listener = (data: Node) => {
-					callback(unwrap(data) as Schema, data.meta);
+					callback(unwrap(data), data.meta);
 				};
 				subscribe(path, listener);
 				return () => {
@@ -309,7 +326,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 					// maybe should use subscribe {once: true} ?
 					// and not send "unsubscribe" back
 					unsubscribe(path, listener);
-					callback(unwrap(data) as Schema, data.meta);
+					callback(unwrap(data), data.meta);
 				});
 			},
 		};
