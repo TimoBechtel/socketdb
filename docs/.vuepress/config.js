@@ -83,13 +83,14 @@ module.exports = {
 					collapsable: false,
 					children: ['', 'quick-start', 'client', 'server'],
 				},
+				'plugins',
 				{
 					title: 'Advanced',
 					children: ['persistence'],
 				},
 				{
 					title: 'Extensions',
-					children: ['plugins', 'custom-store'],
+					children: ['create-plugins', 'custom-store'],
 				},
 			],
 			'/api/': [
