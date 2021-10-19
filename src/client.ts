@@ -51,7 +51,7 @@ export type ChainReference<Schema extends SchemaDefinition = any> = {
 };
 
 type UpdateListener = {
-	[path: string]: ((data: any) => void)[];
+	[path: string]: ((data: Node) => void)[];
 };
 
 export type ClientHooks = {
@@ -150,16 +150,19 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 					delete listener[wildcardPath];
 				}
 			}
-			// if a path is subscribed but has no data, we still need to inform subscribers
-			// this has the issue, that it notifies even if data has not changed
+			// if a value at a path is not an object, every child path has been deleted or overwritten
+			// so we need to notify all listeners of any child paths
+			// this has the issue, that it notifies even if data has not changed (meaning it was already null)
+			// examples when this happens:
+			// - path '/a' is updated with value '1', path '/a/b' is subscribed -> will be notified with value 'null'
+			// - path '/a' is deleted (set to null), path '/a/b' is subscribed -> will be notified with value 'null'
 			if (!isObject(data.value)) {
 				Object.keys(listener).forEach((subscribedPath) => {
 					if (subscribedPath.startsWith(path)) {
-						let storedData = store.get(subscribedPath);
-						storedData = deepClone(storedData);
 						listener[subscribedPath].forEach((listener) =>
-							listener(storedData)
+							listener(nodeify(null))
 						);
+						delete listener[subscribedPath];
 					}
 				});
 			}
