@@ -1,4 +1,9 @@
-import { isWildcardPath, parsePath, trimWildcard } from '../src/path';
+import {
+	isChildPath,
+	isWildcardPath,
+	parsePath,
+	trimWildcard,
+} from '../src/path';
 
 test('parses path', () => {
 	expect(parsePath('/players/1/position')).toEqual([
@@ -31,4 +36,15 @@ test('trims wildcard from path', () => {
 	expect(trimWildcard('/*')).toEqual('');
 	// expects '/*' to be present:
 	expect(trimWildcard('asc*')).toEqual('as');
+});
+
+test('checks if path is a child of another path', () => {
+	expect(isChildPath('a/b/c', 'a/b')).toBe(true);
+	expect(isChildPath('a/b', 'a')).toBe(true);
+	expect(isChildPath('a/*', 'a')).toBe(true);
+	expect(isChildPath('a', '')).toBe(true);
+
+	expect(isChildPath('a', 'a')).toBe(false);
+	expect(isChildPath('a/b/cd', 'a/b/c')).toBe(false);
+	expect(isChildPath('a', 'a/b')).toBe(false);
 });

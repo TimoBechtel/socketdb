@@ -84,6 +84,33 @@ test('traverses node until true was returned', () => {
 	expect(loopCount).toBe(4);
 });
 
+test('traverseNode should only call a callback for a path once', () => {
+	const node = nodeify({
+		player: {
+			1: {
+				position: { x: 0, y: 1 },
+			},
+			2: {},
+		},
+	});
+
+	let pathsExpected = [
+		'player',
+		'player/1',
+		'player/2',
+		'player/1/position',
+		'player/1/position/x',
+		'player/1/position/y',
+	];
+
+	let paths: string[] = [];
+
+	traverseNode(node, (path) => {
+		paths.push(path);
+	});
+	expect(paths).toEqual(pathsExpected);
+});
+
 test('checks if value is node', () => {
 	expect(isNode({})).toBe(false);
 	expect(isNode('')).toBe(false);

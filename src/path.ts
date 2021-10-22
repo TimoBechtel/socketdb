@@ -17,3 +17,7 @@ export function isWildcardPath(path: string): boolean {
 export function trimWildcard(path: string): string {
 	return isWildcardPath(path) ? path.slice(0, -2) : path;
 }
+
+export function isChildPath(path: string, parentPath: string): boolean {
+	return path.startsWith(joinPath(parentPath, ''));
+}

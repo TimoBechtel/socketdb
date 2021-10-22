@@ -9,7 +9,13 @@ import {
 	unwrap,
 	Value,
 } from './node';
-import { isWildcardPath, joinPath, parsePath, trimWildcard } from './path';
+import {
+	isChildPath,
+	isWildcardPath,
+	joinPath,
+	parsePath,
+	trimWildcard,
+} from './path';
 import { Plugin } from './plugin';
 import { SocketClient } from './socketAdapter/socketClient';
 import { createWebsocketClient } from './socketAdapter/websocketClient';
@@ -134,20 +140,21 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 	}
 
 	function notifySubscriber(diff: Node) {
-		const listener: UpdateListener = { ...updateListener };
 		// TODO: make this thing more efficient,
 		// should not go through multiple loops
 		traverseNode(diff, (path, data) => {
+			const hasChildren = isObject(data.value);
+
 			const wildcardPath = joinPath(path, '*');
-			if (listener[path] || listener[wildcardPath]) {
+			if (updateListener[path] || updateListener[wildcardPath]) {
 				let storedData = deepClone(store.get(path));
-				if (listener[path]) {
-					listener[path].forEach((listener) => listener(storedData));
-					delete listener[path];
+				if (updateListener[path]) {
+					updateListener[path].forEach((listener) => listener(storedData));
 				}
-				if (listener[wildcardPath]) {
-					listener[wildcardPath].forEach((listener) => listener(storedData));
-					delete listener[wildcardPath];
+				if (hasChildren && updateListener[wildcardPath]) {
+					updateListener[wildcardPath].forEach((listener) =>
+						listener(storedData)
+					);
 				}
 			}
 			// if a value at a path is not an object, every child path has been deleted or overwritten
@@ -156,13 +163,12 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 			// examples when this happens:
 			// - path '/a' is updated with value '1', path '/a/b' is subscribed -> will be notified with value 'null'
 			// - path '/a' is deleted (set to null), path '/a/b' is subscribed -> will be notified with value 'null'
-			if (!isObject(data.value)) {
-				Object.keys(listener).forEach((subscribedPath) => {
-					if (subscribedPath.startsWith(path)) {
-						listener[subscribedPath].forEach((listener) =>
+			if (!hasChildren) {
+				Object.keys(updateListener).forEach((subscribedPath) => {
+					if (isChildPath(subscribedPath, path)) {
+						updateListener[subscribedPath].forEach((listener) =>
 							listener(nodeify(null))
 						);
-						delete listener[subscribedPath];
 					}
 				});
 			}
@@ -241,7 +247,11 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 			addSocketPathSubscription(path);
 		} else {
 			/* 
-			  if cached data is null, it either means:
+			  if path is not subscribed, but a higher level path is,
+			  we assume that the cached data is already up to date
+			  and we notify the callback with the cached data.
+			  
+			  If cached data is null, it either means:
 			   a) we have no data yet, or:
 			   b) data does not exist on server yet/anymore
 			  in both cases we don't need to notify user on first request
