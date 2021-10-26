@@ -1,20 +1,20 @@
-type EventBroker = {
-	addListener: (event: string, listener: (message: string) => void) => void;
-	removeListener: (event: string, listener?: (message: string) => void) => void;
-	notify: (event: string, data: any) => void;
+type EventBroker<T> = {
+	addListener: (event: string, listener: (message: T) => void) => void;
+	removeListener: (event: string, listener?: (message: T) => void) => void;
+	notify: (event: string, data: T) => void;
 };
 
-export function createEventBroker(): EventBroker {
+export function createEventBroker<T = any>(): EventBroker<T> {
 	const messageListener: {
-		[event: string]: ((message: string) => void)[];
+		[event: string]: ((message: T) => void)[];
 	} = {};
 
-	function addListener(event: string, listener: (message: string) => void) {
+	function addListener(event: string, listener: (message: T) => void) {
 		if (!messageListener[event]) messageListener[event] = [];
 		messageListener[event].push(listener);
 	}
 
-	function removeListener(event: string, listener?: (message: string) => void) {
+	function removeListener(event: string, listener?: (message: T) => void) {
 		if (listener)
 			messageListener[event]?.splice(
 				messageListener[event].indexOf(listener),
@@ -23,7 +23,7 @@ export function createEventBroker(): EventBroker {
 		else messageListener[event] = [];
 	}
 
-	function notify(event: string, data: any) {
+	function notify(event: string, data: T) {
 		messageListener[event]?.forEach((listener) => listener(data));
 	}
 	return {

@@ -9,17 +9,12 @@ import {
 	unwrap,
 	Value,
 } from './node';
-import {
-	isChildPath,
-	isWildcardPath,
-	joinPath,
-	parsePath,
-	trimWildcard,
-} from './path';
+import { isWildcardPath, joinPath, parsePath, trimWildcard } from './path';
 import { Plugin } from './plugin';
 import { SocketClient } from './socketAdapter/socketClient';
 import { createWebsocketClient } from './socketAdapter/websocketClient';
 import { createStore, Store } from './store';
+import { createSubscriptionManager } from './subscriptionManager';
 import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
 import { deepClone, isObject, mergeDiff } from './utils';
 
@@ -54,10 +49,6 @@ export type ChainReference<Schema extends SchemaDefinition = any> = {
 	delete: () => void;
 	on: (callback: (data: Schema | null, meta?: Meta) => void) => Unsubscriber;
 	once: (callback: (data: Schema | null, meta?: Meta) => void) => void;
-};
-
-type UpdateListener = {
-	[path: string]: ((data: Node) => void)[];
 };
 
 export type ClientHooks = {
@@ -97,8 +88,6 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 	let socketClient: SocketClient =
 		_socketClient || createWebsocketClient({ url });
 
-	let subscribedPaths: string[] = [];
-	const updateListener: UpdateListener = {};
 	const hooks = createHooks<ClientHooks>();
 
 	registerPlugins(plugins);
@@ -107,17 +96,76 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 		socketClient.send('update', { data: diff });
 	}, updateInterval);
 
-	let connectionLost = false;
-	socketClient.onConnect(() => {
-		if (connectionLost) {
-			// reattach subscriptions on every reconnect
-			subscribedPaths.forEach((path) => {
+	const subscriptions = {
+		update: createSubscriptionManager<Node>({
+			createPathSubscription(path, notify) {
+				if (isWildcardPath(path)) {
+					socketClient.on(path, ({ data: keys }: { data: string[] }) => {
+						notify(() => {
+							const update: { [key: string]: any } = {};
+							keys.forEach((key) => (update[key] = null));
+							return nodeify(update);
+						});
+					});
+					socketClient.send('subscribeKeys', { path: trimWildcard(path) });
+				} else {
+					socketClient.on(path, ({ data }: { data: BatchedUpdate }) => {
+						data.delete?.forEach((path) => {
+							store.del(path);
+							subscriptions.update.notify(path, (path) => store.get(path), {
+								recursiveDown: true,
+								recursiveUp: true,
+							});
+						});
+						if (data.change) {
+							const update = creatUpdate(path, data.change);
+							store.put(update);
+							traverseNode(update, (path, data) => {
+								subscriptions.update.notify(path, () =>
+									deepClone(store.get(path))
+								);
+								if (isObject(data.value)) {
+									// with child paths, we need to notify all listeners for the wildcard path
+									subscriptions.update.notify(joinPath(path, '*'), () =>
+										store.get(path)
+									);
+								} else {
+									// notify all subscribers of all child paths that their data has been deleted
+									// this has the issue, that it notifies even if data has not changed (meaning it was already null)
+									// examples when this happens:
+									// - path '/a' is updated with value '1', path '/a/b' is subscribed -> will be notified with value 'null'
+									// - path '/a' is deleted (set to null), path '/a/b' is subscribed -> will be notified with value 'null'
+									subscriptions.update.notify(path, nodeify(null), {
+										excludeSelf: true,
+										recursiveDown: true,
+									});
+								}
+							});
+						}
+					});
+					socketClient.send('subscribe', { path });
+				}
+			},
+			destroySubscription(path) {
+				socketClient.off(path);
+				socketClient.send('unsubscribe', { path });
+			},
+			restoreSubscription(path) {
 				if (isWildcardPath(path)) {
 					socketClient.send('subscribeKeys', { path: trimWildcard(path) });
 				} else {
 					socketClient.send('subscribe', { path });
 				}
-			});
+			},
+		}),
+	};
+
+	let connectionLost = false;
+	socketClient.onConnect(() => {
+		if (connectionLost) {
+			// reattach subscriptions on every reconnect
+			subscriptions.update.resubscribe();
+
 			hooks.call('client:reconnect');
 			connectionLost = false;
 		} else {
@@ -137,139 +185,6 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 				}
 			);
 		});
-	}
-
-	function notifySubscriber(diff: Node) {
-		// TODO: make this thing more efficient,
-		// should not go through multiple loops
-		traverseNode(diff, (path, data) => {
-			const hasChildren = isObject(data.value);
-
-			const wildcardPath = joinPath(path, '*');
-			if (updateListener[path] || updateListener[wildcardPath]) {
-				let storedData = deepClone(store.get(path));
-				if (updateListener[path]) {
-					updateListener[path].forEach((listener) => listener(storedData));
-				}
-				if (hasChildren && updateListener[wildcardPath]) {
-					updateListener[wildcardPath].forEach((listener) =>
-						listener(storedData)
-					);
-				}
-			}
-			// if a value at a path is not an object, every child path has been deleted or overwritten
-			// so we need to notify all listeners of any child paths
-			// this has the issue, that it notifies even if data has not changed (meaning it was already null)
-			// examples when this happens:
-			// - path '/a' is updated with value '1', path '/a/b' is subscribed -> will be notified with value 'null'
-			// - path '/a' is deleted (set to null), path '/a/b' is subscribed -> will be notified with value 'null'
-			if (!hasChildren) {
-				Object.keys(updateListener).forEach((subscribedPath) => {
-					if (isChildPath(subscribedPath, path)) {
-						updateListener[subscribedPath].forEach((listener) =>
-							listener(nodeify(null))
-						);
-					}
-				});
-			}
-		});
-	}
-
-	function addSocketPathSubscription(path: string) {
-		if (isWildcardPath(path)) {
-			socketClient.on(path, ({ data: keys }: { data: string[] }) => {
-				const update: { [key: string]: any } = {};
-				keys.forEach((key) => (update[key] = null));
-				updateListener[path].forEach((callback) => callback(nodeify(update)));
-			});
-			subscribedPaths.push(path);
-			socketClient.send('subscribeKeys', { path: trimWildcard(path) });
-		} else {
-			socketClient.on(path, ({ data }: { data: BatchedUpdate }) => {
-				data.delete?.forEach((path) => {
-					store.del(path);
-					const diff = creatUpdate(path, nodeify(null));
-					notifySubscriber(diff);
-				});
-				if (data.change) {
-					const update = creatUpdate(path, data.change);
-					store.put(update);
-					notifySubscriber(update);
-				}
-			});
-			subscribedPaths.push(path);
-			socketClient.send('subscribe', { path });
-		}
-	}
-
-	function removeSocketPathSubscription(path: string) {
-		if (subscribedPaths.indexOf(path) !== -1) {
-			socketClient.off(path);
-			subscribedPaths = subscribedPaths.filter((p) => p !== path);
-			socketClient.send('unsubscribe', { path });
-		}
-	}
-
-	function findLowerLevelSubscribedPaths(newPath: string) {
-		return subscribedPaths.filter(
-			(subscribedPath) =>
-				subscribedPath.length > newPath.length &&
-				subscribedPath.startsWith(newPath)
-		);
-	}
-
-	function isSameOrHigherLevelPathSubscribed(path: string): boolean {
-		return subscribedPaths.some((subscribedPath) =>
-			path.startsWith(subscribedPath)
-		);
-	}
-
-	function findNextHighestLevelPaths(path: string): string[] {
-		return Object.keys(updateListener)
-			.sort((k1, k2) => parsePath(k1).length - parsePath(k2).length)
-			.reduce((arr: string[], key: string) => {
-				if (key.startsWith(path)) {
-					if (!arr.some((k) => key.startsWith(k))) {
-						arr.push(key);
-					}
-				}
-				return arr;
-			}, []);
-	}
-
-	function subscribe(path: string, callback: (data: Node) => void) {
-		if (!updateListener[path]) updateListener[path] = [];
-		updateListener[path].push(callback);
-
-		if (!isSameOrHigherLevelPathSubscribed(path)) {
-			const oldPaths = findLowerLevelSubscribedPaths(path);
-			oldPaths.forEach(removeSocketPathSubscription);
-			addSocketPathSubscription(path);
-		} else {
-			/* 
-			  if path is not subscribed, but a higher level path is,
-			  we assume that the cached data is already up to date
-			  and we notify the callback with the cached data.
-			  
-			  If cached data is null, it either means:
-			   a) we have no data yet, or:
-			   b) data does not exist on server yet/anymore
-			  in both cases we don't need to notify user on first request
-			*/
-			const cachedData = store.get(trimWildcard(path));
-			if (cachedData.value !== null) callback(cachedData);
-		}
-	}
-
-	function unsubscribe(path: string, callback: (data: Node) => void) {
-		updateListener[path] = updateListener[path].filter((l) => l !== callback);
-
-		if (updateListener[path].length < 1) {
-			delete updateListener[path];
-			removeSocketPathSubscription(path);
-			const nextPaths = findNextHighestLevelPaths(path);
-			nextPaths.forEach(addSocketPathSubscription);
-		}
 	}
 
 	function get<Schema extends SchemaDefinition>(
@@ -297,10 +212,14 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 						keys = [...keys, ...newKeys];
 					}
 				};
-				subscribe(wildcardPath, onKeysReceived);
-				return () => {
-					unsubscribe(wildcardPath, onKeysReceived);
-				};
+				return subscriptions.update.subscribe(
+					wildcardPath,
+					onKeysReceived,
+					() => {
+						const cachedData = store.get(trimWildcard(path));
+						return cachedData.value === null ? null : cachedData;
+					}
+				);
 			},
 			set(value, meta) {
 				if (!connectionLost) {
@@ -329,18 +248,25 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 				const listener = (data: Node) => {
 					callback(unwrap(data), data.meta);
 				};
-				subscribe(path, listener);
-				return () => {
-					unsubscribe(path, listener);
-				};
+				return subscriptions.update.subscribe(path, listener, () => {
+					const cachedData = store.get(path);
+					return cachedData.value === null ? null : cachedData;
+				});
 			},
 			once(callback) {
-				subscribe(path, function listener(data) {
-					// maybe should use subscribe {once: true} ?
-					// and not send "unsubscribe" back
-					unsubscribe(path, listener);
-					callback(unwrap(data), data.meta);
-				});
+				subscriptions.update.subscribe(
+					path,
+					function listener(data) {
+						// maybe should use subscribe {once: true} ?
+						// and not send "unsubscribe" back
+						subscriptions.update.unsubscribe(path, listener);
+						callback(unwrap(data), data.meta);
+					},
+					() => {
+						const cachedData = store.get(path);
+						return cachedData.value === null ? null : cachedData;
+					}
+				);
 			},
 		};
 	}

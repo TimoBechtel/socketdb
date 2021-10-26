@@ -519,7 +519,8 @@ test('allows setting metadata', (done) => {
 });
 
 test('on/once always receives data on first call', (done) => {
-	const { addListener, removeListener, notify } = createEventBroker();
+	const { addListener, removeListener, notify } =
+		createEventBroker<{ data: BatchedUpdate }>();
 	const socketClient: SocketClient = {
 		onConnect() {},
 		onDisconnect() {},
@@ -804,7 +805,7 @@ test('if data is null, should notify every subpath', (done) => {
 });
 
 test('subscribes again after reconnect', (done) => {
-	const { addListener, notify } = createEventBroker();
+	const { addListener, notify } = createEventBroker<{ data: BatchedUpdate }>();
 	let subscribeCount = 0;
 
 	let connect: () => void, disconnect: () => void;
@@ -823,7 +824,7 @@ test('subscribes again after reconnect', (done) => {
 			expect(path).toBe('players/1');
 			expect(once).not.toBe(true);
 			if (subscribeCount === 1) {
-				notify('players/1', { data: nodeify({ name: 'Thomas' }) });
+				notify('players/1', { data: { change: nodeify({ name: 'Thomas' }) } });
 				disconnect();
 				connect();
 			} else {
