@@ -1,4 +1,4 @@
-import { createHooks, Hook } from './hooks';
+import { createHooks, Hook } from 'krog';
 import { Node, traverseNode } from './node';
 import { joinPath } from './path';
 import { Plugin } from './plugin';
