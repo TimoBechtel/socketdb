@@ -128,6 +128,8 @@ test('all clients receive data on update', async () => {
 });
 
 test('only sends data once for every update on same root path', (done) => {
+	let emitCount = 0;
+
 	const { connectClient, socketServer } = mockSocketServer();
 	const { notify: notifyClient, socketClient } = mockSocketClient({
 		onSend(event, data) {
@@ -136,7 +138,6 @@ test('only sends data once for every update on same root path', (done) => {
 		},
 	});
 
-	let emitCount = 0;
 	const client = SocketDBClient({ socketClient, updateInterval: 5 });
 	SocketDBServer({ socketServer, updateInterval: 5 });
 
@@ -161,7 +162,7 @@ test('only sends data once for every update on same root path', (done) => {
 	setTimeout(() => {
 		expect(emitCount).toBe(2);
 		done();
-	}, 100);
+	}, 50);
 });
 
 test('on/once always receives data on first call, even when not subscribed to before', (done) => {

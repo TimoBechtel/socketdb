@@ -118,7 +118,7 @@ test('emits updates to subscriber', (done) => {
 	const store = createStore();
 	const { socketServer, connectClient } = mockSocketServer();
 
-	SocketDBServer({ store, socketServer });
+	SocketDBServer({ store, socketServer, updateInterval: 5 });
 
 	let count = 1;
 	const { notify } = connectClient({
@@ -143,7 +143,7 @@ test('emits updates to subscriber', (done) => {
 						setTimeout(() => {
 							expect(store.get('players/1/name')).toEqual(nodeify('Peter'));
 						});
-					}, 100);
+					}, 25);
 				} else {
 					expect(data).toEqual<BatchedUpdate>({
 						change: nodeify({ name: 'Peter' }),
@@ -265,7 +265,7 @@ test('sends keys when entries are added or removed', async () => {
 
 	const { socketServer, connectClient } = mockSocketServer();
 
-	const server = SocketDBServer({ store, socketServer });
+	const server = SocketDBServer({ store, socketServer, updateInterval: 5 });
 
 	server.update(
 		nodeify({
@@ -299,7 +299,7 @@ test('sends keys when entries are added or removed', async () => {
 									}),
 								},
 							});
-						}, 100);
+						}, 25);
 					}
 					if (count === 1) {
 						expect(data).toEqual(['2']);
@@ -318,7 +318,7 @@ test('only send data if client is subscribed', (done) => {
 
 	const { socketServer, connectClient } = mockSocketServer();
 
-	const server = SocketDBServer({ store, socketServer });
+	const server = SocketDBServer({ store, socketServer, updateInterval: 10 });
 
 	let receivedCount = 0;
 
@@ -344,7 +344,7 @@ test('only send data if client is subscribed', (done) => {
 	setTimeout(() => {
 		expect(receivedCount).toBe(1);
 		done();
-	}, 100);
+	}, 50);
 });
 
 test('should batch updates', (done) => {

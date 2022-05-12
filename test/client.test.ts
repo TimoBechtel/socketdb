@@ -259,7 +259,7 @@ test('can unsubscribe from path', (done) => {
 		expect(unsubscribeCount).toBe(1);
 		expect(updateCount).toBe(1);
 		done();
-	}, 100);
+	}, 50);
 });
 
 test('can subscribe to path once', (done) => {
@@ -272,7 +272,7 @@ test('can subscribe to path once', (done) => {
 		},
 	});
 
-	const client = SocketDBClient({ socketClient });
+	const client = SocketDBClient({ socketClient, updateInterval: 5 });
 
 	let updateCount = 0;
 	client
@@ -287,7 +287,7 @@ test('can subscribe to path once', (done) => {
 	setTimeout(() => {
 		expect(updateCount).toBe(1);
 		done();
-	}, 100);
+	}, 50);
 });
 
 test('should batch subscribe events', (done) => {
@@ -430,7 +430,7 @@ test('can unsubscribe from keys of path', (done) => {
 		},
 	});
 
-	const client = SocketDBClient({ socketClient });
+	const client = SocketDBClient({ socketClient, updateInterval: 5 });
 
 	let updateCount = 0;
 	const unsubscribe = client.get('players').each((ref) => {
@@ -440,9 +440,11 @@ test('can unsubscribe from keys of path', (done) => {
 	setTimeout(() => {
 		unsubscribe();
 		notify('players/*', { data: ['2', '3'] });
-		expect(updateCount).toBe(1);
-		done();
-	}, 100);
+		setTimeout(() => {
+			expect(updateCount).toBe(1);
+			done();
+		}, 50);
+	}, 50);
 });
 
 test('received data should not be passed as reference', (done) => {
@@ -558,7 +560,7 @@ test('only subscribes once for every root path', (done) => {
 		},
 	});
 
-	const client = SocketDBClient({ socketClient });
+	const client = SocketDBClient({ socketClient, updateInterval: 10 });
 
 	let subscriptionCount = 0;
 	let updateCount = 0;
@@ -592,8 +594,8 @@ test('only subscribes once for every root path', (done) => {
 		setTimeout(() => {
 			expect(updateCount).toBe(4);
 			done();
-		}, 100);
-	}, 100);
+		}, 50);
+	}, 50);
 });
 
 test('always subscribe to highest level path', (done) => {
@@ -610,7 +612,7 @@ test('always subscribe to highest level path', (done) => {
 		},
 	});
 
-	const client = SocketDBClient({ socketClient });
+	const client = SocketDBClient({ socketClient, updateInterval: 5 });
 
 	let subscriptionCount = 0;
 	let unsubscriptionCount = 0;
@@ -693,7 +695,7 @@ test('always subscribe to highest level path', (done) => {
 		expect(subscriptionCount).toBe(5);
 		expect(updateReceivedCount).toBe(3);
 		done();
-	}, 100);
+	}, 50);
 });
 
 test('does not resubscribe to keys if higher level path is already subscribed', (done) => {
@@ -740,7 +742,7 @@ test('if data is null, should notify every subpath', (done) => {
 		},
 	});
 
-	const client = SocketDBClient({ socketClient });
+	const client = SocketDBClient({ socketClient, updateInterval: 5 });
 
 	let subscriptionCount = 0;
 
@@ -778,7 +780,7 @@ test('if data is null, should notify every subpath', (done) => {
 		expect(testString).toBe('abcd');
 		expect(updateCount).toBe(4);
 		done();
-	}, 500);
+	}, 50);
 });
 
 test('subscribes again after reconnect', (done) => {
