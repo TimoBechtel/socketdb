@@ -3,6 +3,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import { terser } from 'rollup-plugin-terser';
 import ts from 'rollup-plugin-ts';
+import pkg from './package.json';
 
 export default [
 	{
@@ -39,6 +40,9 @@ export default [
 			sourcemap: true,
 			exports: 'named',
 		},
+		// make sure to not include dependencies in the bundle
+		// (esm browser bundle should consumed as a npm package anyway)
+		external: Object.keys(pkg.dependencies),
 		plugins: [
 			ts({
 				tsconfig: 'tsconfig.browser.json',
