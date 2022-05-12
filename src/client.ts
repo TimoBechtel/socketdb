@@ -1,4 +1,5 @@
 import { createHooks, Hook } from 'krog';
+import { createBatchedClient } from './batchedSocketEvents';
 import {
 	isNode,
 	KeyValue,
@@ -85,31 +86,35 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 					window.location.hostname
 			  }:${window.location.port}`
 			: 'ws://localhost:8080');
-	let socketClient: SocketClient =
+	let connection: SocketClient =
 		_socketClient || createWebsocketClient({ url });
+
+	const socketEvents = createBatchedClient(connection, updateInterval);
 
 	const hooks = createHooks<ClientHooks>();
 
 	registerPlugins(plugins);
 
 	const queueUpdate = createUpdateBatcher((diff) => {
-		socketClient.send('update', { data: diff });
+		// not deep cloning diff (for perf.), because we do not need to
+		// as diff will be cleared after sending update (see queue)
+		socketEvents.queue('update', { data: diff });
 	}, updateInterval);
 
 	const subscriptions = {
 		update: createSubscriptionManager<Node>({
 			createPathSubscription(path, notify) {
 				if (isWildcardPath(path)) {
-					socketClient.on(path, ({ data: keys }: { data: string[] }) => {
+					socketEvents.subscribe(path, ({ data: keys }: { data: string[] }) => {
 						notify(() => {
 							const update: { [key: string]: any } = {};
 							keys.forEach((key) => (update[key] = null));
 							return nodeify(update);
 						});
 					});
-					socketClient.send('subscribeKeys', { path: trimWildcard(path) });
+					socketEvents.queue('subscribeKeys', { path: trimWildcard(path) });
 				} else {
-					socketClient.on(path, ({ data }: { data: BatchedUpdate }) => {
+					socketEvents.subscribe(path, ({ data }: { data: BatchedUpdate }) => {
 						data.delete?.forEach((path) => {
 							store.del(path);
 							subscriptions.update.notify(path, (path) => store.get(path), {
@@ -143,25 +148,25 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 							});
 						}
 					});
-					socketClient.send('subscribe', { path });
+					socketEvents.queue('subscribe', { path });
 				}
 			},
 			destroySubscription(path) {
-				socketClient.off(path);
-				socketClient.send('unsubscribe', { path });
+				socketEvents.unsubscribe(path);
+				socketEvents.queue('unsubscribe', { path });
 			},
 			restoreSubscription(path) {
 				if (isWildcardPath(path)) {
-					socketClient.send('subscribeKeys', { path: trimWildcard(path) });
+					socketEvents.queue('subscribeKeys', { path: trimWildcard(path) });
 				} else {
-					socketClient.send('subscribe', { path });
+					socketEvents.queue('subscribe', { path });
 				}
 			},
 		}),
 	};
 
 	let connectionLost = false;
-	socketClient.onConnect(() => {
+	connection.onConnect(() => {
 		if (connectionLost) {
 			// reattach subscriptions on every reconnect
 			subscriptions.update.resubscribe();
@@ -172,7 +177,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 			hooks.call('client:firstConnect');
 		}
 	});
-	socketClient.onDisconnect(() => {
+	connection.onDisconnect(() => {
 		hooks.call('client:disconnect');
 		connectionLost = true;
 	});
@@ -274,7 +279,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 	return {
 		...get(''),
 		disconnect() {
-			socketClient.close();
+			connection.close();
 		},
 	};
 }
