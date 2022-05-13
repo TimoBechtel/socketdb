@@ -514,3 +514,36 @@ test('should batch updates', (done) => {
 		done();
 	}, 50);
 });
+
+test('allows adding a custom user context', (done) => {
+	const store = createStore();
+	SocketDBServer({
+		store,
+		socketServer: {
+			onConnection(callback) {
+				callback(
+					{
+						onDisconnect() {},
+						on() {},
+						off() {},
+						send() {},
+						close() {},
+					},
+					'1',
+					{ username: 'Peter' }
+				);
+			},
+		},
+		plugins: [
+			{
+				name: 'username',
+				hooks: {
+					'server:clientConnect': (_, { client }) => {
+						expect(client.context).toEqual({ username: 'Peter' });
+						done();
+					},
+				},
+			},
+		],
+	});
+});

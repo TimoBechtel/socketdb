@@ -2,7 +2,7 @@ import { createHooks, Hook } from 'krog';
 import { Node, traverseNode } from './node';
 import { joinPath } from './path';
 import { Plugin } from './plugin';
-import { SocketServer } from './socketAdapter/socketServer';
+import { SessionContext, SocketServer } from './socketAdapter/socketServer';
 import { createWebsocketServer } from './socketAdapter/websocketServer';
 import { createStore, Store } from './store';
 import { BatchedUpdate, createUpdateBatcher } from './updateBatcher';
@@ -27,21 +27,29 @@ export type SocketDB = SocketDBServerAPI;
 export type ServerHooks = {
 	'server:clientConnect'?: Hook<
 		{ id: string },
-		{ client: { id: string }; api: SocketDBServerAPI }
+		{ client: { id: string; context: SessionContext }; api: SocketDBServerAPI }
 	>;
 	'server:clientDisconnect'?: Hook<
 		{ id: string },
-		{ client: { id: string }; api: SocketDBServerAPI }
+		{ client: { id: string; context: SessionContext }; api: SocketDBServerAPI }
 	>;
 	'server:update'?: Hook<
 		{ data: Node },
 		// if client id is null, it means the update comes from the server
-		{ client: { id: string | null }; api: SocketDBServerAPI }
+		// TODO: allow client object to be null, when update comes from server
+		{
+			client: { id: string | null; context: SessionContext | null };
+			api: SocketDBServerAPI;
+		}
 	>;
 	'server:delete'?: Hook<
 		{ path: string },
 		// if client id is null, it means the deletion comes from the server
-		{ client: { id: string | null }; api: SocketDBServerAPI }
+		// TODO: allow client object to be null, when update comes from server
+		{
+			client: { id: string | null; context: SessionContext | null };
+			api: SocketDBServerAPI;
+		}
 	>;
 };
 
@@ -85,12 +93,18 @@ export function SocketDBServer({
 		});
 	}
 
-	function update(data: Node, id: string | null = null) {
+	function update(
+		data: Node,
+		client: { id: string | null; context: SessionContext | null } = {
+			id: null,
+			context: null,
+		}
+	) {
 		hooks
 			.call('server:update', {
 				args: { data },
 				context: {
-					client: { id },
+					client,
 					api,
 				},
 			})
@@ -101,11 +115,17 @@ export function SocketDBServer({
 			.catch(console.log);
 	}
 
-	function del(path: string, id: string | null = null) {
+	function del(
+		path: string,
+		client: { id: string | null; context: SessionContext | null } = {
+			id: null,
+			context: null,
+		}
+	) {
 		hooks
 			.call(
 				'server:delete',
-				{ args: { path }, context: { client: { id }, api } },
+				{ args: { path }, context: { client, api } },
 				{ asRef: true }
 			)
 			.then(({ path }) => {
@@ -154,12 +174,13 @@ export function SocketDBServer({
 		}
 	}
 
-	socketServer.onConnection((client, id) => {
+	socketServer.onConnection((client, id, context = {}) => {
+		const clientContext = { id, context };
 		hooks.call(
 			'server:clientConnect',
 			{
 				args: { id },
-				context: { client: { id }, api },
+				context: { client: clientContext, api },
 			},
 			{ asRef: true }
 		);
@@ -169,13 +190,13 @@ export function SocketDBServer({
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
 			hooks.call(
 				'server:clientDisconnect',
-				{ args: { id }, context: { client: { id }, api } },
+				{ args: { id }, context: { client: clientContext, api } },
 				{ asRef: true }
 			);
 		});
 		client.on('update', ({ data }: { data: BatchedUpdate }) => {
-			data.delete?.forEach((path) => del(path, id));
-			if (data.change) update(data.change, id);
+			data.delete?.forEach((path) => del(path, clientContext));
+			if (data.change) update(data.change, clientContext);
 		});
 		client.on('subscribe', ({ path, once }) => {
 			client.send(path, { data: { change: store.get(path) } });
