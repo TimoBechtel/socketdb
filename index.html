@@ -4,29 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>SocketDB</title>
-    <meta name="generator" content="VuePress 1.8.2">
+    <meta name="generator" content="VuePress 1.9.7">
     <link rel="apple-touch-icon" href="/socketdb/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="/socketdb/logo.png">
     <link rel="manifest" href="/socketdb/manifest.json">
     <meta name="description" content="Easy to use data storage that syncs across browsers in realtime.">
-    <meta property="article:modified_time" content="2022-03-18T16:09:57.000Z">
-    <meta property="og:site_name" content="SocketDB">
-    <meta property="og:title" content="SocketDB">
-    <meta property="og:description" content="Easy to use data storage that syncs across browsers in realtime.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://timobechtel.github.io/socketdb/">
-    <meta property="og:image" content="https://timobechtel.github.io/socketdb/hero.png">
-    <meta name="twitter:title" content="SocketDB">
-    <meta name="twitter:description" content="Easy to use data storage that syncs across browsers in realtime.">
-    <meta name="twitter:url" content="https://timobechtel.github.io/socketdb/">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:image" content="https://timobechtel.github.io/socketdb/hero.png">
-    <meta name="twitter:label1" content="Written by">
     <meta name="theme-color" content="#FF5F5F">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     
-    <link rel="preload" href="/socketdb/assets/css/0.styles.04261718.css" as="style"><link rel="preload" href="/socketdb/assets/js/app.4cb468e7.js" as="script"><link rel="preload" href="/socketdb/assets/js/2.7b32372b.js" as="script"><link rel="preload" href="/socketdb/assets/js/18.9ec72b19.js" as="script"><link rel="prefetch" href="/socketdb/assets/js/10.2be45620.js"><link rel="prefetch" href="/socketdb/assets/js/11.808caf59.js"><link rel="prefetch" href="/socketdb/assets/js/12.5c94254a.js"><link rel="prefetch" href="/socketdb/assets/js/13.d482a0dd.js"><link rel="prefetch" href="/socketdb/assets/js/14.883430c7.js"><link rel="prefetch" href="/socketdb/assets/js/15.1affa35d.js"><link rel="prefetch" href="/socketdb/assets/js/16.a69ae139.js"><link rel="prefetch" href="/socketdb/assets/js/17.816567eb.js"><link rel="prefetch" href="/socketdb/assets/js/3.829ed770.js"><link rel="prefetch" href="/socketdb/assets/js/4.424a05da.js"><link rel="prefetch" href="/socketdb/assets/js/5.51ed705c.js"><link rel="prefetch" href="/socketdb/assets/js/6.753de4d5.js"><link rel="prefetch" href="/socketdb/assets/js/7.43e58078.js"><link rel="prefetch" href="/socketdb/assets/js/8.e7347220.js"><link rel="prefetch" href="/socketdb/assets/js/9.c3e9f2b7.js">
+    <link rel="preload" href="/socketdb/assets/css/0.styles.04261718.css" as="style"><link rel="preload" href="/socketdb/assets/js/app.a839ad75.js" as="script"><link rel="preload" href="/socketdb/assets/js/2.500503cd.js" as="script"><link rel="preload" href="/socketdb/assets/js/18.a4a70917.js" as="script"><link rel="prefetch" href="/socketdb/assets/js/10.9c09ca3c.js"><link rel="prefetch" href="/socketdb/assets/js/11.a7b37d56.js"><link rel="prefetch" href="/socketdb/assets/js/12.dc3c958d.js"><link rel="prefetch" href="/socketdb/assets/js/13.aa472f3b.js"><link rel="prefetch" href="/socketdb/assets/js/14.8d3eb8a7.js"><link rel="prefetch" href="/socketdb/assets/js/15.28a981f4.js"><link rel="prefetch" href="/socketdb/assets/js/16.34fee0a7.js"><link rel="prefetch" href="/socketdb/assets/js/17.37b9d869.js"><link rel="prefetch" href="/socketdb/assets/js/3.f6108782.js"><link rel="prefetch" href="/socketdb/assets/js/4.d2f3029d.js"><link rel="prefetch" href="/socketdb/assets/js/5.cd3a776f.js"><link rel="prefetch" href="/socketdb/assets/js/6.48520940.js"><link rel="prefetch" href="/socketdb/assets/js/7.75a1515b.js"><link rel="prefetch" href="/socketdb/assets/js/8.c1f01c46.js"><link rel="prefetch" href="/socketdb/assets/js/9.a0c7e45a.js">
     <link rel="stylesheet" href="/socketdb/assets/css/0.styles.04261718.css">
   </head>
   <body>
@@ -54,12 +41,12 @@
   Quick Start →
 </a></p></header> <!----> <div class="theme-default-content custom content__default"><div class="language-js extra-class"><pre class="language-js"><code>db<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'some'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'path'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">on</span><span class="token punctuation">(</span>console<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-db<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'some'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token punctuation">{</span> path<span class="token operator">:</span> <span class="token string">'Hello World'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+db<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">'some'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token literal-property property">path</span><span class="token operator">:</span> <span class="token string">'Hello World'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token comment">// =&gt; Hello World</span>
 </code></pre></div><h2 id="what-this-is"><a href="#what-this-is" class="header-anchor">#</a> What this is</h2> <p>SocketDB is an easy to use data storage that syncs across browsers in realtime
 and allows you to focus on your application without worrying about networking.</p> <p>It features:</p> <ul><li>minimal network overhead: caches data and only syncs changes</li> <li>batches changes to reduce transmitted data</li> <li>automatically reconnects on connection lost</li> <li>full typescript support</li></ul></div> <div class="footer">
     MIT Licensed | Copyright © Timo Bechtel
   </div></main></div><div class="global-ui"></div></div>
-    <script src="/socketdb/assets/js/app.4cb468e7.js" defer></script><script src="/socketdb/assets/js/2.7b32372b.js" defer></script><script src="/socketdb/assets/js/18.9ec72b19.js" defer></script>
+    <script src="/socketdb/assets/js/app.a839ad75.js" defer></script><script src="/socketdb/assets/js/2.500503cd.js" defer></script><script src="/socketdb/assets/js/18.a4a70917.js" defer></script>
   </body>
 </html>

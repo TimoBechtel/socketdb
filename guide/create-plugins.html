@@ -4,25 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Write plugins | SocketDB</title>
-    <meta name="generator" content="VuePress 1.8.2">
+    <meta name="generator" content="VuePress 1.9.7">
     <link rel="apple-touch-icon" href="/socketdb/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="/socketdb/logo.png">
     <link rel="manifest" href="/socketdb/manifest.json">
     <meta name="description" content="Real-time synchronized data storage">
-    <meta property="article:modified_time" content="2022-03-18T16:09:57.000Z">
-    <meta property="og:site_name" content="SocketDB">
-    <meta property="og:title" content="Write plugins">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://timobechtel.github.io/socketdb/guide/create-plugins.html">
-    <meta name="twitter:title" content="Write plugins">
-    <meta name="twitter:url" content="https://timobechtel.github.io/socketdb/guide/create-plugins.html">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:label1" content="Written by">
     <meta name="theme-color" content="#FF5F5F">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     
-    <link rel="preload" href="/socketdb/assets/css/0.styles.04261718.css" as="style"><link rel="preload" href="/socketdb/assets/js/app.4cb468e7.js" as="script"><link rel="preload" href="/socketdb/assets/js/2.7b32372b.js" as="script"><link rel="preload" href="/socketdb/assets/js/12.5c94254a.js" as="script"><link rel="prefetch" href="/socketdb/assets/js/10.2be45620.js"><link rel="prefetch" href="/socketdb/assets/js/11.808caf59.js"><link rel="prefetch" href="/socketdb/assets/js/13.d482a0dd.js"><link rel="prefetch" href="/socketdb/assets/js/14.883430c7.js"><link rel="prefetch" href="/socketdb/assets/js/15.1affa35d.js"><link rel="prefetch" href="/socketdb/assets/js/16.a69ae139.js"><link rel="prefetch" href="/socketdb/assets/js/17.816567eb.js"><link rel="prefetch" href="/socketdb/assets/js/18.9ec72b19.js"><link rel="prefetch" href="/socketdb/assets/js/3.829ed770.js"><link rel="prefetch" href="/socketdb/assets/js/4.424a05da.js"><link rel="prefetch" href="/socketdb/assets/js/5.51ed705c.js"><link rel="prefetch" href="/socketdb/assets/js/6.753de4d5.js"><link rel="prefetch" href="/socketdb/assets/js/7.43e58078.js"><link rel="prefetch" href="/socketdb/assets/js/8.e7347220.js"><link rel="prefetch" href="/socketdb/assets/js/9.c3e9f2b7.js">
+    <link rel="preload" href="/socketdb/assets/css/0.styles.04261718.css" as="style"><link rel="preload" href="/socketdb/assets/js/app.a839ad75.js" as="script"><link rel="preload" href="/socketdb/assets/js/2.500503cd.js" as="script"><link rel="preload" href="/socketdb/assets/js/12.dc3c958d.js" as="script"><link rel="prefetch" href="/socketdb/assets/js/10.9c09ca3c.js"><link rel="prefetch" href="/socketdb/assets/js/11.a7b37d56.js"><link rel="prefetch" href="/socketdb/assets/js/13.aa472f3b.js"><link rel="prefetch" href="/socketdb/assets/js/14.8d3eb8a7.js"><link rel="prefetch" href="/socketdb/assets/js/15.28a981f4.js"><link rel="prefetch" href="/socketdb/assets/js/16.34fee0a7.js"><link rel="prefetch" href="/socketdb/assets/js/17.37b9d869.js"><link rel="prefetch" href="/socketdb/assets/js/18.a4a70917.js"><link rel="prefetch" href="/socketdb/assets/js/3.f6108782.js"><link rel="prefetch" href="/socketdb/assets/js/4.d2f3029d.js"><link rel="prefetch" href="/socketdb/assets/js/5.cd3a776f.js"><link rel="prefetch" href="/socketdb/assets/js/6.48520940.js"><link rel="prefetch" href="/socketdb/assets/js/7.75a1515b.js"><link rel="prefetch" href="/socketdb/assets/js/8.c1f01c46.js"><link rel="prefetch" href="/socketdb/assets/js/9.a0c7e45a.js">
     <link rel="stylesheet" href="/socketdb/assets/css/0.styles.04261718.css">
   </head>
   <body>
@@ -47,7 +38,7 @@
 		<span class="token punctuation">{</span>
 			name<span class="token operator">:</span> <span class="token string">'myplugin'</span><span class="token punctuation">,</span>
 			hooks<span class="token operator">:</span> <span class="token punctuation">{</span>
-				<span class="token string">'client:set'</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> path<span class="token punctuation">,</span> value<span class="token punctuation">,</span> meta <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+				<span class="token string-property property">'client:set'</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> path<span class="token punctuation">,</span> value<span class="token punctuation">,</span> meta <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
 					meta<span class="token punctuation">.</span>updated <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getTime</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 					<span class="token keyword">return</span> <span class="token punctuation">{</span>
 						path<span class="token punctuation">,</span>
@@ -86,7 +77,7 @@ and finally processed internally instead of the initial arguments.</p> <h2 id="e
 	args<span class="token operator">:</span> Arguments<span class="token punctuation">,</span>
 	cxt<span class="token operator">:</span> Context
 <span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">void</span> <span class="token operator">|</span> Arguments <span class="token operator">|</span> <span class="token builtin">Promise</span><span class="token operator">&lt;</span><span class="token keyword">void</span> <span class="token operator">|</span> Arguments<span class="token operator">&gt;</span><span class="token punctuation">;</span>
-</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/TimoBechtel/socketdb/edit/main/docs/guide/create-plugins.md" target="_blank" rel="noopener noreferrer">Edit this page</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">3/18/2022, 4:09:57 PM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
+</code></pre></div></div> <footer class="page-edit"><div class="edit-link"><a href="https://github.com/TimoBechtel/socketdb/edit/main/docs/guide/create-plugins.md" target="_blank" rel="noopener noreferrer">Edit this page</a> <span><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span class="sr-only">(opens new window)</span></span></div> <div class="last-updated"><span class="prefix">Last Updated:</span> <span class="time">5/12/2022, 9:54:10 PM</span></div></footer> <div class="page-nav"><p class="inner"><span class="prev">
       ←
       <a href="/socketdb/guide/persistence.html" class="prev">
         Persistence
@@ -95,6 +86,6 @@ and finally processed internally instead of the initial arguments.</p> <h2 id="e
       </a>
       →
     </span></p></div> </main></div><div class="global-ui"></div></div>
-    <script src="/socketdb/assets/js/app.4cb468e7.js" defer></script><script src="/socketdb/assets/js/2.7b32372b.js" defer></script><script src="/socketdb/assets/js/12.5c94254a.js" defer></script>
+    <script src="/socketdb/assets/js/app.a839ad75.js" defer></script><script src="/socketdb/assets/js/2.500503cd.js" defer></script><script src="/socketdb/assets/js/12.dc3c958d.js" defer></script>
   </body>
 </html>
