@@ -1,3 +1,10 @@
+# [3.9.0](https://github.com/TimoBechtel/socketdb/compare/v3.8.1...v3.9.0) (2022-05-13)
+
+
+### Features
+
+* **server:** allow adding a user context ([b00f0bc](https://github.com/TimoBechtel/socketdb/commit/b00f0bcdffbe1994d22f4c57e8e5b7d7e97041c0)), closes [#26](https://github.com/TimoBechtel/socketdb/issues/26)
+
 ## [3.8.1](https://github.com/TimoBechtel/socketdb/compare/v3.8.0...v3.8.1) (2021-10-17)
 
 
