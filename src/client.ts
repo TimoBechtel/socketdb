@@ -79,6 +79,9 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 	updateInterval?: number;
 	plugins?: ClientPlugin[];
 } = {}): SocketDBClientAPI<Schema> {
+	// use half of the update interval, because we have two update queues resulting in double the time
+	updateInterval = updateInterval / 2;
+
 	let url: string =
 		_url ||
 		(typeof window !== 'undefined'

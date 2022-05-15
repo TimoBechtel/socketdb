@@ -69,6 +69,9 @@ export function SocketDBServer({
 	socketServer?: SocketServer;
 	plugins?: ServerPlugin[];
 } = {}): SocketDBServerAPI {
+	// use half of the update interval, because we have two update queues resulting in double the time
+	updateInterval = updateInterval / 2;
+
 	let subscriber: Subscriptions = {};
 
 	const api: SocketDBServerAPI = {
