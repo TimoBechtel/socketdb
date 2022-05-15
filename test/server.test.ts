@@ -1,10 +1,8 @@
 import { nodeify } from '../src/node';
 import { SocketDBServer } from '../src/server';
-import { createEventBroker } from '../src/socketAdapter/eventBroker';
-import { Socket } from '../src/socketAdapter/socket';
-import { SocketServer } from '../src/socketAdapter/socketServer';
 import { createStore } from '../src/store';
 import { BatchedUpdate } from '../src/updateBatcher';
+import { mockSocketServer } from './utils';
 
 test('updates data on manual update', () => {
 	const store = createStore();
@@ -28,27 +26,12 @@ test('updates data on manual update', () => {
 
 test('updates data on socket request', () => {
 	const store = createStore();
-	let connect: (client: Socket, id: string) => void;
-	const { addListener, notify } = createEventBroker();
 
-	const socketServer: SocketServer = {
-		onConnection(callback) {
-			connect = callback;
-		},
-	};
+	const { socketServer, connectClient } = mockSocketServer();
+
 	SocketDBServer({ store, socketServer });
 
-	// @ts-ignore - connect is set when the server is created above (synchronously)
-	connect(
-		{
-			onDisconnect() {},
-			on: addListener,
-			off() {},
-			send() {},
-			close() {},
-		},
-		'1'
-	);
+	const { notify } = connectClient();
 	notify('update', {
 		data: {
 			change: nodeify({
@@ -69,27 +52,12 @@ test('updates data on socket request', () => {
 
 test('deletes data on socket request', (done) => {
 	const store = createStore();
-	let connect: (client: Socket, id: string) => void;
-	const { addListener, notify } = createEventBroker();
 
-	const socketServer: SocketServer = {
-		onConnection(callback) {
-			connect = callback;
-		},
-	};
+	const { socketServer, connectClient } = mockSocketServer();
+
 	SocketDBServer({ store, socketServer });
 
-	// @ts-ignore - connect is set when the server is created above (synchronously)
-	connect(
-		{
-			onDisconnect() {},
-			on: addListener,
-			off() {},
-			send() {},
-			close() {},
-		},
-		'1'
-	);
+	const { notify } = connectClient();
 	notify('update', {
 		data: {
 			change: nodeify({
@@ -129,90 +97,62 @@ test('sends data on first subscribe', (done) => {
 		})
 	);
 
-	let connect: (client: Socket, id: string) => void;
-	const { addListener, removeListener, notify } = createEventBroker();
+	const { socketServer, connectClient } = mockSocketServer();
 
-	const socketServer: SocketServer = {
-		onConnection(callback) {
-			connect = callback;
-		},
-	};
 	SocketDBServer({ store, socketServer });
 
-	// @ts-ignore - connect is set when the server is created above (synchronously)
-	connect(
-		{
-			onDisconnect() {},
-			on: addListener,
-			off: removeListener,
-			send(event, { data }) {
-				if (event === 'players/1') {
-					expect(data).toEqual({ change: nodeify({ name: 'Ralph' }) });
-					done();
-				}
-			},
-			close() {},
+	const { notify } = connectClient({
+		id: '1',
+		onSend(event, { data }) {
+			if (event === 'players/1') {
+				expect(data).toEqual({ change: nodeify({ name: 'Ralph' }) });
+				done();
+			}
 		},
-		'1'
-	);
+	});
 
 	notify('subscribe', { path: 'players/1' });
 });
 
 test('emits updates to subscriber', (done) => {
 	const store = createStore();
-	let connect: (client: Socket, id: string) => void;
-	const { addListener, removeListener, notify } = createEventBroker();
+	const { socketServer, connectClient } = mockSocketServer();
 
-	const socketServer: SocketServer = {
-		onConnection(callback) {
-			connect = callback;
-		},
-	};
-	SocketDBServer({ store, socketServer });
+	SocketDBServer({ store, socketServer, updateInterval: 5 });
 
 	let count = 1;
-
-	// @ts-ignore - connect is set when the server is created above (synchronously)
-	connect(
-		{
-			onDisconnect() {},
-			on: addListener,
-			off: removeListener,
-			send(event, { data }) {
-				if (event === 'players/1') {
-					if (count === 1) {
-						expect(data).toEqual({ change: nodeify(null) });
-						count++;
-						setTimeout(() => {
-							notify('update', {
-								data: {
-									change: nodeify({
-										players: {
-											1: {
-												name: 'Peter',
-											},
+	const { notify } = connectClient({
+		onSend(event, { data }) {
+			if (event === 'players/1') {
+				if (count === 1) {
+					expect(data).toEqual({ change: nodeify(null) });
+					count++;
+					setTimeout(() => {
+						notify('update', {
+							data: {
+								change: nodeify({
+									players: {
+										1: {
+											name: 'Peter',
 										},
-									}),
-									delete: [],
-								},
-							});
-							setTimeout(() => {
-								expect(store.get('players/1/name')).toEqual(nodeify('Peter'));
-							});
-						}, 100);
-					} else {
-						expect(data).toEqual<BatchedUpdate>({
-							change: nodeify({ name: 'Peter' }),
+									},
+								}),
+								delete: [],
+							},
 						});
-						done();
-					}
+						setTimeout(() => {
+							expect(store.get('players/1/name')).toEqual(nodeify('Peter'));
+						});
+					}, 25);
+				} else {
+					expect(data).toEqual<BatchedUpdate>({
+						change: nodeify({ name: 'Peter' }),
+					});
+					done();
 				}
-			},
-			close() {},
+			}
 		},
-		'1'
-	);
+	});
 
 	notify('subscribe', { path: 'players/1' });
 });
@@ -229,46 +169,32 @@ test('only emits changed values', (done) => {
 		})
 	);
 
-	let connect: (client: Socket, id: string) => void;
-	const { addListener, removeListener, notify } = createEventBroker();
+	const { socketServer, connectClient } = mockSocketServer();
 
-	const socketServer: SocketServer = {
-		onConnection(callback) {
-			connect = callback;
-		},
-	};
 	SocketDBServer({ store, socketServer });
 
 	let updateCount = 0;
 
-	// @ts-ignore - connect is set when the server is created above (synchronously)
-	connect(
-		{
-			onDisconnect() {},
-			on: addListener,
-			off: removeListener,
-			send(event, { data }) {
-				if (event === 'players/1') {
-					if (updateCount === 0) {
-						updateCount++;
-						expect(data).toEqual({ change: nodeify({ name: 'Peter' }) });
-					} else {
-						expect(data).toEqual({
-							change: nodeify({
-								position: {
-									x: 0,
-									y: 1,
-								},
-							}),
-						});
-						done();
-					}
+	const { notify } = connectClient({
+		onSend(event, { data }) {
+			if (event === 'players/1') {
+				if (updateCount === 0) {
+					updateCount++;
+					expect(data).toEqual({ change: nodeify({ name: 'Peter' }) });
+				} else {
+					expect(data).toEqual({
+						change: nodeify({
+							position: {
+								x: 0,
+								y: 1,
+							},
+						}),
+					});
+					done();
 				}
-			},
-			close() {},
+			}
 		},
-		'1'
-	);
+	});
 
 	notify('subscribe', { path: 'players/1' });
 	notify('update', {
@@ -300,72 +226,46 @@ test('emits updates to all subscribers', async () => {
 			},
 		})
 	);
-	let connect: (client: Socket, id: string) => void;
+	const { socketServer, connectClient } = mockSocketServer();
 
-	const socketServer: SocketServer = {
-		onConnection(callback) {
-			connect = callback;
-		},
-	};
 	SocketDBServer({ store, socketServer });
 
 	await new Promise<void>((resolve) => {
-		const { addListener, removeListener, notify } = createEventBroker();
-		connect(
-			{
-				onDisconnect() {},
-				on: addListener,
-				off: removeListener,
-				send(event, { data }) {
-					if (event === 'players') {
-						expect(data).toEqual({
-							change: nodeify({
-								1: {
-									name: 'Peter',
-								},
-							}),
-						});
-						resolve();
-					}
-				},
-				close() {},
+		const { notify } = connectClient({
+			onSend(event, { data }) {
+				if (event === 'players') {
+					expect(data).toEqual({
+						change: nodeify({
+							1: {
+								name: 'Peter',
+							},
+						}),
+					});
+					resolve();
+				}
 			},
-			'1'
-		);
+		});
 		notify('subscribe', { path: 'players', once: true });
 	});
 	await new Promise<void>((resolve) => {
-		const { addListener, removeListener, notify } = createEventBroker();
-		connect(
-			{
-				onDisconnect() {},
-				on: addListener,
-				off: removeListener,
-				send(event, { data }) {
-					if (event === 'players/1/name') {
-						expect(data).toEqual({ change: nodeify('Peter') });
-						resolve();
-					}
-				},
-				close() {},
+		const { notify } = connectClient({
+			onSend(event, { data }) {
+				if (event === 'players/1/name') {
+					expect(data).toEqual({ change: nodeify('Peter') });
+					resolve();
+				}
 			},
-			'2'
-		);
+		});
 		notify('subscribe', { path: 'players/1/name' });
 	});
 });
 
 test('sends keys when entries are added or removed', async () => {
 	const store = createStore();
-	let connect: (client: Socket, id: string) => void;
-	const { addListener, removeListener, notify } = createEventBroker();
 
-	const socketServer: SocketServer = {
-		onConnection(callback) {
-			connect = callback;
-		},
-	};
-	const server = SocketDBServer({ store, socketServer });
+	const { socketServer, connectClient } = mockSocketServer();
+
+	const server = SocketDBServer({ store, socketServer, updateInterval: 5 });
 
 	server.update(
 		nodeify({
@@ -379,76 +279,56 @@ test('sends keys when entries are added or removed', async () => {
 
 	await new Promise<void>((resolve) => {
 		let count = 0;
-		connect(
-			{
-				onDisconnect() {},
-				on: addListener,
-				off: removeListener,
-				send(event, { data }) {
-					if (event === 'players/*') {
-						if (count === 0) {
-							expect(data).toEqual(['1']);
-							setTimeout(() => {
-								notify('update', {
-									data: {
-										change: nodeify({
-											players: {
-												1: {
-													name: 'Peter',
-												},
-												2: {
-													name: 'Parker',
-												},
+		const { notify } = connectClient({
+			onSend(event, { data }) {
+				if (event === 'players/*') {
+					if (count === 0) {
+						expect(data).toEqual(['1']);
+						setTimeout(() => {
+							notify('update', {
+								data: {
+									change: nodeify({
+										players: {
+											1: {
+												name: 'Peter',
 											},
-										}),
-									},
-								});
-							}, 100);
-						}
-						if (count === 1) {
-							expect(data).toEqual(['2']);
-							resolve();
-						}
-						count++;
+											2: {
+												name: 'Parker',
+											},
+										},
+									}),
+								},
+							});
+						}, 25);
 					}
-				},
-				close() {},
+					if (count === 1) {
+						expect(data).toEqual(['2']);
+						resolve();
+					}
+					count++;
+				}
 			},
-			'1'
-		);
+		});
 		notify('subscribeKeys', { path: 'players', flat: true });
 	});
 });
 
 test('only send data if client is subscribed', (done) => {
 	const store = createStore();
-	let connect: (client: Socket, id: string) => void;
-	const { addListener, removeListener, notify } = createEventBroker();
 
-	const socketServer: SocketServer = {
-		onConnection(callback) {
-			connect = callback;
-		},
-	};
-	const server = SocketDBServer({ store, socketServer });
+	const { socketServer, connectClient } = mockSocketServer();
+
+	const server = SocketDBServer({ store, socketServer, updateInterval: 10 });
 
 	let receivedCount = 0;
 
-	// @ts-ignore - connect is set when the server is created above (synchronously)
-	connect(
-		{
-			onDisconnect() {},
-			on: addListener,
-			off: removeListener,
-			send(event, { data }) {
-				if (event === 'players/1') {
-					receivedCount++;
-				}
-			},
-			close() {},
+	const { notify } = connectClient({
+		onSend(event, { data }) {
+			if (event === 'players/1') {
+				receivedCount++;
+			}
 		},
-		'1'
-	);
+	});
 
 	notify('subscribe', { path: 'players/1' });
 	notify('unsubscribe', { path: 'players/1' });
@@ -464,42 +344,29 @@ test('only send data if client is subscribed', (done) => {
 	setTimeout(() => {
 		expect(receivedCount).toBe(1);
 		done();
-	}, 100);
+	}, 50);
 });
 
 test('should batch updates', (done) => {
 	const store = createStore();
-	let connect: (client: Socket, id: string) => void;
-	const { addListener, removeListener, notify } = createEventBroker();
 
-	const socketServer: SocketServer = {
-		onConnection(callback) {
-			connect = callback;
-		},
-	};
+	const { socketServer, connectClient } = mockSocketServer();
+
 	SocketDBServer({ store, socketServer, updateInterval: 10 });
 
 	let receivedCount = 0;
 
-	// @ts-ignore - connect is set when the server is created above (synchronously)
-	connect(
-		{
-			onDisconnect() {},
-			on: addListener,
-			off: removeListener,
-			send(event, { data }) {
-				if (receivedCount === 0) {
-					expect(data).toEqual({ change: nodeify(null) });
-				}
-				if (receivedCount === 1) {
-					expect(data).toEqual({ change: nodeify('b'), delete: ['player/a'] });
-				}
-				receivedCount++;
-			},
-			close() {},
+	const { notify } = connectClient({
+		onSend(event, { data }) {
+			if (receivedCount === 0) {
+				expect(data).toEqual({ change: nodeify(null) });
+			}
+			if (receivedCount === 1) {
+				expect(data).toEqual({ change: nodeify('b'), delete: ['player/a'] });
+			}
+			receivedCount++;
 		},
-		'1'
-	);
+	});
 
 	notify('subscribe', { path: 'player' });
 

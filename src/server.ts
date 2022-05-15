@@ -1,4 +1,5 @@
 import { createHooks, Hook } from 'krog';
+import { createBatchedClient } from './batchedSocketEvents';
 import { Node, traverseNode } from './node';
 import { joinPath } from './path';
 import { Plugin } from './plugin';
@@ -68,6 +69,9 @@ export function SocketDBServer({
 	socketServer?: SocketServer;
 	plugins?: ServerPlugin[];
 } = {}): SocketDBServerAPI {
+	// use half of the update interval, because we have two update queues resulting in double the time
+	updateInterval = updateInterval / 2;
+
 	let subscriber: Subscriptions = {};
 
 	const api: SocketDBServerAPI = {
@@ -174,8 +178,9 @@ export function SocketDBServer({
 		}
 	}
 
-	socketServer.onConnection((client, id, context = {}) => {
+	socketServer.onConnection((connection, id, context = {}) => {
 		const clientContext = { id, context };
+		const socketEvents = createBatchedClient(connection, updateInterval);
 		hooks.call(
 			'server:clientConnect',
 			{
@@ -185,7 +190,7 @@ export function SocketDBServer({
 			{ asRef: true }
 		);
 
-		client.onDisconnect(() => {
+		connection.onDisconnect(() => {
 			delete subscriber[id];
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
 			hooks.call(
@@ -194,34 +199,39 @@ export function SocketDBServer({
 				{ asRef: true }
 			);
 		});
-		client.on('update', ({ data }: { data: BatchedUpdate }) => {
+		socketEvents.subscribe('update', ({ data }: { data: BatchedUpdate }) => {
 			data.delete?.forEach((path) => del(path, clientContext));
 			if (data.change) update(data.change, clientContext);
 		});
-		client.on('subscribe', ({ path, once }) => {
-			client.send(path, { data: { change: store.get(path) } });
+		socketEvents.subscribe('subscribe', ({ path, once }) => {
+			socketEvents.queue(path, {
+				// deepClone to only send the current snapshot, as data might change while queued
+				data: { change: deepClone(store.get(path)) },
+			});
 			if (once) return;
 			addSubscriber(id, path, (data) => {
-				client.send(path, { data });
+				socketEvents.queue(path, { data });
 			});
 		});
-		client.on('unsubscribe', ({ path }) => {
+		socketEvents.subscribe('unsubscribe', ({ path }) => {
 			removeSubscriber(id, path);
 		});
-		client.on('subscribeKeys', ({ path }) => {
+		socketEvents.subscribe('subscribeKeys', ({ path }) => {
 			const data = store.get(path);
 			const wildcardPath = joinPath(path, '*');
 			let keys: string[] = [];
 			if (isObject(data.value)) {
 				keys = Object.keys(data.value);
-				client.send(wildcardPath, { data: keys });
+				// destructure keys to only send the current keys, as they might change while queued
+				socketEvents.queue(wildcardPath, { data: [...keys] });
 			}
 			addSubscriber(id + 'wildcard', path, (data: BatchedUpdate) => {
 				if (data.change && isObject(data.change.value)) {
 					const newKeys = Object.keys(data.change.value).filter(
 						(key) => !keys.includes(key)
 					);
-					if (newKeys.length > 0) client.send(wildcardPath, { data: newKeys });
+					if (newKeys.length > 0)
+						socketEvents.queue(wildcardPath, { data: newKeys });
 					keys = [...keys, ...newKeys];
 				}
 			});
