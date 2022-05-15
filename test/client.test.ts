@@ -301,9 +301,9 @@ test('should batch subscribe events', (done) => {
 		onDisconnect() {},
 		off() {},
 		on() {},
-		send(event, { events }) {
+		send(event, events) {
 			// should batch all events in a single array
-			expect(event).toEqual('data');
+			expect(event).toEqual('events');
 			expect(events).toHaveLength(5);
 
 			sendCount++;

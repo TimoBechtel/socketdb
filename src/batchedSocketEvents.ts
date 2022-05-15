@@ -27,13 +27,13 @@ export function createBatchedClient<Events extends GenericEvents>(
 			return [];
 		},
 		flush(events) {
-			connection.send('data', { events });
+			connection.send('events', events);
 		},
 		updateInterval: interval,
 	});
 
-	connection.on('data', (data: { events: QueuedEvent[] }) => {
-		data?.events?.forEach((event) => {
+	connection.on('events', (socketEvents: QueuedEvent[]) => {
+		socketEvents?.forEach((event) => {
 			events.notify(event.event as string, event.data);
 		});
 	});

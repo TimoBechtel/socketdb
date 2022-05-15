@@ -10,7 +10,7 @@ function createQueuedEvent(event: string, data: any) {
 
 function batched(notify: (event: string, data: any) => void) {
 	return (event: string, data: any) => {
-		notify('data', { events: [createQueuedEvent(event, data)] });
+		notify('events', [createQueuedEvent(event, data)]);
 	};
 }
 
@@ -106,7 +106,7 @@ function mockSocket({
 		onDisconnect(callback) {
 			disconnect = callback;
 		},
-		send(_, { events }: { events: GenericQueuedEvent<any>[] }) {
+		send(_, events: GenericQueuedEvent<any>[]) {
 			events.forEach((event) => {
 				onSend?.(event.event as string, event.data);
 			});
