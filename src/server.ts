@@ -1,5 +1,6 @@
 import { createHooks, Hook } from 'krog';
 import { createBatchedClient } from './batchedSocketEvents';
+import { DATA_CONTEXT, SOCKET_EVENTS } from './constants';
 import { Node, traverseNode } from './node';
 import { joinPath } from './path';
 import { Plugin } from './plugin';
@@ -199,43 +200,59 @@ export function SocketDBServer({
 				{ asRef: true }
 			);
 		});
-		socketEvents.subscribe('update', ({ data }: { data: BatchedUpdate }) => {
-			data.delete?.forEach((path) => del(path, clientContext));
-			if (data.change) update(data.change, clientContext);
-		});
-		socketEvents.subscribe('subscribe', ({ path, once }) => {
-			socketEvents.queue(path, {
-				// deepClone to only send the current snapshot, as data might change while queued
-				data: { change: deepClone(store.get(path)) },
-			});
-			if (once) return;
-			addSubscriber(id, path, (data) => {
-				socketEvents.queue(path, { data });
-			});
-		});
-		socketEvents.subscribe('unsubscribe', ({ path }) => {
-			removeSubscriber(id, path);
-		});
-		socketEvents.subscribe('subscribeKeys', ({ path }) => {
-			const data = store.get(path);
-			const wildcardPath = joinPath(path, '*');
-			let keys: string[] = [];
-			if (isObject(data.value)) {
-				keys = Object.keys(data.value);
-				// destructure keys to only send the current keys, as they might change while queued
-				socketEvents.queue(wildcardPath, { data: [...keys] });
+		socketEvents.subscribe(
+			SOCKET_EVENTS.data.clientUpdate,
+			({ data }: { data: BatchedUpdate }) => {
+				data.delete?.forEach((path) => del(path, clientContext));
+				if (data.change) update(data.change, clientContext);
 			}
-			addSubscriber(id + 'wildcard', path, (data: BatchedUpdate) => {
-				if (data.change && isObject(data.change.value)) {
-					const newKeys = Object.keys(data.change.value).filter(
-						(key) => !keys.includes(key)
-					);
-					if (newKeys.length > 0)
-						socketEvents.queue(wildcardPath, { data: newKeys });
-					keys = [...keys, ...newKeys];
+		);
+		socketEvents.subscribe(
+			SOCKET_EVENTS.data.requestSubscription,
+			({ path, once }) => {
+				socketEvents.queue(`${DATA_CONTEXT}:${path}`, {
+					// deepClone to only send the current snapshot, as data might change while queued
+					data: { change: deepClone(store.get(path)) },
+				});
+				if (once) return;
+				addSubscriber(id, path, (data) => {
+					socketEvents.queue(`${DATA_CONTEXT}:${path}`, { data });
+				});
+			}
+		);
+		socketEvents.subscribe(
+			SOCKET_EVENTS.data.requestUnsubscription,
+			({ path }) => {
+				removeSubscriber(id, path);
+			}
+		);
+		socketEvents.subscribe(
+			SOCKET_EVENTS.data.requestKeysSubscription,
+			({ path }) => {
+				const data = store.get(path);
+				const wildcardPath = joinPath(path, '*');
+				let keys: string[] = [];
+				if (isObject(data.value)) {
+					keys = Object.keys(data.value);
+					// destructure keys to only send the current keys, as they might change while queued
+					socketEvents.queue(`${DATA_CONTEXT}:${wildcardPath}`, {
+						data: [...keys],
+					});
 				}
-			});
-		});
+				addSubscriber(id + 'wildcard', path, (data: BatchedUpdate) => {
+					if (data.change && isObject(data.change.value)) {
+						const newKeys = Object.keys(data.change.value).filter(
+							(key) => !keys.includes(key)
+						);
+						if (newKeys.length > 0)
+							socketEvents.queue(`${DATA_CONTEXT}:${wildcardPath}`, {
+								data: newKeys,
+							});
+						keys = [...keys, ...newKeys];
+					}
+				});
+			}
+		);
 	});
 	return api;
 }

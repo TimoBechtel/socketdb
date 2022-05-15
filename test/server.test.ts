@@ -1,3 +1,4 @@
+import { DATA_CONTEXT, SOCKET_EVENTS } from '../src/constants';
 import { nodeify } from '../src/node';
 import { SocketDBServer } from '../src/server';
 import { createStore } from '../src/store';
@@ -32,7 +33,7 @@ test('updates data on socket request', () => {
 	SocketDBServer({ store, socketServer });
 
 	const { notify } = connectClient();
-	notify('update', {
+	notify(SOCKET_EVENTS.data.clientUpdate, {
 		data: {
 			change: nodeify({
 				players: {
@@ -58,7 +59,7 @@ test('deletes data on socket request', (done) => {
 	SocketDBServer({ store, socketServer });
 
 	const { notify } = connectClient();
-	notify('update', {
+	notify(SOCKET_EVENTS.data.clientUpdate, {
 		data: {
 			change: nodeify({
 				players: {
@@ -72,7 +73,7 @@ test('deletes data on socket request', (done) => {
 	});
 	setTimeout(() => {
 		expect(store.get('players/1')).toEqual(nodeify({ x: 0, y: 1 }));
-		notify('update', {
+		notify(SOCKET_EVENTS.data.clientUpdate, {
 			data: {
 				delete: ['players/1'],
 			},
@@ -104,14 +105,14 @@ test('sends data on first subscribe', (done) => {
 	const { notify } = connectClient({
 		id: '1',
 		onSend(event, { data }) {
-			if (event === 'players/1') {
+			if (event === `${DATA_CONTEXT}:players/1`) {
 				expect(data).toEqual({ change: nodeify({ name: 'Ralph' }) });
 				done();
 			}
 		},
 	});
 
-	notify('subscribe', { path: 'players/1' });
+	notify(SOCKET_EVENTS.data.requestSubscription, { path: 'players/1' });
 });
 
 test('emits updates to subscriber', (done) => {
@@ -123,12 +124,12 @@ test('emits updates to subscriber', (done) => {
 	let count = 1;
 	const { notify } = connectClient({
 		onSend(event, { data }) {
-			if (event === 'players/1') {
+			if (event === `${DATA_CONTEXT}:players/1`) {
 				if (count === 1) {
 					expect(data).toEqual({ change: nodeify(null) });
 					count++;
 					setTimeout(() => {
-						notify('update', {
+						notify(SOCKET_EVENTS.data.clientUpdate, {
 							data: {
 								change: nodeify({
 									players: {
@@ -154,7 +155,7 @@ test('emits updates to subscriber', (done) => {
 		},
 	});
 
-	notify('subscribe', { path: 'players/1' });
+	notify(SOCKET_EVENTS.data.requestSubscription, { path: 'players/1' });
 });
 
 test('only emits changed values', (done) => {
@@ -177,7 +178,7 @@ test('only emits changed values', (done) => {
 
 	const { notify } = connectClient({
 		onSend(event, { data }) {
-			if (event === 'players/1') {
+			if (event === `${DATA_CONTEXT}:players/1`) {
 				if (updateCount === 0) {
 					updateCount++;
 					expect(data).toEqual({ change: nodeify({ name: 'Peter' }) });
@@ -196,8 +197,8 @@ test('only emits changed values', (done) => {
 		},
 	});
 
-	notify('subscribe', { path: 'players/1' });
-	notify('update', {
+	notify(SOCKET_EVENTS.data.requestSubscription, { path: 'players/1' });
+	notify(SOCKET_EVENTS.data.clientUpdate, {
 		data: {
 			change: nodeify({
 				players: {
@@ -233,7 +234,7 @@ test('emits updates to all subscribers', async () => {
 	await new Promise<void>((resolve) => {
 		const { notify } = connectClient({
 			onSend(event, { data }) {
-				if (event === 'players') {
+				if (event === `${DATA_CONTEXT}:players`) {
 					expect(data).toEqual({
 						change: nodeify({
 							1: {
@@ -245,18 +246,21 @@ test('emits updates to all subscribers', async () => {
 				}
 			},
 		});
-		notify('subscribe', { path: 'players', once: true });
+		notify(SOCKET_EVENTS.data.requestSubscription, {
+			path: 'players',
+			once: true,
+		});
 	});
 	await new Promise<void>((resolve) => {
 		const { notify } = connectClient({
 			onSend(event, { data }) {
-				if (event === 'players/1/name') {
+				if (event === `${DATA_CONTEXT}:players/1/name`) {
 					expect(data).toEqual({ change: nodeify('Peter') });
 					resolve();
 				}
 			},
 		});
-		notify('subscribe', { path: 'players/1/name' });
+		notify(SOCKET_EVENTS.data.requestSubscription, { path: 'players/1/name' });
 	});
 });
 
@@ -281,11 +285,11 @@ test('sends keys when entries are added or removed', async () => {
 		let count = 0;
 		const { notify } = connectClient({
 			onSend(event, { data }) {
-				if (event === 'players/*') {
+				if (event === `${DATA_CONTEXT}:players/*`) {
 					if (count === 0) {
 						expect(data).toEqual(['1']);
 						setTimeout(() => {
-							notify('update', {
+							notify(SOCKET_EVENTS.data.clientUpdate, {
 								data: {
 									change: nodeify({
 										players: {
@@ -309,7 +313,10 @@ test('sends keys when entries are added or removed', async () => {
 				}
 			},
 		});
-		notify('subscribeKeys', { path: 'players', flat: true });
+		notify(SOCKET_EVENTS.data.requestKeysSubscription, {
+			path: 'players',
+			flat: true,
+		});
 	});
 });
 
@@ -324,14 +331,14 @@ test('only send data if client is subscribed', (done) => {
 
 	const { notify } = connectClient({
 		onSend(event, { data }) {
-			if (event === 'players/1') {
+			if (event === `${DATA_CONTEXT}:players/1`) {
 				receivedCount++;
 			}
 		},
 	});
 
-	notify('subscribe', { path: 'players/1' });
-	notify('unsubscribe', { path: 'players/1' });
+	notify(SOCKET_EVENTS.data.requestSubscription, { path: 'players/1' });
+	notify(SOCKET_EVENTS.data.requestUnsubscription, { path: 'players/1' });
 	server.update(
 		nodeify({
 			players: {
@@ -357,7 +364,7 @@ test('should batch updates', (done) => {
 	let receivedCount = 0;
 
 	const { notify } = connectClient({
-		onSend(event, { data }) {
+		onSend(_, { data }) {
 			if (receivedCount === 0) {
 				expect(data).toEqual({ change: nodeify(null) });
 			}
@@ -368,11 +375,15 @@ test('should batch updates', (done) => {
 		},
 	});
 
-	notify('subscribe', { path: 'player' });
+	notify(SOCKET_EVENTS.data.requestSubscription, { path: 'player' });
 
-	notify('update', { data: { change: nodeify({ player: 'a' }) } });
-	notify('update', { data: { change: nodeify({ player: 'b' }) } });
-	notify('update', { data: { delete: ['player/a'] } });
+	notify(SOCKET_EVENTS.data.clientUpdate, {
+		data: { change: nodeify({ player: 'a' }) },
+	});
+	notify(SOCKET_EVENTS.data.clientUpdate, {
+		data: { change: nodeify({ player: 'b' }) },
+	});
+	notify(SOCKET_EVENTS.data.clientUpdate, { data: { delete: ['player/a'] } });
 
 	setTimeout(() => {
 		// first: null, second: 'b'

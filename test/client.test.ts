@@ -1,4 +1,5 @@
 import { SocketDBClient } from '../src/client';
+import { DATA_CONTEXT, SOCKET_EVENTS } from '../src/constants';
 import { nodeify } from '../src/node';
 import { SocketClient } from '../src/socketAdapter/socketClient';
 import { createStore } from '../src/store';
@@ -18,7 +19,7 @@ test('throws error when using * as pathname', () => {
 test('emits update object for path', (done) => {
 	const { socketClient } = mockSocketClient({
 		onSend(event, { data }) {
-			expect(event).toEqual('update');
+			expect(event).toEqual(SOCKET_EVENTS.data.clientUpdate);
 			expect(data).toEqual({
 				change: nodeify({
 					players: {
@@ -42,7 +43,7 @@ test('deletes data and notifies local subscribers', (done) => {
 
 	const { notify, socketClient } = mockSocketClient({
 		onSend(event, { data }: { data: BatchedUpdate }) {
-			if (event === 'update') {
+			if (event === SOCKET_EVENTS.data.clientUpdate) {
 				if (data.change) {
 					expect(data.change).toEqual(
 						nodeify({
@@ -53,13 +54,13 @@ test('deletes data and notifies local subscribers', (done) => {
 							},
 						})
 					);
-					notify('players/1/name', {
+					notify(`${DATA_CONTEXT}:players/1/name`, {
 						data: {
 							change: nodeify('Patrick'),
 						},
 					});
 				} else {
-					notify('players/1/name', {
+					notify(`${DATA_CONTEXT}:players/1/name`, {
 						data: {
 							delete: data.delete,
 						},
@@ -105,7 +106,7 @@ test('should batch updates', (done) => {
 
 	const { socketClient } = mockSocketClient({
 		onSend(event, { data }) {
-			expect(event).toEqual('update');
+			expect(event).toEqual(SOCKET_EVENTS.data.clientUpdate);
 			expect(data).toEqual({
 				change: nodeify({
 					players: {
@@ -168,7 +169,7 @@ test('merges data on update', (done) => {
 			updateCount++;
 		});
 
-	notify('players/1', {
+	notify(`${DATA_CONTEXT}:players/1`, {
 		data: {
 			change: nodeify({
 				name: 'Peter',
@@ -179,7 +180,7 @@ test('merges data on update', (done) => {
 			}),
 		},
 	});
-	notify('players/1', {
+	notify(`${DATA_CONTEXT}:players/1`, {
 		data: {
 			change: nodeify({
 				position: {
@@ -193,12 +194,16 @@ test('merges data on update', (done) => {
 test('can subscribe to path', (done) => {
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event, { path, once }) {
-			expect(event).toEqual('subscribe');
+			expect(event).toEqual(SOCKET_EVENTS.data.requestSubscription);
 			expect(path).toBe('players/1');
 			expect(once).not.toBe(true);
-			notify('players/1', { data: { change: nodeify({ name: 'Thomas' }) } });
-			notify('players/1', { data: { change: nodeify({ name: 'Thomas2' }) } });
-			notify('players/1', { data: { delete: ['players/1'] } });
+			notify(`${DATA_CONTEXT}:players/1`, {
+				data: { change: nodeify({ name: 'Thomas' }) },
+			});
+			notify(`${DATA_CONTEXT}:players/1`, {
+				data: { change: nodeify({ name: 'Thomas2' }) },
+			});
+			notify(`${DATA_CONTEXT}:players/1`, { data: { delete: ['players/1'] } });
 		},
 	});
 
@@ -228,18 +233,18 @@ test('can unsubscribe from path', (done) => {
 
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event) {
-			if (event === 'subscribe') {
+			if (event === SOCKET_EVENTS.data.requestSubscription) {
 				subscribeCount++;
 				setTimeout(() => {
-					notify('players/1', {
+					notify(`${DATA_CONTEXT}:players/1`, {
 						data: { change: nodeify({ name: 'Thomas' }) },
 					});
 					unsubscribe();
-					notify('players/1', {
+					notify(`${DATA_CONTEXT}:players/1`, {
 						data: { change: nodeify({ name: 'Thomas2' }) },
 					});
 				}, 10);
-			} else if (event === 'unsubscribe') {
+			} else if (event === SOCKET_EVENTS.data.requestUnsubscription) {
 				unsubscribeCount++;
 			}
 		},
@@ -265,9 +270,11 @@ test('can unsubscribe from path', (done) => {
 test('can subscribe to path once', (done) => {
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event, { path }) {
-			if (event === 'subscribe') {
+			if (event === SOCKET_EVENTS.data.requestSubscription) {
 				expect(path).toBe('players/1');
-				notify('players/1', { data: { change: nodeify('test') } });
+				notify(`${DATA_CONTEXT}:players/1`, {
+					data: { change: nodeify('test') },
+				});
 			}
 		},
 	});
@@ -365,11 +372,13 @@ test('unsubscribing does not cancel other subscriptions', (done) => {
 
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event, { data }) {
-			if (event === 'update') {
+			if (event === SOCKET_EVENTS.data.clientUpdate) {
 				expect(data).toEqual({
 					change: nodeify({ path: 'test' }),
 				});
-				notify('path', { data: { change: nodeify('test') } });
+				notify(`${DATA_CONTEXT}:path`, {
+					data: { change: nodeify('test') },
+				});
 			}
 		},
 	});
@@ -398,9 +407,9 @@ test('unsubscribing does not cancel other subscriptions', (done) => {
 test('can subscribe to keys of path', (done) => {
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event, { path }) {
-			if (event === 'subscribeKeys') {
+			if (event === SOCKET_EVENTS.data.requestKeysSubscription) {
 				expect(path).toBe('players');
-				notify('players/*', { data: ['1', '2'] });
+				notify(`${DATA_CONTEXT}:players/*`, { data: ['1', '2'] });
 			}
 		},
 	});
@@ -423,9 +432,9 @@ test('can subscribe to keys of path', (done) => {
 test('can unsubscribe from keys of path', (done) => {
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event, { path }) {
-			if (event === 'subscribeKeys') {
+			if (event === SOCKET_EVENTS.data.requestKeysSubscription) {
 				expect(path).toBe('players');
-				notify('players/*', { data: ['1'] });
+				notify(`${DATA_CONTEXT}:players/*`, { data: ['1'] });
 			}
 		},
 	});
@@ -439,7 +448,7 @@ test('can unsubscribe from keys of path', (done) => {
 	});
 	setTimeout(() => {
 		unsubscribe();
-		notify('players/*', { data: ['2', '3'] });
+		notify(`${DATA_CONTEXT}:players/*`, { data: ['2', '3'] });
 		setTimeout(() => {
 			expect(updateCount).toBe(1);
 			done();
@@ -450,8 +459,10 @@ test('can unsubscribe from keys of path', (done) => {
 test('received data should not be passed as reference', (done) => {
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event, { data }) {
-			if (event === 'update') {
-				notify('data', { data: { change: data.change.value.data } });
+			if (event === SOCKET_EVENTS.data.clientUpdate) {
+				notify(`${DATA_CONTEXT}:data`, {
+					data: { change: data.change.value.data },
+				});
 			}
 		},
 	});
@@ -481,8 +492,8 @@ test('also receives metadata', (done) => {
 
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event) {
-			if (event === 'subscribe') {
-				notify('players/1', {
+			if (event === SOCKET_EVENTS.data.requestSubscription) {
+				notify(`${DATA_CONTEXT}:players/1`, {
 					data: { change: { meta: metaExample, value: 'Thomas' } },
 				});
 			}
@@ -526,8 +537,10 @@ test('allows setting metadata', (done) => {
 test('on/once always receives data on first call', (done) => {
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event) {
-			if (event === 'subscribe') {
-				notify('players/1', { data: { change: nodeify({ name: 'Thomas' }) } });
+			if (event === SOCKET_EVENTS.data.requestSubscription) {
+				notify(`${DATA_CONTEXT}:players/1`, {
+					data: { change: nodeify({ name: 'Thomas' }) },
+				});
 				client
 					.get('players')
 					.get('1')
@@ -554,7 +567,7 @@ test('on/once always receives data on first call', (done) => {
 test('only subscribes once for every root path', (done) => {
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event) {
-			if (event === 'subscribe') {
+			if (event === SOCKET_EVENTS.data.requestSubscription) {
 				subscriptionCount++;
 			}
 		},
@@ -589,7 +602,9 @@ test('only subscribes once for every root path', (done) => {
 		expect(subscriptionCount).toBe(1);
 		// we don't have data yet
 		expect(updateCount).toBe(0);
-		notify('players', { data: { change: nodeify({ 1: { name: 'Paul' } }) } });
+		notify(`${DATA_CONTEXT}:players`, {
+			data: { change: nodeify({ 1: { name: 'Paul' } }) },
+		});
 
 		setTimeout(() => {
 			expect(updateCount).toBe(4);
@@ -601,12 +616,12 @@ test('only subscribes once for every root path', (done) => {
 test('always subscribe to highest level path', (done) => {
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event, { path }) {
-			if (event === 'subscribe') {
+			if (event === SOCKET_EVENTS.data.requestSubscription) {
 				subscriptionCount++;
 				if (subscriptionCount === 2) {
 					expect(path).toBe('players');
 				}
-			} else if (event === 'unsubscribe') {
+			} else if (event === SOCKET_EVENTS.data.requestUnsubscription) {
 				unsubscriptionCount++;
 			}
 		},
@@ -646,7 +661,7 @@ test('always subscribe to highest level path', (done) => {
 		});
 		updateReceivedCount++;
 	});
-	notify('players', {
+	notify(`${DATA_CONTEXT}:players`, {
 		data: {
 			change: nodeify({
 				1: {
@@ -701,15 +716,15 @@ test('always subscribe to highest level path', (done) => {
 test('does not resubscribe to keys if higher level path is already subscribed', (done) => {
 	const { socketClient, notify } = mockSocketClient({
 		onSend(event, { path }) {
-			if (event === 'subscribeKeys') {
+			if (event === SOCKET_EVENTS.data.requestKeysSubscription) {
 				fail('should not subscribe to keys');
 			}
-			if (event === 'subscribe') {
+			if (event === SOCKET_EVENTS.data.requestSubscription) {
 				expect(path).toBe('players');
 				// simulate coming from server + make sure, "each" is called before
 				// checks if each will receive updates coming from server
 				setTimeout(() => {
-					notify('players', {
+					notify(`${DATA_CONTEXT}:players`, {
 						data: { change: nodeify({ 1: 'test1', 2: 'test2' }) },
 					});
 				}, 10);
@@ -735,8 +750,8 @@ test('does not resubscribe to keys if higher level path is already subscribed', 
 
 test('if data is null, should notify every subpath', (done) => {
 	const { socketClient, notify } = mockSocketClient({
-		onSend(event, { path }) {
-			if (event === 'subscribe') {
+		onSend(event) {
+			if (event === SOCKET_EVENTS.data.requestSubscription) {
 				subscriptionCount++;
 			}
 		},
@@ -773,7 +788,7 @@ test('if data is null, should notify every subpath', (done) => {
 			testString += 'd';
 		});
 
-	notify('players', { data: { change: nodeify(null) } });
+	notify(`${DATA_CONTEXT}:players`, { data: { change: nodeify(null) } });
 
 	setTimeout(() => {
 		expect(subscriptionCount).toBe(1);
@@ -787,11 +802,13 @@ test('subscribes again after reconnect', (done) => {
 	const { socketClient, notify, disconnect, reconnect } = mockSocketClient({
 		onSend(event, { path, once }) {
 			subscribeCount++;
-			expect(event).toEqual('subscribe');
+			expect(event).toEqual(SOCKET_EVENTS.data.requestSubscription);
 			expect(path).toBe('players/1');
 			expect(once).not.toBe(true);
 			if (subscribeCount === 1) {
-				notify('players/1', { data: { change: nodeify({ name: 'Thomas' }) } });
+				notify(`${DATA_CONTEXT}:players/1`, {
+					data: { change: nodeify({ name: 'Thomas' }) },
+				});
 				disconnect();
 				reconnect();
 			} else {

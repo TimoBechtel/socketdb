@@ -1,5 +1,6 @@
 import { createHooks, Hook } from 'krog';
 import { createBatchedClient } from './batchedSocketEvents';
+import { DATA_CONTEXT, SOCKET_EVENTS } from './constants';
 import {
 	isNode,
 	KeyValue,
@@ -101,68 +102,78 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 	const queueUpdate = createUpdateBatcher((diff) => {
 		// not deep cloning diff (for perf.), because we do not need to
 		// as diff will be cleared after sending update (see queue)
-		socketEvents.queue('update', { data: diff });
+		socketEvents.queue(SOCKET_EVENTS.data.clientUpdate, { data: diff });
 	}, updateInterval);
 
 	const subscriptions = {
 		update: createSubscriptionManager<Node>({
 			createPathSubscription(path, notify) {
 				if (isWildcardPath(path)) {
-					socketEvents.subscribe(path, ({ data: keys }: { data: string[] }) => {
-						notify(() => {
-							const update: { [key: string]: any } = {};
-							keys.forEach((key) => (update[key] = null));
-							return nodeify(update);
-						});
-					});
-					socketEvents.queue('subscribeKeys', { path: trimWildcard(path) });
-				} else {
-					socketEvents.subscribe(path, ({ data }: { data: BatchedUpdate }) => {
-						data.delete?.forEach((path) => {
-							store.del(path);
-							subscriptions.update.notify(path, (path) => store.get(path), {
-								recursiveDown: true,
-								recursiveUp: true,
-							});
-						});
-						if (data.change) {
-							const update = creatUpdate(path, data.change);
-							store.put(update);
-							traverseNode(update, (path, data) => {
-								subscriptions.update.notify(path, () =>
-									deepClone(store.get(path))
-								);
-								if (isObject(data.value)) {
-									// with child paths, we need to notify all listeners for the wildcard path
-									subscriptions.update.notify(joinPath(path, '*'), () =>
-										store.get(path)
-									);
-								} else {
-									// notify all subscribers of all child paths that their data has been deleted
-									// this has the issue, that it notifies even if data has not changed (meaning it was already null)
-									// examples when this happens:
-									// - path '/a' is updated with value '1', path '/a/b' is subscribed -> will be notified with value 'null'
-									// - path '/a' is deleted (set to null), path '/a/b' is subscribed -> will be notified with value 'null'
-									subscriptions.update.notify(path, nodeify(null), {
-										excludeSelf: true,
-										recursiveDown: true,
-									});
-								}
+					socketEvents.subscribe(
+						`${DATA_CONTEXT}:${path}`,
+						({ data: keys }: { data: string[] }) => {
+							notify(() => {
+								const update: { [key: string]: any } = {};
+								keys.forEach((key) => (update[key] = null));
+								return nodeify(update);
 							});
 						}
+					);
+					socketEvents.queue(SOCKET_EVENTS.data.requestKeysSubscription, {
+						path: trimWildcard(path),
 					});
-					socketEvents.queue('subscribe', { path });
+				} else {
+					socketEvents.subscribe(
+						`${DATA_CONTEXT}:${path}`,
+						({ data }: { data: BatchedUpdate }) => {
+							data.delete?.forEach((path) => {
+								store.del(path);
+								subscriptions.update.notify(path, (path) => store.get(path), {
+									recursiveDown: true,
+									recursiveUp: true,
+								});
+							});
+							if (data.change) {
+								const update = creatUpdate(path, data.change);
+								store.put(update);
+								traverseNode(update, (path, data) => {
+									subscriptions.update.notify(path, () =>
+										deepClone(store.get(path))
+									);
+									if (isObject(data.value)) {
+										// with child paths, we need to notify all listeners for the wildcard path
+										subscriptions.update.notify(joinPath(path, '*'), () =>
+											store.get(path)
+										);
+									} else {
+										// notify all subscribers of all child paths that their data has been deleted
+										// this has the issue, that it notifies even if data has not changed (meaning it was already null)
+										// examples when this happens:
+										// - path '/a' is updated with value '1', path '/a/b' is subscribed -> will be notified with value 'null'
+										// - path '/a' is deleted (set to null), path '/a/b' is subscribed -> will be notified with value 'null'
+										subscriptions.update.notify(path, nodeify(null), {
+											excludeSelf: true,
+											recursiveDown: true,
+										});
+									}
+								});
+							}
+						}
+					);
+					socketEvents.queue(SOCKET_EVENTS.data.requestSubscription, { path });
 				}
 			},
 			destroySubscription(path) {
-				socketEvents.unsubscribe(path);
-				socketEvents.queue('unsubscribe', { path });
+				socketEvents.unsubscribe(`${DATA_CONTEXT}:${path}`);
+				socketEvents.queue(SOCKET_EVENTS.data.requestUnsubscription, { path });
 			},
 			restoreSubscription(path) {
 				if (isWildcardPath(path)) {
-					socketEvents.queue('subscribeKeys', { path: trimWildcard(path) });
+					socketEvents.queue(SOCKET_EVENTS.data.requestKeysSubscription, {
+						path: trimWildcard(path),
+					});
 				} else {
-					socketEvents.queue('subscribe', { path });
+					socketEvents.queue(SOCKET_EVENTS.data.requestSubscription, { path });
 				}
 			},
 		}),
