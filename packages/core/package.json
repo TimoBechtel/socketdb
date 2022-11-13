@@ -1,0 +1,9 @@
+{
+	"name": "@socketdb/core",
+	"version": "0.0.1",
+	"type": "commonjs",
+	"description": "SocketDB Core",
+	"homepage": "https://socketdb.com",
+	"license": "MIT",
+	"repository": "git@github.com:TimoBechtel/socketdb.git"
+}

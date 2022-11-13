@@ -1,0 +1,22 @@
+{
+	"name": "@socketdb/server",
+	"version": "0.0.1",
+	"type": "commonjs",
+	"description": "Node-Server for SocketDB - The real-time synchronized data storage.",
+	"homepage": "https://socketdb.com",
+	"license": "MIT",
+	"repository": "git@github.com:TimoBechtel/socketdb.git",
+	"keywords": [
+		"socket db",
+		"websocket",
+		"socket",
+		"live",
+		"database",
+		"real time",
+		"synchronization",
+		"socket.io"
+	],
+	"peerDependencies": {
+		"ws": "^8.11.0"
+	}
+}
