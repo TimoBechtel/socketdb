@@ -1,6 +1,8 @@
 # Write plugins
 
-SocketDB can be extended using plugins. See a list of already available plugins [here](plugins).
+SocketDB can be extended using plugins.
+
+See a list of already available plugins [here](plugins).
 
 Plugins can tap into exposed hooks to extend the functionality of SocketDB:
 
@@ -23,6 +25,10 @@ const client = SocketDBClient({
 	],
 });
 ```
+
+:::tip Plugin implementation
+Plugins are implemented using the `krog` library. Check out its [documentation](https://github.com/TimoBechtel/krog) to learn more.
+:::
 
 If your plugins middleware returns a value, this value will be passed to the next plugin
 and finally processed internally instead of the initial arguments.
@@ -65,10 +71,30 @@ type Hook<Arguments = void, Context = void> = (
 
 ```ts
 type ServerHooks = {
-	'server:clientConnect'?: Hook<{ id: string }, { client: { id: string } }>;
-	'server:clientDisconnect'?: Hook<{ id: string }, { client: { id: string } }>;
-	'server:update'?: Hook<{ data: Node }, { client: { id: string } }>;
-	'server:delete'?: Hook<{ path: string }, { client: { id: string } }>;
+	'server:clientConnect'?: Hook<
+		{ id: string },
+		{ client: { id: string; context: SessionContext }; api: SocketDBServerAPI }
+	>;
+	'server:clientDisconnect'?: Hook<
+		{ id: string },
+		{ client: { id: string; context: SessionContext }; api: SocketDBServerAPI }
+	>;
+	'server:update'?: Hook<
+		{ data: Node },
+		// if client id is null, it means the update comes from the server
+		{
+			client: { id: string | null; context: SessionContext | null };
+			api: SocketDBServerAPI;
+		}
+	>;
+	'server:delete'?: Hook<
+		{ path: string },
+		// if client id is null, it means the deletion comes from the server
+		{
+			client: { id: string | null; context: SessionContext | null };
+			api: SocketDBServerAPI;
+		}
+	>;
 };
 type Hook<Arguments = void, Context = void> = (
 	args: Arguments,

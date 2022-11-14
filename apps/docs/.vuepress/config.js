@@ -85,9 +85,13 @@ module.exports = {
 				},
 				'plugins',
 				{
-					title: 'Extensions',
-					children: ['create-plugins', 'custom-store'],
-					collapsable: false,
+					title: 'Extending SocketDB',
+					children: [
+						'create-plugins',
+						'custom-store',
+						'custom-server-implementation',
+					],
+					collapsable: true,
 				},
 				{
 					title: 'Advanced',
