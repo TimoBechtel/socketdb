@@ -1,6 +1,6 @@
 {
 	"name": "@socketdb/client",
-	"version": "0.0.1",
+	"version": "4.0.0",
 	"type": "commonjs",
 	"description": "Web-Client for SocketDB - The real-time synchronized data storage.",
 	"homepage": "https://socketdb.com",

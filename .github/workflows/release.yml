@@ -19,6 +19,17 @@ jobs:
           #   { type: 'json', path: 'packages/server/package.json', jsonpath: '$.version' }
           #   { type: 'json', path: 'packages/core/package.json', jsonpath: '$.version' }
 
+      - name: Update libraries package.json versions
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          cd packages
+          cd client
+          npm version ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} && cd ..
+          cd server
+          npm version ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} && cd ..
+          cd core
+          npm version ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} && cd ..
+
       - name: Checkout
         if: ${{ steps.release.outputs.release_created }}
         uses: actions/checkout@v3
