@@ -14,10 +14,10 @@ jobs:
           release-type: node
           package-name: '@socketdb'
           release-as: 4.0.0
-          extra-files: |
-            { type: 'json', path: 'packages/client/package.json', jsonpath: '$.version' }
-            { type: 'json', path: 'packages/server/package.json', jsonpath: '$.version' }
-            { type: 'json', path: 'packages/core/package.json', jsonpath: '$.version' }
+          # extra-files: |
+          #   { type: 'json', path: 'packages/client/package.json', jsonpath: '$.version' }
+          #   { type: 'json', path: 'packages/server/package.json', jsonpath: '$.version' }
+          #   { type: 'json', path: 'packages/core/package.json', jsonpath: '$.version' }
 
       - name: Checkout
         if: ${{ steps.release.outputs.release_created }}
@@ -57,4 +57,4 @@ jobs:
       - name: Publish
         if: ${{ steps.release.outputs.release_created }}
         #  publish all packages with the new version
-        run: pnpm nx run-many --target publish
+        run: pnpm nx run-many --target publish --ver=${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} --tag=latest
