@@ -4,6 +4,26 @@
 
 - **server:** allow adding a user context ([b00f0bc](https://github.com/TimoBechtel/socketdb/commit/b00f0bcdffbe1994d22f4c57e8e5b7d7e97041c0)), closes [#26](https://github.com/TimoBechtel/socketdb/issues/26)
 
+## [4.0.0](https://github.com/TimoBechtel/socketdb/compare/v3.9.0...v4.0.0) (2022-11-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* socketdb has been split into @socketdb/client & @socketdb/server
+* this breaks compatibility with previous versions. make sure to upgrade both client and server
+* this breaks compatibility with previous versions. make sure to upgrade both client and server
+
+### Features
+
+* batch all socketevents ([8a06672](https://github.com/TimoBechtel/socketdb/commit/8a0667270d920e744fb72328dd72e9999bbdecc0))
+* update documentation url ([712ed49](https://github.com/TimoBechtel/socketdb/commit/712ed49f054a694bda861db25a9967f48112a8dc))
+
+
+### Code Refactoring
+
+* move to a monorepo ([5ba03ed](https://github.com/TimoBechtel/socketdb/commit/5ba03ed9743b22d2c93507e0475f86885315fd18))
+* prefix socket events with a context ([bb89f10](https://github.com/TimoBechtel/socketdb/commit/bb89f103894533ff0938a4e60b833aab6442ff84))
+
 ## [3.8.1](https://github.com/TimoBechtel/socketdb/compare/v3.8.0...v3.8.1) (2021-10-17)
 
 ### Bug Fixes
