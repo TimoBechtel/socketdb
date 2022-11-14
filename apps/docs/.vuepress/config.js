@@ -85,12 +85,19 @@ module.exports = {
 				},
 				'plugins',
 				{
-					title: 'Advanced',
-					children: ['persistence'],
-				},
-				{
 					title: 'Extensions',
 					children: ['create-plugins', 'custom-store'],
+					collapsable: false,
+				},
+				{
+					title: 'Advanced',
+					children: ['persistence'],
+					collapsable: true,
+				},
+				{
+					title: 'Migration Guides',
+					children: ['migration-guides/v3-to-v4'],
+					collapsable: false,
 				},
 			],
 			'/api/': [
