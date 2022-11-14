@@ -1,28 +1,60 @@
-name: Release
-
 on:
   push:
     branches:
       - main
-      - next
 
+name: release-please
 jobs:
-  release:
-    name: Release
+  release-please:
     runs-on: ubuntu-latest
     steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          release-type: node
+          package-name: '@socketdb'
+          release-as: 4.0.0
+          extra-files: |
+            { type: 'json', path: 'packages/client/package.json', jsonpath: '$.version' }
+            { type: 'json', path: 'packages/server/package.json', jsonpath: '$.version' }
+            { type: 'json', path: 'packages/core/package.json', jsonpath: '$.version' }
+
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          # We need to fetch all branches and commits so that Nx affected has a base to compare against.
+          fetch-depth: 0
+
+      - uses: nrwl/nx-set-shas@v3
+        if: ${{ steps.release.outputs.release_created }}
+
+      - name: Setup pnpm
+        if: ${{ steps.release.outputs.release_created }}
+        uses: pnpm/action-setup@v2.2.4
+        id: pnpm-install
+        with:
+          version: 7
+          run_install: false
+
+      - name: Node setup
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache: 'pnpm'
+
       - name: Install dependencies
-        run: yarn install
-      - name: Test
-        run: yarn test
+        if: ${{ steps.release.outputs.release_created }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        if: ${{ steps.release.outputs.release_created }}
+        # need to build all packages as we want to publish all with the same version
+        run: pnpm nx run-many --target=build --parallel=3 --exclude=docs
+
       - name: Publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+        if: ${{ steps.release.outputs.release_created }}
+        #  publish all packages with the new version
+        run: pnpm nx run-many --target publish

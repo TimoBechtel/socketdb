@@ -1,0 +1,56 @@
+{
+	"name": "client",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/client/src",
+	"projectType": "library",
+	"targets": {
+		"build": {
+			"executor": "@nrwl/rollup:rollup",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/client",
+				"format": ["esm"],
+				"main": "packages/client/src/index.ts",
+				"tsConfig": "packages/client/tsconfig.lib.json",
+				"assets": [
+					{
+						"glob": "*.md",
+						"input": "packages/client",
+						"output": "."
+					},
+					{
+						"glob": "LICENSE",
+						"input": ".",
+						"output": "."
+					}
+				],
+				"project": "packages/client/package.json",
+				"buildableProjectDepsInPackageJsonType": "dependencies",
+				"generateExportsField": true
+			}
+		},
+		"publish": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "node tools/scripts/publish.mjs client {args.ver} {args.tag}"
+			},
+			"dependsOn": ["build"]
+		},
+		"lint": {
+			"executor": "@nrwl/linter:eslint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": ["packages/client/**/*.ts"]
+			}
+		},
+		"test": {
+			"executor": "@nrwl/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/client/jest.config.ts",
+				"passWithNoTests": true
+			}
+		}
+	},
+	"tags": ["scope:browser"]
+}

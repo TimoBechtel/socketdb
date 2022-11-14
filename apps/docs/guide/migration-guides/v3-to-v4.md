@@ -1,0 +1,88 @@
+# v4 Migration Guide
+
+There a number of breaking changes in v4. This guide will help you migrate your code.
+
+The biggest change is that SocketDB is now split into multiple packages. Most notably `@socketdb/client` and `@socketdb/server`.
+
+All packages share the same version number. Make sure to keep all packages at the same major version.
+
+## The client has been moved into its own package
+
+To upgrade the client, replace all imports from `socketdb` to `@socketdb/client`.
+
+```diff
+- import { SocketDBClient } from 'socketdb';
++ import { SocketDBClient } from '@socketdb/client';
+```
+
+## The server has been moved into its own package
+
+To upgrade the server, replace all imports from `socketdb` to `@socketdb/server`.
+
+```diff
+- import { SocketDBServer } from 'socketdb';
++ import { SocketDBServer } from '@socketdb/server';
+```
+
+## Core functions are now located in the `core` package
+
+If you have been using core functions, for example to create a [custom store](/guide/custom-store), you need to install the `@socketdb/core` package.
+
+<code-group>
+<code-block title="PNPM">
+```bash
+pnpm add @socketdb/core
+```
+</code-block>
+
+<code-block title="NPM">
+```bash
+npm install @socketdb/core
+```
+</code-block>
+
+</code-group>
+
+Then replace the relevant imports from `socketdb` to `@socketdb/core`.
+
+```diff
+- import { createStore } from 'socketdb';
++ import { createStore } from '@socketdb/core';
+```
+
+## Client and server cannot be updated independently to v4
+
+You need to update both the client and the server at the same time. This is because of a change how socket events are handled.
+
+## All socket events are now batched 🎉
+
+SocketDB now batches all events. This means that nested subscribe calls will now only send one event to the client.
+Previously, every nested subscribe call would send & receive its own event. This has been a major performance issue for larger collections.
+
+```js
+// this will now only send a single event instead of an event for every todo item
+db.get('todos').each((todoRef) => {
+	todoRef.on(({ title }) => {
+		console.log(title);
+	});
+});
+```
+
+If you've been avoiding nested subscribe calls, like `each` for performance reasons, you may now opt-in again to use nested subscribe calls for cleaner code.
+
+:::tip Note
+Feel free to raise an [issue](https://github.com/TimoBechtel/socketdb/issues) if you face any performance problems with this.
+:::
+
+```diff
+- db.get('todos').on(todosObject => {
+-   Object.values(todosObject).forEach(({title}) => {
+-     console.log(title);
+-   });
+- })
++ db.get('todos').each((todoRef) => {
++	  todoRef.on(({ title }) => {
++		  console.log(title);
++	  });
++ });
+```
