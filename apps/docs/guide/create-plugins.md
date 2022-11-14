@@ -36,7 +36,7 @@ For example:
 `extension.d.ts`
 
 ```ts
-declare module 'socketdb' {
+declare module '@socketdb/client' {
 	export interface Meta {
 		updated: Date;
 	}

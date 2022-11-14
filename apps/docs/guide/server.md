@@ -1,7 +1,7 @@
 # Server usage
 
 ```js
-import { SocketDBServer } from 'socketdb';
+import { SocketDBServer } from '@socketdb/server';
 const server = SocketDBServer(options);
 ```
 
@@ -25,7 +25,7 @@ If you want to use SocketDB with an existing server, like express, you can initi
 For example:
 
 ```js
-import { SocketDBServer, createWebsocketServer } from 'socketdb';
+import { SocketDBServer, createWebsocketServer } from '@socketdb/server';
 import { createServer } from 'http';
 import express from 'express';
 const app = express();

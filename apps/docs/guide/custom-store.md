@@ -3,6 +3,8 @@
 You can use your own store for the [SocketDBClient](/api/client) as well as [SocketDBServer](/api/server).
 This allows you to, for example, add persistence to your application.
 
+> You might need to install the core utils package for this: `@socketdb/core`
+
 Simply write a function that returns an object with these functions:
 
 ```ts
@@ -29,7 +31,7 @@ type Node = {
 Or you can simply extend the default store:
 
 ```js
-import { createStore } from 'socketdb';
+import { createStore } from '@socketdb/core';
 
 const { get, put, del } = createStore();
 

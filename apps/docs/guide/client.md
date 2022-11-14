@@ -1,7 +1,7 @@
 # Client usage
 
 ```js
-import { SocketDBClient } from 'socketdb/browser';
+import { SocketDBClient } from '@socketdb/client';
 const db = SocketDBClient(options);
 ```
 

@@ -1,30 +1,15 @@
 # Quick Start
 
-<code-group>
-<code-block title="YARN">
-```bash
-yarn add socketdb
-```
-</code-block>
-
-<code-block title="NPM">
-```bash
-npm install socketdb
-```
-</code-block>
-
-</code-group>
-
 ## Setup Server
 
 Create new project:
 
 <code-group>
-<code-block title="YARN">
+<code-block title="PNPM">
 ```bash
 mkdir myserver && cd myserver
-yarn init
-yarn add socketdb
+pnpm init
+pnpm add @socketdb/server
 ```
 </code-block>
 
@@ -32,7 +17,7 @@ yarn add socketdb
 ```bash
 mkdir myserver && cd myserver
 npm init
-npm install socketdb
+npm install @socketdb/server
 ```
 </code-block>
 
@@ -41,7 +26,7 @@ npm install socketdb
 Create `index.js` file with:
 
 ```js
-import { SocketDBServer } from 'socketdb';
+import { SocketDBServer } from '@socketdb/server';
 
 SocketDBServer({ port: 8080 });
 ```
@@ -50,31 +35,30 @@ Run it with `node index.js`.
 
 ## Setup Client
 
-There are two ways you can use SocketDB.
-
-### Using script tag
-
-Download `SocketDBClient minified UMD` from latest [release](https://github.com/TimoBechtel/socketdb/releases).
-
-Link it in your html head:
-
-```html
-<script src="SocketDBClient-VERSION_NUMBER.min.js"></script>
+<code-group>
+<code-block title="PNPM">
+```bash
+pnpm add @socketdb/client
 ```
+</code-block>
 
-This will expose the `SocketDBClient` globally.
+<code-block title="NPM">
+```bash
+npm install @socketdb/client
+```
+</code-block>
 
-### As npm module (recommended)
+</code-group>
 
-To use SocketDB as a module, you need to setup your frontend with a bundler (like [rollup](https://rollupjs.org/)) that bundles your node_modules.
+> To use SocketDB, you need to setup your frontend with a bundler (like [rollup](https://rollupjs.org/)) that bundles your node_modules.
 
-Then you can just import the browser version:
+Then you can just import the client:
 
 ```js
-import { SocketDBClient } from 'socketdb/browser';
+import { SocketDBClient } from '@socketdb/client';
 ```
 
-## Start client
+## Start client & connect to server
 
 Then, in your frontend javascript, you can connect to the server like this:
 
