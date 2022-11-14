@@ -9,7 +9,7 @@ module.exports = {
 	 * Ref：https://v1.vuepress.vuejs.org/config/#description
 	 */
 	description: description,
-	base: '/socketdb/',
+	base: '/',
 
 	/**
 	 * Extra tags to be injected to the page HTML `<head>`
@@ -54,7 +54,7 @@ module.exports = {
 	 */
 	themeConfig: {
 		author: 'Timo Bechtel',
-		domain: 'https://timobechtel.github.io/socketdb',
+		domain: 'https://socketdb.com',
 		repo: 'https://github.com/TimoBechtel/socketdb',
 		editLinks: true,
 		docsDir: 'docs',
