@@ -4,6 +4,14 @@
 
 - **server:** allow adding a user context ([b00f0bc](https://github.com/TimoBechtel/socketdb/commit/b00f0bcdffbe1994d22f4c57e8e5b7d7e97041c0)), closes [#26](https://github.com/TimoBechtel/socketdb/issues/26)
 
+## [4.1.0](https://github.com/TimoBechtel/socketdb/compare/v4.0.2...v4.1.0) (2022-11-15)
+
+
+### Features
+
+* **client:** add commonjs support ([ac670dc](https://github.com/TimoBechtel/socketdb/commit/ac670dcb67eafe06ed1305c39188bde577159f09))
+* **plugin-validate:** add support for socketdb v4 ([8c8c91e](https://github.com/TimoBechtel/socketdb/commit/8c8c91e7ac4407dc15f8b5fbdb50241f32c0d6b9))
+
 ## [4.0.2](https://github.com/TimoBechtel/socketdb/compare/v4.0.1...v4.0.2) (2022-11-15)
 
 
