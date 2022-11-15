@@ -15,7 +15,7 @@
 				"assets": [
 					{
 						"glob": "*.md",
-						"input": "packages/client",
+						"input": "packages/plugin-validate",
 						"output": "."
 					},
 					{
