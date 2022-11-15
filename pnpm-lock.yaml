@@ -24,7 +24,7 @@ specifiers:
   is-ci: ^3.0.1
   jest: 28.1.1
   jest-environment-jsdom: 28.1.1
-  krog: ^1.1.0
+  krog: ^1.2.0
   lint-staged: ^13.0.3
   nx: 15.0.13
   prettier: ^2.6.2
@@ -39,7 +39,7 @@ specifiers:
   ws: ^7.5.9
 
 dependencies:
-  krog: 1.1.0
+  krog: 1.2.0
   tslib: 2.4.1
   ws: 7.5.9
 
@@ -12155,10 +12155,10 @@ packages:
     engines: { node: '>=6' }
     dev: true
 
-  /krog/1.1.0:
+  /krog/1.2.0:
     resolution:
       {
-        integrity: sha512-dibxWOP+GQwfRuAQm8wn3FhFjXvV6DGGHIJPt/MUGYLP1VuakAM5AkpJAGw7u8o13NmL6rnKo2VDMIf0s/M+FA==,
+        integrity: sha512-bQZkkwCbRuxaR4BTLVU8kS3VtB8iR7TUseB5TxFbKGmQUWMD9B0uNi5vNiBPHpWWoHI915IW8numwNseNtDJCg==,
       }
     dev: false
 
