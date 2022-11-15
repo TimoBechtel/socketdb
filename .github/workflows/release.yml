@@ -22,11 +22,6 @@ jobs:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
 
-      - name: Sync libraries package.json versions
-        if: ${{ steps.release.outputs.release_created }}
-        run: |
-          node tools/scripts/sync-versions.mjs
-
       - uses: nrwl/nx-set-shas@v3
         if: ${{ steps.release.outputs.release_created }}
 
@@ -48,6 +43,11 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.release.outputs.release_created }}
         run: pnpm install --frozen-lockfile
+
+      - name: Sync libraries package.json versions
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          node tools/scripts/sync-versions.mjs
 
       - name: Build
         if: ${{ steps.release.outputs.release_created }}
