@@ -66,5 +66,7 @@ jobs:
 
       - name: Publish
         if: ${{ steps.release.outputs.release_created }}
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
         #  publish all packages with the new version
         run: pnpm nx run-many --target publish --ver=${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} --tag=latest
