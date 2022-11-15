@@ -39,6 +39,8 @@ jobs:
         with:
           node-version: 16
           cache: 'pnpm'
+          # configures .npmrc file for publishing to npm
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         if: ${{ steps.release.outputs.release_created }}
