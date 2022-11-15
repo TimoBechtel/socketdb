@@ -4,6 +4,13 @@
 
 - **server:** allow adding a user context ([b00f0bc](https://github.com/TimoBechtel/socketdb/commit/b00f0bcdffbe1994d22f4c57e8e5b7d7e97041c0)), closes [#26](https://github.com/TimoBechtel/socketdb/issues/26)
 
+## [4.0.1](https://github.com/TimoBechtel/socketdb/compare/v4.0.0...v4.0.1) (2022-11-15)
+
+
+### Bug Fixes
+
+* wrong @socketdb/core dependency version ([095ab6d](https://github.com/TimoBechtel/socketdb/commit/095ab6d22f23853f3d0123d04d3e9685c8e1b732))
+
 ## [4.0.0](https://github.com/TimoBechtel/socketdb/compare/v3.9.0...v4.0.0) (2022-11-14)
 
 
