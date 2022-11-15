@@ -13,10 +13,6 @@ jobs:
         with:
           release-type: node
           package-name: '@socketdb'
-          # extra-files: |
-          #   { type: 'json', path: 'packages/client/package.json', jsonpath: '$.version' }
-          #   { type: 'json', path: 'packages/server/package.json', jsonpath: '$.version' }
-          #   { type: 'json', path: 'packages/core/package.json', jsonpath: '$.version' }
 
       - name: Checkout
         if: ${{ steps.release.outputs.release_created }}
@@ -26,16 +22,10 @@ jobs:
           # We need to fetch all branches and commits so that Nx affected has a base to compare against.
           fetch-depth: 0
 
-      - name: Update libraries package.json versions
+      - name: Sync libraries package.json versions
         if: ${{ steps.release.outputs.release_created }}
         run: |
-          cd packages
-          cd client
-          npm version ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} && cd ..
-          cd server
-          npm version ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} && cd ..
-          cd core
-          npm version ${{ steps.release.outputs.major }}.${{ steps.release.outputs.minor }}.${{ steps.release.outputs.patch }} && cd ..
+          node tools/scripts/sync-versions.mjs
 
       - uses: nrwl/nx-set-shas@v3
         if: ${{ steps.release.outputs.release_created }}
