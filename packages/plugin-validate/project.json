@@ -1,0 +1,56 @@
+{
+	"name": "plugin-validate",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugin-validate/src",
+	"projectType": "library",
+	"targets": {
+		"build": {
+			"executor": "@nrwl/rollup:rollup",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugin-validate",
+				"format": ["esm", "cjs"],
+				"main": "packages/plugin-validate/src/index.ts",
+				"tsConfig": "packages/plugin-validate/tsconfig.lib.json",
+				"assets": [
+					{
+						"glob": "*.md",
+						"input": "packages/client",
+						"output": "."
+					},
+					{
+						"glob": "LICENSE",
+						"input": ".",
+						"output": "."
+					}
+				],
+				"project": "packages/plugin-validate/package.json",
+				"buildableProjectDepsInPackageJsonType": "dependencies",
+				"generateExportsField": true
+			}
+		},
+		"publish": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "node tools/scripts/publish.mjs plugin-validate {args.ver} {args.tag}"
+			},
+			"dependsOn": ["build"]
+		},
+		"lint": {
+			"executor": "@nrwl/linter:eslint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": ["packages/plugin-validate/**/*.ts"]
+			}
+		},
+		"test": {
+			"executor": "@nrwl/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugin-validate/jest.config.ts",
+				"passWithNoTests": true
+			}
+		}
+	},
+	"tags": []
+}
