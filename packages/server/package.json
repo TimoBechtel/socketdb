@@ -1,6 +1,6 @@
 {
 	"name": "@socketdb/server",
-	"version": "4.0.0",
+	"version": "4.0.1",
 	"type": "commonjs",
 	"description": "Node-Server for SocketDB - The real-time synchronized data storage.",
 	"homepage": "https://socketdb.com",
