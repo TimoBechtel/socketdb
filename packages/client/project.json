@@ -9,7 +9,7 @@
 			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/client",
-				"format": ["esm"],
+				"format": ["esm", "cjs"],
 				"main": "packages/client/src/index.ts",
 				"tsConfig": "packages/client/tsconfig.lib.json",
 				"assets": [
