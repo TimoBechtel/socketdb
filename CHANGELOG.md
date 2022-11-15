@@ -4,6 +4,13 @@
 
 - **server:** allow adding a user context ([b00f0bc](https://github.com/TimoBechtel/socketdb/commit/b00f0bcdffbe1994d22f4c57e8e5b7d7e97041c0)), closes [#26](https://github.com/TimoBechtel/socketdb/issues/26)
 
+## [4.0.2](https://github.com/TimoBechtel/socketdb/compare/v4.0.1...v4.0.2) (2022-11-15)
+
+
+### Bug Fixes
+
+* **client:** check for websocket ready state before sending ([7ac28ab](https://github.com/TimoBechtel/socketdb/commit/7ac28ab19dc63329f223313564e409dbea7ad9bd))
+
 ## [4.0.1](https://github.com/TimoBechtel/socketdb/compare/v4.0.0...v4.0.1) (2022-11-15)
 
 
