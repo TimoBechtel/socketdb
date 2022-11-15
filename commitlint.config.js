@@ -18,7 +18,6 @@ module.exports = {
 		// allow custom scopes to be able to use multiple
 		allowCustomScopes: true,
 		confirmColorize: true,
-		markBreakingChangeMode: true,
 		allowBreakingChanges: ['feat', 'fix', 'refactor'],
 	},
 };
