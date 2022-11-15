@@ -1,11 +1,4 @@
-# [3.9.0](https://github.com/TimoBechtel/socketdb/compare/v3.8.1...v3.9.0) (2022-05-13)
-
-### Features
-
-- **server:** allow adding a user context ([b00f0bc](https://github.com/TimoBechtel/socketdb/commit/b00f0bcdffbe1994d22f4c57e8e5b7d7e97041c0)), closes [#26](https://github.com/TimoBechtel/socketdb/issues/26)
-
 ## [4.1.1](https://github.com/TimoBechtel/socketdb/compare/v4.1.0...v4.1.1) (2022-11-15)
-
 
 ### Bug Fixes
 
@@ -13,45 +6,45 @@
 
 ## [4.1.0](https://github.com/TimoBechtel/socketdb/compare/v4.0.2...v4.1.0) (2022-11-15)
 
-
 ### Features
 
-* **client:** add commonjs support ([ac670dc](https://github.com/TimoBechtel/socketdb/commit/ac670dcb67eafe06ed1305c39188bde577159f09))
-* **plugin-validate:** add support for socketdb v4 ([8c8c91e](https://github.com/TimoBechtel/socketdb/commit/8c8c91e7ac4407dc15f8b5fbdb50241f32c0d6b9))
+- **client:** add commonjs support ([ac670dc](https://github.com/TimoBechtel/socketdb/commit/ac670dcb67eafe06ed1305c39188bde577159f09))
+- **plugin-validate:** add support for socketdb v4 ([8c8c91e](https://github.com/TimoBechtel/socketdb/commit/8c8c91e7ac4407dc15f8b5fbdb50241f32c0d6b9))
 
 ## [4.0.2](https://github.com/TimoBechtel/socketdb/compare/v4.0.1...v4.0.2) (2022-11-15)
 
-
 ### Bug Fixes
 
-* **client:** check for websocket ready state before sending ([7ac28ab](https://github.com/TimoBechtel/socketdb/commit/7ac28ab19dc63329f223313564e409dbea7ad9bd))
+- **client:** check for websocket ready state before sending ([7ac28ab](https://github.com/TimoBechtel/socketdb/commit/7ac28ab19dc63329f223313564e409dbea7ad9bd))
 
 ## [4.0.1](https://github.com/TimoBechtel/socketdb/compare/v4.0.0...v4.0.1) (2022-11-15)
 
-
 ### Bug Fixes
 
-* wrong @socketdb/core dependency version ([095ab6d](https://github.com/TimoBechtel/socketdb/commit/095ab6d22f23853f3d0123d04d3e9685c8e1b732))
+- wrong @socketdb/core dependency version ([095ab6d](https://github.com/TimoBechtel/socketdb/commit/095ab6d22f23853f3d0123d04d3e9685c8e1b732))
 
 ## [4.0.0](https://github.com/TimoBechtel/socketdb/compare/v3.9.0...v4.0.0) (2022-11-14)
 
-
 ### ⚠ BREAKING CHANGES
 
-* socketdb has been split into @socketdb/client & @socketdb/server
-* this breaks compatibility with previous versions. make sure to upgrade both client and server
-* this breaks compatibility with previous versions. make sure to upgrade both client and server
+- socketdb has been split into @socketdb/client & @socketdb/server
+- changed the underlying events-system. this breaks compatibility with previous versions. make sure to upgrade both client and server
 
 ### Features
 
-* batch all socketevents ([8a06672](https://github.com/TimoBechtel/socketdb/commit/8a0667270d920e744fb72328dd72e9999bbdecc0))
-* update documentation url ([712ed49](https://github.com/TimoBechtel/socketdb/commit/712ed49f054a694bda861db25a9967f48112a8dc))
-
+- batch all socketevents ([8a06672](https://github.com/TimoBechtel/socketdb/commit/8a0667270d920e744fb72328dd72e9999bbdecc0))
+- update documentation url ([712ed49](https://github.com/TimoBechtel/socketdb/commit/712ed49f054a694bda861db25a9967f48112a8dc))
 
 ### Code Refactoring
 
-* move to a monorepo ([5ba03ed](https://github.com/TimoBechtel/socketdb/commit/5ba03ed9743b22d2c93507e0475f86885315fd18))
-* prefix socket events with a context ([bb89f10](https://github.com/TimoBechtel/socketdb/commit/bb89f103894533ff0938a4e60b833aab6442ff84))
+- move to a monorepo ([5ba03ed](https://github.com/TimoBechtel/socketdb/commit/5ba03ed9743b22d2c93507e0475f86885315fd18))
+- prefix socket events with a context ([bb89f10](https://github.com/TimoBechtel/socketdb/commit/bb89f103894533ff0938a4e60b833aab6442ff84))
+
+## [3.9.0](https://github.com/TimoBechtel/socketdb/compare/v3.8.1...v3.9.0) (2022-05-13)
+
+### Features
+
+- **server:** allow adding a user context ([b00f0bc](https://github.com/TimoBechtel/socketdb/commit/b00f0bcdffbe1994d22f4c57e8e5b7d7e97041c0)), closes [#26](https://github.com/TimoBechtel/socketdb/issues/26)
 
 ## [3.8.1](https://github.com/TimoBechtel/socketdb/compare/v3.8.0...v3.8.1) (2021-10-17)
 
@@ -59,7 +52,7 @@
 
 - **typescript:** allow using types without providing a generic type ([a973a93](https://github.com/TimoBechtel/socketdb/commit/a973a93c6a530eb927ad146e90776285049ad0d7))
 
-# [3.8.0](https://github.com/TimoBechtel/socketdb/compare/v3.7.2...v3.8.0) (2021-10-17)
+## [3.8.0](https://github.com/TimoBechtel/socketdb/compare/v3.7.2...v3.8.0) (2021-10-17)
 
 ### Features
 
@@ -78,7 +71,7 @@
 
 - **client:** not notifying "each" when higher path is subscribed ([2da5a9c](https://github.com/TimoBechtel/socketdb/commit/2da5a9ce6487397ae3de529a92ff66523b4e3d4a))
 
-# [3.7.0](https://github.com/TimoBechtel/socketdb/compare/v3.6.3...v3.7.0) (2021-02-19)
+## [3.7.0](https://github.com/TimoBechtel/socketdb/compare/v3.6.3...v3.7.0) (2021-02-19)
 
 ### Features
 
@@ -103,7 +96,7 @@
 
 - **client:** once cancels other subscriptions ([7e68a87](https://github.com/TimoBechtel/socketdb/commit/7e68a87c23973c4eeb4800345c5903d76a0aa8e6)), closes [#20](https://github.com/TimoBechtel/socketdb/issues/20)
 
-# [3.6.0](https://github.com/TimoBechtel/socketdb/compare/v3.5.1...v3.6.0) (2021-02-15)
+## [3.6.0](https://github.com/TimoBechtel/socketdb/compare/v3.5.1...v3.6.0) (2021-02-15)
 
 ### Features
 
@@ -115,37 +108,37 @@
 
 - **hooks:** passing metadata as reference ([3f4cff7](https://github.com/TimoBechtel/socketdb/commit/3f4cff73987985918a84fc0e572fdac509522c10))
 
-# [3.5.0](https://github.com/TimoBechtel/socketdb/compare/v3.4.0...v3.5.0) (2021-02-13)
+## [3.5.0](https://github.com/TimoBechtel/socketdb/compare/v3.4.0...v3.5.0) (2021-02-13)
 
 ### Features
 
 - **browser:** add browser bundle ([cd070eb](https://github.com/TimoBechtel/socketdb/commit/cd070ebb40cd9bd8f6b05ae5cbcd43bc736d74ad)), closes [#13](https://github.com/TimoBechtel/socketdb/issues/13)
 
-# [3.4.0](https://github.com/TimoBechtel/socketdb/compare/v3.3.0...v3.4.0) (2021-02-12)
+## [3.4.0](https://github.com/TimoBechtel/socketdb/compare/v3.3.0...v3.4.0) (2021-02-12)
 
 ### Features
 
 - **hooks:** add delete hooks ([3d2cabc](https://github.com/TimoBechtel/socketdb/commit/3d2cabc19386e87fd4fb8e97d26d6a8be76035d0))
 
-# [3.3.0](https://github.com/TimoBechtel/socketdb/compare/v3.2.0...v3.3.0) (2021-02-12)
+## [3.3.0](https://github.com/TimoBechtel/socketdb/compare/v3.2.0...v3.3.0) (2021-02-12)
 
 ### Features
 
 - add delete function ([9ffd25f](https://github.com/TimoBechtel/socketdb/commit/9ffd25fc05db1bf9477c7c11d945c37922f97244)), closes [#9](https://github.com/TimoBechtel/socketdb/issues/9)
 
-# [3.2.0](https://github.com/TimoBechtel/socketdb/compare/v3.1.0...v3.2.0) (2021-02-12)
+## [3.2.0](https://github.com/TimoBechtel/socketdb/compare/v3.1.0...v3.2.0) (2021-02-12)
 
 ### Features
 
 - **client:** allow setting metadata ([f35131b](https://github.com/TimoBechtel/socketdb/commit/f35131b2ee93fbfd881431a7f576bd61ff125e15)), closes [#7](https://github.com/TimoBechtel/socketdb/issues/7)
 
-# [3.1.0](https://github.com/TimoBechtel/socketdb/compare/v3.0.0...v3.1.0) (2021-02-11)
+## [3.1.0](https://github.com/TimoBechtel/socketdb/compare/v3.0.0...v3.1.0) (2021-02-11)
 
 ### Features
 
 - **plugins:** add hook based plugin system ([a40b61a](https://github.com/TimoBechtel/socketdb/commit/a40b61ab69d9846146dfff9c845adbfc3ef5a2ff)), closes [#8](https://github.com/TimoBechtel/socketdb/issues/8)
 
-# [3.0.0](https://github.com/TimoBechtel/socketdb/compare/v2.2.0...v3.0.0) (2021-01-30)
+## [3.0.0](https://github.com/TimoBechtel/socketdb/compare/v2.2.0...v3.0.0) (2021-01-30)
 
 ### Code Refactoring
 
@@ -156,7 +149,7 @@
 - store api has changed. it now returns and accepts only node object types. this also
   changes the server api, as the update and get methods now also require data as node types.
 
-# [2.2.0](https://github.com/TimoBechtel/socketdb/compare/v2.1.2...v2.2.0) (2021-01-21)
+## [2.2.0](https://github.com/TimoBechtel/socketdb/compare/v2.1.2...v2.2.0) (2021-01-21)
 
 ### Features
 
@@ -174,13 +167,13 @@
 
 - issues with unsubscribing and resubscribing ([b3bfd99](https://github.com/TimoBechtel/socketdb/commit/b3bfd991b18ae6321518b0b237f8eae4a0b855be))
 
-# [2.1.0](https://github.com/TimoBechtel/socketdb/compare/v2.0.0...v2.1.0) (2020-12-05)
+## [2.1.0](https://github.com/TimoBechtel/socketdb/compare/v2.0.0...v2.1.0) (2020-12-05)
 
 ### Features
 
 - **client:** automatically reconnect on connection lost ([06c636b](https://github.com/TimoBechtel/socketdb/commit/06c636be0fc0ba266776ed10e6638a8394c8639f))
 
-# [2.0.0](https://github.com/TimoBechtel/socketdb/compare/v1.0.0...v2.0.0) (2020-11-23)
+## [2.0.0](https://github.com/TimoBechtel/socketdb/compare/v1.0.0...v2.0.0) (2020-11-23)
 
 ### Bug Fixes
 
@@ -194,7 +187,7 @@
 
 - API for initializing Server and Client was changed. It does not need a socket.io instance anymore.
 
-# 1.0.0 (2020-11-19)
+## 1.0.0 (2020-11-19)
 
 ### Bug Fixes
 
