@@ -69,7 +69,10 @@ export const createWebsocketClient = ({
 	}
 
 	async function sendMessage(message: string) {
-		(await socket).send(message);
+		const ws = await socket;
+		if (ws.readyState === WebSocket.OPEN) {
+			ws.send(message);
+		}
 	}
 
 	return {
