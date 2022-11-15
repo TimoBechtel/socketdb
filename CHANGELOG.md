@@ -1,3 +1,9 @@
+## [4.1.1](https://github.com/TimoBechtel/socketdb/compare/v4.1.0...v4.1.1) (2022-11-15)
+
+### Bug Fixes
+
+* wrong readme files for packages ([fa9f411](https://github.com/TimoBechtel/socketdb/commit/fa9f4114570c916dd90117920a878c12614cf559))
+
 ## [4.1.0](https://github.com/TimoBechtel/socketdb/compare/v4.0.2...v4.1.0) (2022-11-15)
 
 ### Features
