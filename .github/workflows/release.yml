@@ -13,7 +13,6 @@ jobs:
         with:
           release-type: node
           package-name: '@socketdb'
-          release-as: 4.0.0
           # extra-files: |
           #   { type: 'json', path: 'packages/client/package.json', jsonpath: '$.version' }
           #   { type: 'json', path: 'packages/server/package.json', jsonpath: '$.version' }
