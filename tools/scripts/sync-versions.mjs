@@ -7,9 +7,8 @@
  * Otherwise dependency versions will always be 0.0.0 resulting in a broken build.
  */
 
-import { readCachedProjectGraph } from '@nrwl/devkit';
 import chalk from 'chalk';
-import { readFileSync, writeFileSync } from 'fs';
+import { readdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 function invariant(condition, message) {
@@ -29,18 +28,11 @@ invariant(
 	`No version provided or version did not match Semantic Versioning, expected: #.#.#-tag.# or #.#.#, got ${version}.`
 );
 
-const graph = readCachedProjectGraph();
+const packagesRoot = join(process.cwd(), 'packages');
+const packages = readdirSync('packages');
 
-const projects = Object.values(graph.nodes).filter(
-	(node) => node.type === 'lib'
-);
-
-const workspaceRoot = process.cwd();
-
-projects.forEach((project) => {
-	const path = project.data?.root ? join(workspaceRoot, project.data.root) : '';
-
-	invariant(path, `Could not find root path of project "${project.name}".`);
+packages.forEach((packageDir) => {
+	const path = join(packagesRoot, packageDir);
 
 	process.chdir(path);
 
@@ -52,7 +44,7 @@ projects.forEach((project) => {
 	} catch (e) {
 		console.log(
 			chalk(
-				`Project "${project.name}" does not have a "package.json" file. Skipping...`
+				`Project "${packageDir}" does not have a "package.json" file. Skipping...`
 			)
 		);
 	}
