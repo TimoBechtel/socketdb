@@ -4,6 +4,13 @@
 
 * wrong readme files for packages ([fa9f411](https://github.com/TimoBechtel/socketdb/commit/fa9f4114570c916dd90117920a878c12614cf559))
 
+## [4.2.0](https://github.com/TimoBechtel/socketdb/compare/v4.1.1...v4.2.0) (2022-11-17)
+
+
+### Features
+
+* **core:** improve SchemaDefinition types ([5a33d8a](https://github.com/TimoBechtel/socketdb/commit/5a33d8ab50cfde086670849ed7b9ffb8c92a5128))
+
 ## [4.1.0](https://github.com/TimoBechtel/socketdb/compare/v4.0.2...v4.1.0) (2022-11-15)
 
 ### Features
