@@ -10,7 +10,8 @@ import {
 	isObject,
 	isWildcardPath,
 	joinPath,
-	KeyValue,
+	Json,
+	LeafValue,
 	mergeDiff,
 	Meta,
 	Node,
@@ -23,7 +24,6 @@ import {
 	traverseNode,
 	trimWildcard,
 	unwrap,
-	Value,
 } from '@socketdb/core';
 import { createHooks, Hook } from 'krog';
 import { createWebsocketClient } from './socket-implementation/websocketClient';
@@ -34,17 +34,15 @@ export type SocketDBClientAPI<Schema extends SchemaDefinition = any> = {
 
 type Unsubscriber = () => void;
 
-type SchemaDefinition = KeyValue | Value;
+type SchemaDefinition = Json | LeafValue;
 
 export type ChainReference<Schema extends SchemaDefinition = any> = {
 	get<Key extends keyof Schema>(
-		path: Schema extends KeyValue ? Key : never
-	): ChainReference<Schema extends KeyValue ? Schema[Key] : never>;
+		path: Schema extends Json ? Key : never
+	): ChainReference<Schema extends Json ? Schema[Key] : never>;
 	each: (
 		callback: (
-			ref: ChainReference<
-				Schema extends KeyValue ? Schema[keyof Schema] : never
-			>,
+			ref: ChainReference<Schema extends Json ? Schema[keyof Schema] : never>,
 			key: keyof Schema
 		) => void
 	) => Unsubscriber;

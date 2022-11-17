@@ -1,36 +1,41 @@
 import { joinPath } from './path';
 import { isObject } from './utils';
 
-export type Value = string | number | boolean | null | Value[];
+type JsonPrimitives = string | number | boolean | null;
+
+type JsonArray = (JsonPrimitives | Json | JsonArray)[];
+
+// the leaf value can only be a primitive or a json array
+export type LeafValue = JsonPrimitives | JsonArray;
+
+export type Json = {
+	[key: string]: JsonPrimitives | Json | JsonArray;
+};
 
 // might be extended by external socketdb plugins
 export interface Meta {
 	[namespace: string]: any;
 }
 
-export type KeyValue = {
-	[key: string]: Value | KeyValue;
-};
-
-export type Node<Schema extends KeyValue | Value = any> = {
+export type Node<Schema extends Json | LeafValue = any> = {
 	meta?: Meta;
-	value: Schema extends KeyValue
+	value: Schema extends Json
 		? { [Key in keyof Schema]: Node<Schema[Key]> }
-		: Value;
+		: LeafValue;
 };
 
 export function isNode(value: any): value is Node {
 	return (value as Node)?.value !== undefined;
 }
 
-export function nodeify<Schema extends KeyValue | Value>(
+export function nodeify<Schema extends Json | LeafValue>(
 	data: Schema
 ): Node<Schema> {
 	const node: { value: any } = { value: {} };
 	if (isObject(data)) {
 		Object.entries(data).forEach(([key, value]) => {
 			if (isObject(value)) {
-				node.value[key] = nodeify(value as KeyValue);
+				node.value[key] = nodeify(value as Json);
 			} else {
 				node.value[key] = { value: value as any };
 			}
@@ -41,12 +46,12 @@ export function nodeify<Schema extends KeyValue | Value>(
 	return node;
 }
 
-export function unwrap<Schema extends KeyValue | Value>(
+export function unwrap<Schema extends Json | LeafValue>(
 	node: Node<Schema>
 ): Schema {
 	if (isObject(node.value)) {
 		const data: { [key: string]: any } = {};
-		Object.entries<Node<Value | KeyValue>>(node.value).forEach(
+		Object.entries<Node<LeafValue | Json>>(node.value).forEach(
 			([key, node]) => {
 				if (isObject(node.value)) data[key] = unwrap(node);
 				else data[key] = node.value;
@@ -76,3 +81,14 @@ export function traverseNode(
 		}
 	}
 }
+
+// deprecated exports for backwards compatibility
+// TODO: remove in next major version
+/**
+ * @deprecated Use `Json` instead
+ */
+export type KeyValue = Json;
+/**
+ * @deprecated Use `LeafValue` instead
+ */
+export type Value = LeafValue;
