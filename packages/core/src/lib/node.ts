@@ -1,7 +1,7 @@
 import { joinPath } from './path';
 import { isObject } from './utils';
 
-type JsonPrimitives = string | number | boolean | null;
+type JsonPrimitives = string | number | boolean | null | undefined;
 
 type JsonArray = (JsonPrimitives | Json | JsonArray)[];
 
