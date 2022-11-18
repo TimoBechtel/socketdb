@@ -4,6 +4,13 @@
 
 * wrong readme files for packages ([fa9f411](https://github.com/TimoBechtel/socketdb/commit/fa9f4114570c916dd90117920a878c12614cf559))
 
+## [4.2.1](https://github.com/TimoBechtel/socketdb/compare/v4.2.0...v4.2.1) (2022-11-18)
+
+
+### Bug Fixes
+
+* **core:** add undefined as allowed primitive value ([1e9c35c](https://github.com/TimoBechtel/socketdb/commit/1e9c35c5a130eab4ffdb8ec642cc06cf5f826c9b))
+
 ## [4.2.0](https://github.com/TimoBechtel/socketdb/compare/v4.1.1...v4.2.0) (2022-11-17)
 
 
