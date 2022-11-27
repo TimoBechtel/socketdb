@@ -25,7 +25,7 @@ const config = {
 					routeBasePath: '/',
 					sidebarPath: require.resolve('./sidebars.js'),
 					editUrl:
-						'https://github.com/TimoBechtel/socketdb/edit/main/apps/docs/guide/',
+						'https://github.com/TimoBechtel/socketdb/edit/main/apps/docs',
 				},
 				blog: false,
 				theme: {
