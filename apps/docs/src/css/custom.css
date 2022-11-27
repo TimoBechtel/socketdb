@@ -1,0 +1,109 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+	--ifm-color-primary: #ff5f5f;
+	--ifm-color-primary-dark: #d14747;
+	--ifm-color-primary-darker: #ae3939;
+	--ifm-color-primary-darkest: #892c2c;
+	--ifm-color-primary-light: #f37070;
+	--ifm-color-primary-lighter: #ff9898;
+	--ifm-color-primary-lightest: #ffabab;
+	--ifm-code-font-size: 95%;
+
+	--ifm-container-width: 960px;
+	--ifm-container-width-xl: 960px;
+
+	--ifm-font-family-base: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
+		Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+
+	--ifm-button-padding-vertical: 0.8rem;
+	--ifm-button-padding-horizontal: 1.5rem;
+	--ifm-button-font-weight: var(--ifm-font-weight-semibold);
+
+	--ifm-spacing-vertical: 1.2rem;
+
+	--ifm-heading-line-height: 1.4;
+	--ifm-heading-font-weight: var(--ifm-font-weight-semibold);
+
+	--ifm-menu-link-padding-vertical: 0.65rem;
+	--ifm-menu-link-padding-horizontal: 1rem;
+
+	--ifm-transition-fast: 250ms;
+
+	--ifm-hero-background-color: transparent;
+	--ifm-footer-background-color: transparent;
+	--ifm-footer-color: var(--ifm-color-gray-600);
+
+	--ifm-tabs-padding-vertical: 0.5rem;
+	--ifm-tabs-padding-horizontal: 0.5rem;
+}
+
+html[data-theme='dark'] {
+	--ifm-navbar-background-color: var(--ifm-background-color);
+	--ifm-background-surface-color: rgb(48, 53, 62);
+	--ifm-background-color: #191b26;
+}
+
+html[data-theme='dark'] .navbar {
+	border-bottom: 1px solid var(--ifm-toc-border-color);
+}
+
+.hero__subtitle {
+	color: var(--ifm-color-emphasis-700);
+	max-width: 35rem;
+	margin: 1.8rem auto;
+	font-size: 1.6rem;
+	line-height: 1.25;
+}
+
+article {
+	color: var(--ifm-font-color-secondary);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	color: var(--ifm-font-color-base);
+}
+
+h2 {
+	padding-bottom: 0.3rem;
+	border-bottom: 1px solid var(--ifm-color-gray-200);
+}
+
+.menu__link {
+	border-radius: 0.3rem;
+}
+
+.menu__link--sublist-caret:after {
+	opacity: 0.5;
+}
+
+.docusaurus-highlight-code-line {
+	background-color: rgba(0, 0, 0, 0.1);
+	display: block;
+	margin: 0 calc(-1 * var(--ifm-pre-padding));
+	padding: 0 var(--ifm-pre-padding);
+}
+
+.navbar__link svg {
+	color: var(--ifm-color-gray-600);
+	width: 11px;
+	height: 11px;
+}
+
+.menu {
+	margin-right: 0.5rem;
+}
+
+html[data-theme='dark'] .docusaurus-highlight-code-line {
+	background-color: rgba(0, 0, 0, 0.3);
+}

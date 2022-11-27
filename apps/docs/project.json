@@ -2,20 +2,18 @@
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"name": "docs",
 	"projectType": "application",
-	"sourceRoot": "apps/docs",
+	"sourceRoot": "apps/docs/src",
 	"targets": {
 		"build": {
-			"executor": "nx:run-commands",
-			"outputs": ["dist/apps/docs"],
+			"executor": "@nx-plus/docusaurus:browser",
 			"options": {
-				"command": "vuepress check-md apps/docs && vuepress build apps/docs --dest dist/apps/docs"
+				"outputPath": "dist/apps/docs"
 			}
 		},
 		"serve": {
-			"executor": "nx:run-commands",
-			"outputs": ["apps/docs/.vuepress/.temp", "apps/docs/.vuepress/.cache"],
+			"executor": "@nx-plus/docusaurus:dev-server",
 			"options": {
-				"command": "vuepress check-md apps/docs && vuepress dev apps/docs"
+				"port": 3000
 			}
 		}
 	},

@@ -23,8 +23,6 @@ const db = SocketDBClient<Schema>(options);
 db.get('users').get('1').set({ name: 1 }); // => throws a ts compilation error
 ```
 
-</code-group>
-
 ## options (object)
 
 - `url: string` (optional)
