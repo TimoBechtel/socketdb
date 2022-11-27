@@ -57,7 +57,7 @@ will be called with the current value and metadata for that path.
 
 `on` will return an unsubscriber function that allows you to unsubscribe from changes.
 
-::: warning Note
+:::caution Note
 If no data is available or was deleted, `data` (or `meta`) will be `null`.  
 So you need to check for a `null` value.
 :::
@@ -154,7 +154,7 @@ db.get('bitcoin/wallet')
 	});
 ```
 
-::: warning Be careful
+:::caution Be careful
 After deleting a node, it is still possible to set data for the same path or subpath.  
 So make sure to not update its child nodes after deleting, or otherwise you might end up with partial data!
 :::
