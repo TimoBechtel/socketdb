@@ -1,6 +1,3 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # v4 Migration Guide
 
 There a number of breaking changes in v4. This guide will help you migrate your code.
@@ -31,24 +28,9 @@ To upgrade the server, replace all imports from `socketdb` to `@socketdb/server`
 
 If you have been using core functions, for example to create a [custom store](/guide/custom-store), you need to install the `@socketdb/core` package.
 
-<Tabs>
-<TabItem value="pnpm" label="pnpm">
-
-```bash
-pnpm add @socketdb/core
-```
-
-</TabItem>
-
-<TabItem value="npm" label="npm">
-
-```bash
+```bash npm2yarn2pnpm
 npm install @socketdb/core
 ```
-
-</TabItem>
-
-</Tabs>
 
 Then replace the relevant imports from `socketdb` to `@socketdb/core`.
 

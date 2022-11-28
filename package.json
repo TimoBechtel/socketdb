@@ -31,6 +31,7 @@
 		"@emotion/react": "^11.10.5",
 		"@emotion/styled": "^11.10.5",
 		"@mdx-js/react": "^1.6.21",
+		"@sapphire/docusaurus-plugin-npm2yarn2pnpm": "^1.1.4",
 		"ajv": "^8.11.2",
 		"clsx": "^1.1.1",
 		"krog": "^1.2.0",

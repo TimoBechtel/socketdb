@@ -4,6 +4,8 @@
 const lightCodeTheme = require('prism-react-renderer/themes/palenight');
 const darkCodeTheme = require('prism-react-renderer/themes/palenight');
 
+const { npm2yarn2pnpm } = require('@sapphire/docusaurus-plugin-npm2yarn2pnpm');
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
 	title: 'SocketDB',
@@ -26,6 +28,10 @@ const config = {
 					sidebarPath: require.resolve('./sidebars.js'),
 					editUrl:
 						'https://github.com/TimoBechtel/socketdb/edit/main/apps/docs',
+					remarkPlugins: [[npm2yarn2pnpm, { sync: true }]],
+				},
+				pages: {
+					remarkPlugins: [[npm2yarn2pnpm, { sync: true }]],
 				},
 				blog: false,
 				theme: {

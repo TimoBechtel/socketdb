@@ -19,6 +19,7 @@ specifiers:
   '@nrwl/rollup': 15.0.13
   '@nrwl/workspace': 15.0.13
   '@nx-plus/docusaurus': ^14.1.0
+  '@sapphire/docusaurus-plugin-npm2yarn2pnpm': ^1.1.4
   '@types/jest': 28.1.1
   '@types/node': 18.7.1
   '@types/ws': ^8.5.3
@@ -53,6 +54,7 @@ dependencies:
   '@emotion/react': 11.10.5_dzj4tgexvvjhyxdh56ztoytblu
   '@emotion/styled': 11.10.5_ntk3xc32nev3giwk5xrmfa5exu
   '@mdx-js/react': 1.6.22_react@17.0.2
+  '@sapphire/docusaurus-plugin-npm2yarn2pnpm': 1.1.4
   ajv: 8.11.2
   clsx: 1.2.1
   krog: 1.2.0
@@ -4218,6 +4220,16 @@ packages:
       estree-walker: 2.0.2
       picomatch: 2.3.1
     dev: true
+
+  /@sapphire/docusaurus-plugin-npm2yarn2pnpm/1.1.4:
+    resolution:
+      {
+        integrity: sha512-wws6XT8tqKYi7quonI6AXq6dxYU00E5flT+nWnss0/0+4OKiv9xAdwNavEOKre7TS9lCin/qPAYt3EN4iMReuQ==,
+      }
+    engines: { node: '>=v16.6.0', npm: '>=7.0.0' }
+    dependencies:
+      unist-util-visit: 2.0.3
+    dev: false
 
   /@sideway/address/4.1.4:
     resolution:

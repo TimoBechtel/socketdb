@@ -1,34 +1,14 @@
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-
 # Quick Start
 
 ## Setup Server
 
 Create new project:
 
-<Tabs>
-<TabItem value="pnpm" label="pnpm">
-
-```bash
-mkdir myserver && cd myserver
-pnpm init
-pnpm add @socketdb/server
-```
-
-</TabItem>
-
-<TabItem value="npm" label="npm">
-
-```bash
+```bash npm2yarn2pnpm
 mkdir myserver && cd myserver
 npm init
 npm install @socketdb/server
 ```
-
-</TabItem>
-
-</Tabs>
 
 Create `index.js` file with:
 
@@ -42,24 +22,9 @@ Run it with `node index.js`.
 
 ## Setup Client
 
-<Tabs>
-<TabItem value="pnpm" label="pnpm">
-
-```bash
-pnpm add @socketdb/client
-```
-
-</TabItem>
-
-<TabItem value="npm" label="npm">
-
-```bash
+```bash npm2yarn2pnpm
 npm install @socketdb/client
 ```
-
-</TabItem>
-
-</Tabs>
 
 > To use SocketDB, you need to setup your frontend with a bundler (like [rollup](https://rollupjs.org/)) that bundles your node_modules.
 
