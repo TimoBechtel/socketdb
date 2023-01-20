@@ -41,7 +41,7 @@ test('allows providing hooks via plugins', (done) => {
 	setTimeout(() => {
 		// Note: jest errors are catched by socketdb and prevent the store from being updated
 		expect(store.get('players/1/name')).toEqual({ value: 'Arnold' });
-		expect(store.get().meta).toEqual({ updated: time });
+		expect(store.get()?.meta).toEqual({ updated: time });
 		done();
 	}, 10);
 });

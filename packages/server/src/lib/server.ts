@@ -8,6 +8,9 @@ import {
 	isObject,
 	joinPath,
 	Node,
+	nodeify,
+	normalizePath,
+	parsePath,
 	Plugin,
 	SessionContext,
 	SocketServer,
@@ -86,7 +89,9 @@ export function SocketDBServer({
 	const api: SocketDBServerAPI = {
 		update,
 		get: (path: string): Node => {
-			return deepClone(store.get(path));
+			const data = store.get(path);
+			if (!data) return nodeify(null);
+			return deepClone(data);
 		},
 		delete: del,
 	};
@@ -142,8 +147,9 @@ export function SocketDBServer({
 				{ asRef: true }
 			)
 			.then(({ path }) => {
-				store.del(path);
-				queue({ type: 'delete', path });
+				const normalizedPath = normalizePath(path);
+				store.del(normalizedPath);
+				queue({ type: 'delete', path: normalizedPath });
 			})
 			.catch(console.log);
 	}
@@ -218,10 +224,14 @@ export function SocketDBServer({
 		);
 		socketEvents.subscribe(
 			SOCKET_EVENTS.data.requestSubscription,
-			({ path, once }) => {
+			({ path: requestedPath, once }) => {
+				const path = normalizePath(requestedPath);
+				const storedData = store.get(path);
 				socketEvents.queue(`${DATA_CONTEXT}:${path}`, {
-					// deepClone to only send the current snapshot, as data might change while queued
-					data: { change: deepClone(store.get(path)) },
+					data: {
+						// deepClone to only send the current snapshot, as data might change while queued
+						change: storedData ? deepClone(storedData) : nodeify(null),
+					},
 				});
 				if (once) return;
 				addSubscriber(id, path, (data) => {
@@ -231,33 +241,60 @@ export function SocketDBServer({
 		);
 		socketEvents.subscribe(
 			SOCKET_EVENTS.data.requestUnsubscription,
-			({ path }) => {
-				removeSubscriber(id, path);
+			({ path: requestedPath }) => {
+				removeSubscriber(id, normalizePath(requestedPath));
 			}
 		);
 		socketEvents.subscribe(
 			SOCKET_EVENTS.data.requestKeysSubscription,
-			({ path }) => {
-				const data = store.get(path);
+			({ path: requestedPath }) => {
+				const path = normalizePath(requestedPath);
+				const storedData = store.get(path);
 				const wildcardPath = joinPath(path, '*');
-				let keys: string[] = [];
-				if (isObject(data.value)) {
-					keys = Object.keys(data.value);
+				let handledKeys: string[] = [];
+				const value = storedData?.value;
+				if (isObject(value)) {
+					handledKeys = Object.keys(value);
 					// destructure keys to only send the current keys, as they might change while queued
 					socketEvents.queue(`${DATA_CONTEXT}:${wildcardPath}`, {
-						data: [...keys],
+						data: { added: [...handledKeys] },
 					});
 				}
 				addSubscriber(id + 'wildcard', path, (data: BatchedUpdate) => {
 					if (data.change && isObject(data.change.value)) {
-						const newKeys = Object.keys(data.change.value).filter(
-							(key) => !keys.includes(key)
+						const receivedKeys = Object.keys(data.change.value);
+
+						const unhandledKeys = receivedKeys.filter(
+							(key) => !handledKeys.includes(key)
 						);
-						if (newKeys.length > 0)
+						if (unhandledKeys.length > 0)
 							socketEvents.queue(`${DATA_CONTEXT}:${wildcardPath}`, {
-								data: newKeys,
+								data: {
+									added: unhandledKeys,
+								},
 							});
-						keys = [...keys, ...newKeys];
+						// add new keys
+						handledKeys = [...handledKeys, ...unhandledKeys];
+					}
+					if (data.delete) {
+						// note: deletions are absolute paths
+						// they can be any level deep, so we check for direct children or the same path
+						const relevantDeletePaths = data.delete.filter((deletedPath) => {
+							const relativePath = deletedPath.slice(path.length);
+							const pathParts = parsePath(relativePath);
+							// the same path (length 0) or one level deep (length 1)
+							return pathParts.length <= 1;
+						});
+
+						socketEvents.queue(`${DATA_CONTEXT}:${wildcardPath}`, {
+							data: {
+								deleted: relevantDeletePaths,
+							},
+						});
+						// remove deleted keys
+						handledKeys = handledKeys.filter(
+							(key) => !relevantDeletePaths.some((path) => path.endsWith(key))
+						);
 					}
 				});
 			}

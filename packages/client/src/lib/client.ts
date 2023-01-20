@@ -117,12 +117,31 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 				if (isWildcardPath(path)) {
 					socketEvents.subscribe(
 						`${DATA_CONTEXT}:${path}`,
-						({ data: keys }: { data: string[] }) => {
-							notify(() => {
-								const update: { [key: string]: any } = {};
-								keys.forEach((key) => (update[key] = null));
-								return nodeify(update);
-							});
+						({
+							data: updatedKeys,
+						}: {
+							data: { added?: string[]; deleted?: string[] };
+						}) => {
+							const subscribedPath = trimWildcard(path);
+							if (updatedKeys.deleted) {
+								updatedKeys.deleted?.forEach((deletedPath) => {
+									// path is absolute here
+									store.del(deletedPath);
+								});
+							}
+							if (updatedKeys.added) {
+								updatedKeys.added?.forEach((updatedPath) => {
+									const absolutePath = joinPath(subscribedPath, updatedPath);
+									const storedData = store.get(absolutePath);
+									if (storedData === null) {
+										// only set data to null if it does not exist yet (prevent overwriting data)
+										// we save a null value here, so we know about that path to allow diffing key-only updates
+										const update = creatUpdate(absolutePath, nodeify(null));
+										store.put(update);
+									}
+								});
+							}
+							notify(() => store.get(subscribedPath) ?? nodeify(null));
 						}
 					);
 					socketEvents.queue(SOCKET_EVENTS.data.requestKeysSubscription, {
@@ -134,22 +153,29 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 						({ data }: { data: BatchedUpdate }) => {
 							data.delete?.forEach((path) => {
 								store.del(path);
-								subscriptions.update.notify(path, (path) => store.get(path), {
-									recursiveDown: true,
-									recursiveUp: true,
-								});
+								subscriptions.update.notify(
+									path,
+									(path) => store.get(path) ?? nodeify(null),
+									{
+										recursiveDown: true,
+										recursiveUp: true,
+									}
+								);
 							});
 							if (data.change) {
 								const update = creatUpdate(path, data.change);
 								store.put(update);
 								traverseNode(update, (path, data) => {
-									subscriptions.update.notify(path, () =>
-										deepClone(store.get(path))
-									);
+									subscriptions.update.notify(path, () => {
+										const currentData = store.get(path);
+										if (currentData === null) return nodeify(null);
+										return deepClone(currentData);
+									});
 									if (isObject(data.value)) {
 										// with child paths, we need to notify all listeners for the wildcard path
-										subscriptions.update.notify(joinPath(path, '*'), () =>
-											store.get(path)
+										subscriptions.update.notify(
+											joinPath(path, '*'),
+											() => store.get(path) ?? nodeify(null)
 										);
 									} else {
 										// notify all subscribers of all child paths that their data has been deleted
@@ -224,17 +250,27 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 			},
 			each(callback) {
 				const wildcardPath = joinPath(path, '*');
-				let keys: string[] = [];
+				let handledKeys: string[] = [];
 				const onKeysReceived = (node: Node) => {
+					// node is a snapshot of the store for the given path
 					if (isObject(node.value)) {
-						const newKeys = Object.keys(node.value).filter(
-							(key) => !keys.includes(key)
+						const receivedKeys = Object.keys(node.value);
+
+						const unhandledKeys = receivedKeys.filter(
+							(key) => !handledKeys.includes(key)
 						);
-						newKeys.forEach((key) => {
+
+						// notify about new keys
+						unhandledKeys.forEach((key) => {
 							const refpath = joinPath(path, key);
 							callback(get(refpath), key as keyof Schema);
 						});
-						keys = [...keys, ...newKeys];
+
+						// update handled keys
+						handledKeys = receivedKeys;
+					} else {
+						// the path may be updated to a non-object value
+						handledKeys = [];
 					}
 				};
 				return subscriptions.update.subscribe(
@@ -242,6 +278,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 					onKeysReceived,
 					() => {
 						const cachedData = store.get(trimWildcard(path));
+						if (cachedData === null) return null;
 						return cachedData.value === null ? null : cachedData;
 					}
 				);
@@ -254,7 +291,11 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 							const node = nodeify(value);
 							if (meta) node.meta = meta;
 							const update = creatUpdate(path, node);
-							const diff = mergeDiff(update, deepClone(store.get()));
+							const currentData = store.get(path);
+							const diff = mergeDiff(
+								update,
+								currentData ? deepClone(currentData) : {}
+							);
 							if (isNode(diff)) queueUpdate({ type: 'change', data: diff });
 						})
 						.catch(console.log);
@@ -275,6 +316,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 				};
 				return subscriptions.update.subscribe(path, listener, () => {
 					const cachedData = store.get(path);
+					if (cachedData === null) return null;
 					return cachedData.value === null ? null : cachedData;
 				});
 			},
@@ -289,6 +331,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 					},
 					() => {
 						const cachedData = store.get(path);
+						if (cachedData === null) return null;
 						return cachedData.value === null ? null : cachedData;
 					}
 				);
