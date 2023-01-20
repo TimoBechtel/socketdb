@@ -56,7 +56,7 @@ export const createWebsocketClient = ({
 	}
 
 	async function onError(error: Event) {
-		console.log(error);
+		console.error(error);
 		(await socket).close();
 	}
 

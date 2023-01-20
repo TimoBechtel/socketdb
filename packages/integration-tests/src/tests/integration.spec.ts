@@ -318,3 +318,47 @@ test('should batch all socket events', (done) => {
 		done();
 	}, 100);
 });
+
+test('path subscribe callback notifies again after node has been re-attached (created, deleted, created)', (done) => {
+	/**
+	 * Make sure that `each callbacks` are called again after a node has been re-attached (after deletion, data for the same path is received again)
+	 */
+	const { connectClient, socketServer } = mockSocketServer();
+	const { notify: notifyClient, socketClient } = mockSocketClient({
+		onSend(event, data) {
+			notifyServer(event, data);
+		},
+	});
+
+	const store = createStore();
+
+	const client = SocketDBClient({ socketClient, updateInterval: 5 });
+	SocketDBServer({ socketServer, updateInterval: 5, store });
+
+	const { notify: notifyServer } = connectClient({
+		onSend(event, data) {
+			notifyClient(event, data);
+		},
+	});
+
+	store.put(nodeify({ users: { 1: { name: 'Test' } } }));
+
+	let updateCount = 0;
+	client.get('users').each((_, key) => {
+		if (updateCount === 0) {
+			setTimeout(() => {
+				client.get('users').get('1').delete();
+				setTimeout(() => {
+					client.get('users').get('1').set({ name: 'Test' });
+				}, 100);
+			}, 50);
+		}
+		expect(key).toEqual('1');
+		updateCount++;
+	});
+
+	setTimeout(() => {
+		expect(updateCount).toEqual(2);
+		done();
+	}, 500);
+});

@@ -196,7 +196,7 @@ test('get data using the passed function and notify subscribers with that data',
 		done();
 	});
 
-	manager.notify('/a', (path) => store.get(path), {
+	manager.notify('/a', (path) => store.get(path) ?? nodeify(null), {
 		recursiveDown: true,
 	});
 });

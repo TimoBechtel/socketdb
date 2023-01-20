@@ -9,13 +9,13 @@ Simply write a function that returns an object with these functions:
 
 ```ts
 type Store = {
-	get: (path?: string) => Node;
+	get: (path?: string) => Node | null;
 	put: (diff: Node) => Node;
 	del: (path: string) => void;
 };
 ```
 
-- `get` returns a data object or value for a specific path. (e.g. `persons/thomas`);
+- `get` returns a data node for a specific path. (e.g. path: `users/thomas`), or `null` if there is no data for the given path.
 - `put` saves changed data in the store and returns an object containing a diff object with all updated data.
 - `del` deletes nodes for a given path
 

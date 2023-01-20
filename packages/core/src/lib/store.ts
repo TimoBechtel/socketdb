@@ -1,15 +1,21 @@
-import { isNode, Node, nodeify } from './node';
+import { isNode, Node } from './node';
 import { parsePath } from './path';
 import { isObject, mergeDiff } from './utils';
 
 export type Store = {
-	get: (path?: string) => Node;
+	get: (path?: string) => Node | null;
 	put: (diff: Node) => Node;
 	del: (path: string) => void;
 };
 
 export function createStore(): Store {
 	const store: Node = { value: {} };
+	/**
+	 * Note: returns null if path is not found
+	 *
+	 * When a node is returned with a value of null, it means we already tracked the path,
+	 * but have not downloaded the data yet. (e.g. when subscribing keys only)
+	 */
 	function get(path = '') {
 		let current = store;
 		for (const key of parsePath(path)) {
@@ -18,9 +24,8 @@ export function createStore(): Store {
 				current.value[key] === undefined ||
 				current.value[key].value === null
 			) {
-				return nodeify(null);
+				return null;
 			}
-			current.value;
 			current = current.value[key];
 		}
 		return current;
@@ -39,7 +44,7 @@ export function createStore(): Store {
 		}
 		const parentPath = path.slice(0, path.length - deletedKey.length - 1);
 		const node = get(parentPath);
-		if (isObject(node.value)) delete node.value[deletedKey];
+		if (isObject(node?.value)) delete node?.value[deletedKey];
 	}
 	return {
 		get,

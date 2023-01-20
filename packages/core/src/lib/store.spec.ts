@@ -3,7 +3,7 @@ import { createStore } from './store';
 
 test('returns null, if key does not exist', () => {
 	const store = createStore();
-	expect(store.get('some/value/that/doesnt/exist')).toEqual(nodeify(null));
+	expect(store.get('some/value/that/doesnt/exist')).toEqual(null);
 });
 
 test('returns null, if parent key is no object', () => {
@@ -11,11 +11,11 @@ test('returns null, if parent key is no object', () => {
 	store.put({
 		value: { some: { value: { myValue: { value: 'a' } } } },
 	});
-	expect(store.get('some/value/that/doesnt/exist')).toEqual(nodeify(null));
+	expect(store.get('some/value/that/doesnt/exist')).toEqual(null);
 	store.put({
 		value: { some: { value: { that: { value: '' } } } },
 	});
-	expect(store.get('some/value/that/doesnt/exist')).toEqual(nodeify(null));
+	expect(store.get('some/value/that/doesnt/exist')).toEqual(null);
 	store.put({
 		value: {
 			some: {
@@ -25,7 +25,7 @@ test('returns null, if parent key is no object', () => {
 			},
 		},
 	});
-	expect(store.get('some/value/that/doesnt/exist')).toEqual(nodeify(null));
+	expect(store.get('some/value/that/doesnt/exist')).toEqual(null);
 });
 
 test('returns requested values', () => {
@@ -313,7 +313,7 @@ test('can delete data', () => {
 	expect(store.get('player/a/position')).toEqual(nodeify({ x: 0, y: 1 }));
 
 	store.del('player/a/position');
-	expect(store.get('player/a/position')).toEqual(nodeify(null));
+	expect(store.get('player/a/position')).toEqual(null);
 });
 
 test('can delete root data', () => {
@@ -322,5 +322,5 @@ test('can delete root data', () => {
 	expect(store.get('player/a/position')).toEqual(nodeify({ x: 0, y: 1 }));
 
 	store.del('player');
-	expect(store.get('player/a/position')).toEqual(nodeify(null));
+	expect(store.get('player/a/position')).toEqual(null);
 });

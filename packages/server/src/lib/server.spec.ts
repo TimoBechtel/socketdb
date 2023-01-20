@@ -291,7 +291,7 @@ test('sends keys when entries are added or removed', async () => {
 			onSend(event, { data }) {
 				if (event === `${DATA_CONTEXT}:players/*`) {
 					if (count === 0) {
-						expect(data).toEqual(['1']);
+						expect(data).toEqual({ added: ['1'] });
 						setTimeout(() => {
 							notify(SOCKET_EVENTS.data.clientUpdate, {
 								data: {
@@ -310,7 +310,7 @@ test('sends keys when entries are added or removed', async () => {
 						}, 25);
 					}
 					if (count === 1) {
-						expect(data).toEqual(['2']);
+						expect(data).toEqual({ added: ['2'] });
 						resolve();
 					}
 					count++;

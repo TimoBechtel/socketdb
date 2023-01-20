@@ -1,4 +1,4 @@
-import { createStore, mergeDiff, unwrap } from '@socketdb/core';
+import { createStore, mergeDiff, nodeify, unwrap } from '@socketdb/core';
 import type { ServerPlugin } from '@socketdb/server';
 import AJV, { JSONSchemaType } from 'ajv';
 
@@ -24,7 +24,7 @@ export function pluginValidate<DataType>(
 				const tmpStore = createStore();
 				tmpStore.put(api.get(''));
 				tmpStore.del(path);
-				if (!validate(unwrap(tmpStore.get()))) {
+				if (!validate(unwrap(tmpStore.get() ?? nodeify(null)))) {
 					throw {
 						name: 'invalid',
 						message: 'Data is invalid.',

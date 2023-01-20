@@ -93,7 +93,7 @@ test('deletes data and notifies local subscribers', (done) => {
 				client.get('players').get('1').delete();
 			} else if (updateCount === 1) {
 				expect(data).toEqual(null);
-				expect(store.get('players/1')).toEqual(nodeify(null));
+				expect(store.get('players/1')).toEqual(null);
 				done();
 			}
 		});
@@ -413,7 +413,7 @@ test('can subscribe to keys of path', (done) => {
 		onSend(event, { path }) {
 			if (event === SOCKET_EVENTS.data.requestKeysSubscription) {
 				expect(path).toBe('players');
-				notify(`${DATA_CONTEXT}:players/*`, { data: ['1', '2'] });
+				notify(`${DATA_CONTEXT}:players/*`, { data: { added: ['1', '2'] } });
 			}
 		},
 	});
@@ -438,7 +438,7 @@ test('can unsubscribe from keys of path', (done) => {
 		onSend(event, { path }) {
 			if (event === SOCKET_EVENTS.data.requestKeysSubscription) {
 				expect(path).toBe('players');
-				notify(`${DATA_CONTEXT}:players/*`, { data: ['1'] });
+				notify(`${DATA_CONTEXT}:players/*`, { data: { added: ['1'] } });
 			}
 		},
 	});
@@ -452,7 +452,7 @@ test('can unsubscribe from keys of path', (done) => {
 	});
 	setTimeout(() => {
 		unsubscribe();
-		notify(`${DATA_CONTEXT}:players/*`, { data: ['2', '3'] });
+		notify(`${DATA_CONTEXT}:players/*`, { data: { added: ['2', '3'] } });
 		setTimeout(() => {
 			expect(updateCount).toBe(1);
 			done();

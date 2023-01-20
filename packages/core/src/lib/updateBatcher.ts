@@ -45,7 +45,11 @@ export function createUpdateBatcher(
 			const update: BatchedUpdate = {};
 			if (deletions.size > 0) update.delete = Array.from(deletions);
 			const node = diff.get();
-			if (isObject(node.value) && Object.keys(node.value).length > 0)
+			if (
+				node !== null &&
+				isObject(node.value) &&
+				Object.keys(node.value).length > 0
+			)
 				update.change = node;
 			flushUpdate(update);
 		},

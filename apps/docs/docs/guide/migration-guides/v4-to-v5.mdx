@@ -1,0 +1,37 @@
+# v5 Migration Guide
+
+## Both @socketdb/client and @socketdb/server need to be updated to v5
+
+You need to update both the client and the server at the same time. This is because of a change how socket events are handled.
+
+<details>
+	<summary>Details</summary>
+	<p>
+The server now sends both added and deleted keys back to the client when
+subscribed to a wildcard path.
+
+Example response:
+
+```diff
+-{data: ['1', '2', '3']}
++{data: {added: ['1', '2', '3'], deleted: ['0']}}
+```
+
+</p>
+
+</details>
+
+## The store api has changed
+
+The store from @socketdb/core now returns null if there is no data for a given path instead of always returning an empty node.
+
+If you use a [custom store](/guide/custom-store) or use the store from @socketdb/core directly, update it to return null if there is no data for a given path instead of always returning an empty node.
+
+```diff
+export type Store = {
++	get: (path?: string) => Node | null;
+-	get: (path?: string) => Node;
+	put: (diff: Node) => Node;
+	del: (path: string) => void;
+};
+```
