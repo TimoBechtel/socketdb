@@ -298,7 +298,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 							);
 							if (isNode(diff)) queueUpdate({ type: 'change', data: diff });
 						})
-						.catch(console.log);
+						.catch(console.warn);
 				}
 				return this;
 			},
@@ -308,7 +308,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 					.then(({ path }) => {
 						queueUpdate({ type: 'delete', path });
 					})
-					.catch(console.log);
+					.catch(console.warn);
 			},
 			on(callback) {
 				const listener = (data: Node) => {

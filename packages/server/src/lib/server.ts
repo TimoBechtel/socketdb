@@ -130,7 +130,7 @@ export function SocketDBServer({
 				const diff = store.put(data);
 				queue({ type: 'change', data: diff });
 			})
-			.catch(console.log);
+			.catch(console.warn);
 	}
 
 	function del(
@@ -151,7 +151,7 @@ export function SocketDBServer({
 				store.del(normalizedPath);
 				queue({ type: 'delete', path: normalizedPath });
 			})
-			.catch(console.log);
+			.catch(console.warn);
 	}
 
 	function notifySubscribers(diff: BatchedUpdate) {
