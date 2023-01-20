@@ -1,41 +1,35 @@
+## [5.0.0](https://github.com/TimoBechtel/socketdb/compare/v4.2.1...v5.0.0) (2023-01-20)
+
+### ⚠ BREAKING CHANGES
+
+- **core:** the store now returns null if there is no data for a given path instead of always returning an empty node. if you use a custom store or use the store from @socketdb/core directly, make sure to update accordingly.
+- changed the underlying events-system. this breaks compatibility with previous versions. make sure to upgrade both client and server.
+
+### Bug Fixes
+
+- each callback not run again after data for path has been re-added ([c3f0d35](https://github.com/TimoBechtel/socketdb/commit/c3f0d354cf6ed74a484d35a7875a3db8f906f8c0))
+
+### Code Refactoring
+
+- **core:** store returns null for empty data ([c3f0d35](https://github.com/TimoBechtel/socketdb/commit/c3f0d354cf6ed74a484d35a7875a3db8f906f8c0))
+
+## [4.2.1](https://github.com/TimoBechtel/socketdb/compare/v4.2.0...v4.2.1) (2022-11-18)
+
+### Bug Fixes
+
+- **core:** add undefined as allowed primitive value ([1e9c35c](https://github.com/TimoBechtel/socketdb/commit/1e9c35c5a130eab4ffdb8ec642cc06cf5f826c9b))
+
+## [4.2.0](https://github.com/TimoBechtel/socketdb/compare/v4.1.1...v4.2.0) (2022-11-17)
+
+### Features
+
+- **core:** improve SchemaDefinition types ([5a33d8a](https://github.com/TimoBechtel/socketdb/commit/5a33d8ab50cfde086670849ed7b9ffb8c92a5128))
+
 ## [4.1.1](https://github.com/TimoBechtel/socketdb/compare/v4.1.0...v4.1.1) (2022-11-15)
 
 ### Bug Fixes
 
-* wrong readme files for packages ([fa9f411](https://github.com/TimoBechtel/socketdb/commit/fa9f4114570c916dd90117920a878c12614cf559))
-
-## [5.0.0](https://github.com/TimoBechtel/socketdb/compare/v4.2.1...v5.0.0) (2023-01-20)
-
-
-### ⚠ BREAKING CHANGES
-
-* **core:** the store now returns null if there is no data for a given path instead of always returning an empty node. if you use a custom store or use the store from @socketdb/core directly, make sure to update accordingly.
-* changed the underlying events-system. this breaks compatibility with previous versions. make sure to upgrade both client and server.
-* changed the underlying events-system. this breaks compatibility with previous versions. make sure to upgrade both client and server.
-
-### Bug Fixes
-
-* each callback not run again after data for path has been re-added ([dd82258](https://github.com/TimoBechtel/socketdb/commit/dd82258c8763edd74c29fd25317488161f469452))
-* each callback not run again after data for path has been re-added ([c3f0d35](https://github.com/TimoBechtel/socketdb/commit/c3f0d354cf6ed74a484d35a7875a3db8f906f8c0))
-
-
-### Code Refactoring
-
-* **core:** store returns null for empty data ([dd82258](https://github.com/TimoBechtel/socketdb/commit/dd82258c8763edd74c29fd25317488161f469452))
-
-## [4.2.1](https://github.com/TimoBechtel/socketdb/compare/v4.2.0...v4.2.1) (2022-11-18)
-
-
-### Bug Fixes
-
-* **core:** add undefined as allowed primitive value ([1e9c35c](https://github.com/TimoBechtel/socketdb/commit/1e9c35c5a130eab4ffdb8ec642cc06cf5f826c9b))
-
-## [4.2.0](https://github.com/TimoBechtel/socketdb/compare/v4.1.1...v4.2.0) (2022-11-17)
-
-
-### Features
-
-* **core:** improve SchemaDefinition types ([5a33d8a](https://github.com/TimoBechtel/socketdb/commit/5a33d8ab50cfde086670849ed7b9ffb8c92a5128))
+- wrong readme files for packages ([fa9f411](https://github.com/TimoBechtel/socketdb/commit/fa9f4114570c916dd90117920a878c12614cf559))
 
 ## [4.1.0](https://github.com/TimoBechtel/socketdb/compare/v4.0.2...v4.1.0) (2022-11-15)
 
