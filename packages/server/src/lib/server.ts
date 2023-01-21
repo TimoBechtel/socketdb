@@ -12,7 +12,6 @@ import {
 	normalizePath,
 	parsePath,
 	Plugin,
-	SessionContext,
 	SocketServer,
 	SOCKET_EVENTS,
 	Store,
@@ -21,14 +20,22 @@ import {
 import { createHooks, Hook } from 'krog';
 import { createWebsocketServer } from './socket-implementation/websocketServer';
 
+// can be overwritten by consumers
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface SessionContext extends Record<string, unknown> {}
+
 type Subscriptions = {
 	[id: string]: { [path: string]: (data: BatchedUpdate) => void };
 };
 
-export type SocketDBServerAPI = {
+export type SocketDBServerDataAPI = {
 	update: (data: Node) => void;
 	get: (path: string) => Node;
 	delete: (path: string) => void;
+};
+
+export type SocketDBServerAPI = SocketDBServerDataAPI & {
+	listen: (port?: number, callback?: () => void) => void;
 };
 
 /**
@@ -40,11 +47,17 @@ export type SocketDB = SocketDBServerAPI;
 export type ServerHooks = {
 	'server:clientConnect'?: Hook<
 		{ id: string },
-		{ client: { id: string; context: SessionContext }; api: SocketDBServerAPI }
+		{
+			client: { id: string; context: SessionContext };
+			api: SocketDBServerDataAPI;
+		}
 	>;
 	'server:clientDisconnect'?: Hook<
 		{ id: string },
-		{ client: { id: string; context: SessionContext }; api: SocketDBServerAPI }
+		{
+			client: { id: string; context: SessionContext };
+			api: SocketDBServerDataAPI;
+		}
 	>;
 	'server:update'?: Hook<
 		{ data: Node },
@@ -52,7 +65,7 @@ export type ServerHooks = {
 		// TODO: allow client object to be null, when update comes from server
 		{
 			client: { id: string | null; context: SessionContext | null };
-			api: SocketDBServerAPI;
+			api: SocketDBServerDataAPI;
 		}
 	>;
 	'server:delete'?: Hook<
@@ -61,7 +74,7 @@ export type ServerHooks = {
 		// TODO: allow client object to be null, when update comes from server
 		{
 			client: { id: string | null; context: SessionContext | null };
-			api: SocketDBServerAPI;
+			api: SocketDBServerDataAPI;
 		}
 	>;
 };
@@ -72,21 +85,29 @@ export function SocketDBServer({
 	port = 8080,
 	store = createStore(),
 	updateInterval = 50,
-	socketServer = createWebsocketServer({ port }),
+	socketServer = createWebsocketServer(),
 	plugins = [],
+	autoListen = true,
 }: {
+	/**
+	 * The port to listen on.
+	 * @deprecated Use .listen(PORT) instead and set autoListen to false. This will be the default behavior in the future.
+	 */
 	port?: number;
 	store?: Store;
 	updateInterval?: number;
 	socketServer?: SocketServer;
 	plugins?: ServerPlugin[];
+	autoListen?: boolean;
 } = {}): SocketDBServerAPI {
 	// use half of the update interval, because we have two update queues resulting in double the time
 	updateInterval = updateInterval / 2;
 
 	const subscriber: Subscriptions = {};
 
-	const api: SocketDBServerAPI = {
+	const queue = createUpdateBatcher(notifySubscribers, updateInterval);
+
+	const api: SocketDBServerDataAPI = {
 		update,
 		get: (path: string): Node => {
 			const data = store.get(path);
@@ -95,8 +116,6 @@ export function SocketDBServer({
 		},
 		delete: del,
 	};
-
-	const queue = createUpdateBatcher(notifySubscribers, updateInterval);
 
 	const hooks = createHooks<ServerHooks>();
 	registerPlugins(plugins);
@@ -300,5 +319,26 @@ export function SocketDBServer({
 			}
 		);
 	});
-	return api;
+
+	const listen: SocketDBServerAPI['listen'] = (port = 8080, callback) => {
+		socketServer.listen(port, callback);
+	};
+
+	if (autoListen) {
+		console.warn(
+			'You are running SocketDB in self initializing mode. This mode might be removed in a future update. It is recommended to turn off autoListen and use the listen() method instead.'
+		);
+		listen(port);
+		return {
+			...api,
+			listen() {
+				console.warn('No-op. Turn off autoListen to use the listen() method.');
+			},
+		};
+	}
+
+	return {
+		listen,
+		...api,
+	};
 }

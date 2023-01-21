@@ -8,6 +8,7 @@ test('allows providing hooks via plugins', (done) => {
 	const server = SocketDBServer({
 		store,
 		socketServer: {
+			listen() {},
 			onConnection() {},
 		},
 		plugins: [

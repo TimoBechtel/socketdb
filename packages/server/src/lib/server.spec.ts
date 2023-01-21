@@ -14,6 +14,7 @@ test('updates data on manual update', () => {
 	const server = SocketDBServer({
 		store,
 		socketServer: {
+			listen() {},
 			onConnection() {},
 		},
 	});
@@ -415,6 +416,7 @@ test('allows adding a custom user context', (done) => {
 					{ username: 'Peter' }
 				);
 			},
+			listen() {},
 		},
 		plugins: [
 			{

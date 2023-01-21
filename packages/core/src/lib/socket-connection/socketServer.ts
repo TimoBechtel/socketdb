@@ -1,6 +1,6 @@
 import { Socket } from './socket';
 
-export type SessionContext = Record<string, unknown>;
+type SessionContext = Record<string, unknown>;
 
 export type SocketServer = {
 	onConnection: (
@@ -10,4 +10,5 @@ export type SocketServer = {
 			sessionContext?: SessionContext
 		) => void
 	) => void;
+	listen: (port: number, callback?: () => void) => void;
 };
