@@ -12,8 +12,10 @@ export const createWebsocketServer = (
 			server.on('connection', (socket) => {
 				const { notify, addListener, removeListener } = createEventBroker();
 
-				socket.on('message', (packet: string) => {
-					const { event, data } = JSON.parse(packet);
+				socket.on('message', (packet) => {
+					const message =
+						typeof packet === 'string' ? packet : packet.toString();
+					const { event, data } = JSON.parse(message);
 					notify(event, data);
 				});
 
