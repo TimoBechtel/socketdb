@@ -42,6 +42,29 @@ test('emits update object for path', (done) => {
 	client.get('players').get('1').get('name').set('Patrick');
 });
 
+test('does not emit update if nothing changed', (done) => {
+	let emitCount = 0;
+
+	const store = createStore();
+	store.put(nodeify({ players: { 1: { name: 'Patrick' } } }));
+
+	const { socketClient } = mockSocketClient({
+		onSend() {
+			emitCount++;
+			expect(emitCount).toEqual(0);
+		},
+	});
+
+	const client = SocketDBClient({ socketClient, store });
+
+	client.get('players').get('1').get('name').set('Patrick');
+
+	setTimeout(() => {
+		expect(emitCount).toEqual(0);
+		done();
+	}, 10);
+});
+
 test('deletes data and notifies local subscribers', (done) => {
 	const store = createStore();
 

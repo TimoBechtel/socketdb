@@ -136,7 +136,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 									if (storedData === null) {
 										// only set data to null if it does not exist yet (prevent overwriting data)
 										// we save a null value here, so we know about that path to allow diffing key-only updates
-										const update = creatUpdate(absolutePath, nodeify(null));
+										const update = createUpdate(absolutePath, nodeify(null));
 										store.put(update);
 									}
 								});
@@ -163,7 +163,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 								);
 							});
 							if (data.change) {
-								const update = creatUpdate(path, data.change);
+								const update = createUpdate(path, data.change);
 								store.put(update);
 								traverseNode(update, (path, data) => {
 									subscriptions.update.notify(path, () => {
@@ -290,12 +290,12 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 						.then(({ path, value, meta }) => {
 							const node = nodeify(value);
 							if (meta) node.meta = meta;
-							const update = creatUpdate(path, node);
-							const currentData = store.get(path);
-							const diff = mergeDiff(
-								update,
-								currentData ? deepClone(currentData) : {}
-							);
+							const update = createUpdate(path, node);
+							const currentData = store.get();
+							const diff =
+								currentData === null
+									? update
+									: mergeDiff(update, deepClone(currentData));
 							if (isNode(diff)) queueUpdate({ type: 'change', data: diff });
 						})
 						.catch(console.warn);
@@ -347,7 +347,7 @@ export function SocketDBClient<Schema extends SchemaDefinition = any>({
 	};
 }
 
-function creatUpdate(path: string, data: Node): Node {
+function createUpdate(path: string, data: Node): Node {
 	const diff: { value: { [key: string]: Node } } = { value: {} };
 	let current = diff;
 	const keys = parsePath(path);
