@@ -1,3 +1,5 @@
+# Changelog
+
 ## [5.0.1](https://github.com/TimoBechtel/socketdb/compare/v5.0.0...v5.0.1) (2023-01-25)
 
 ### Bug Fixes
