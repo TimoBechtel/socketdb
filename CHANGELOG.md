@@ -1,3 +1,11 @@
+# Changelog
+
+## [5.0.1](https://github.com/TimoBechtel/socketdb/compare/v5.0.0...v5.0.1) (2023-01-25)
+
+### Bug Fixes
+
+- **client:** updates being sent even if nothing has changed ([801fcfc](https://github.com/TimoBechtel/socketdb/commit/801fcfc5c84d94288e0a20a998d0e44059c18546))
+
 ## [5.0.0](https://github.com/TimoBechtel/socketdb/compare/v4.2.1...v5.0.0) (2023-01-20)
 
 ### ⚠ BREAKING CHANGES
