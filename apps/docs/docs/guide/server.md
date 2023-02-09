@@ -29,11 +29,14 @@ import { SocketDBServer, createWebsocketServer } from '@socketdb/server';
 import { createServer } from 'http';
 import express from 'express';
 const app = express();
-const server = createServer(app).listen(8080);
+const server = createServer(app);
 
 SocketDBServer({
 	socketServer: createWebsocketServer({ server }),
+	autoListen: false,
 });
+
+server.listen(8080);
 ```
 
 ## get

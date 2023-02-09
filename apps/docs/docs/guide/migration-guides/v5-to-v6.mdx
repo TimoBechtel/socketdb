@@ -1,0 +1,50 @@
+# v6 Migration Guide
+
+## This update changes the api of the `createWebsocketServer` function
+
+:::info
+This change only affects you if you are using the `createWebsocketServer` function directly or a custom implementation of it.
+:::
+
+An `initializeSession` function has been added as option. If you have been using the `verifyClient` option from ws to initialize the session, it is now recommended to use this function instead. For example:
+
+```diff
+const server = createWebsocketServer({
+-	async verifyClient(info, done) {
+-		const result = validateUserToken(info.req);
+-		if (result.ok) {
+-			return done(true);
+-		} else {
+-			done(false, 403, 'Forbidden');
+-		}
+-	},
++	async initializeSession({ req }) {
++		const result = validateUserToken(req);
++		if (result.ok) {
++			return {
++				// userid: result.userid,
++			};
++		} else {
++			throw new WebsocketServerError({
++				code: 'FORBIDDEN',
++			});
++		}
++	},
+});
+```
+
+`createWebsocketServer` now also returns a `listen` function that requires a `port` argument.
+The `listen` function will be run by the SocketDBServer, you don't need to call it yourself.
+
+```diff
+type SocketServer = {
+	onConnection: (
+		callback: (
+			client: Socket,
+			id: string,
+			sessionContext?: SessionContext
+		) => void
+	) => void;
++ listen: (port: number, callback?: () => void) => void;
+};
+```

@@ -264,6 +264,7 @@ test('should batch all socket events', (done) => {
 		onConnection(callback) {
 			connect = callback;
 		},
+		listen() {},
 	};
 	SocketDBServer({ socketServer, updateInterval: 10, store });
 

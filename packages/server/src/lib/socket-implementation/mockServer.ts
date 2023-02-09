@@ -12,6 +12,9 @@ export function mockSocketServer() {
 		onConnection(callback) {
 			connect = callback;
 		},
+		listen() {
+			// no-op
+		},
 	};
 
 	return {

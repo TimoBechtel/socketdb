@@ -37,7 +37,7 @@ const sidebars = {
 		{
 			type: 'category',
 			label: 'Advanced',
-			items: ['guide/persistence'],
+			items: ['guide/persistence', 'guide/authentication'],
 		},
 		{
 			type: 'category',
@@ -45,6 +45,7 @@ const sidebars = {
 			items: [
 				'guide/migration-guides/v3-to-v4',
 				'guide/migration-guides/v4-to-v5',
+				'guide/migration-guides/v5-to-v6',
 			],
 		},
 	],
