@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.0.0](https://github.com/TimoBechtel/socketdb/compare/v5.0.1...v6.0.0) (2023-02-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **server:** The interface for custom websocket-servers has changed. It now needs to return a listen function.
+
+### Features
+
+* **server:** add api for creatinging a user session context ([40a8f4c](https://github.com/TimoBechtel/socketdb/commit/40a8f4c834a59c0bcd61c2e0e811472c87beb035))
+
 ## [5.0.1](https://github.com/TimoBechtel/socketdb/compare/v5.0.0...v5.0.1) (2023-01-25)
 
 ### Bug Fixes
