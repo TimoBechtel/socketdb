@@ -85,6 +85,7 @@ test('validates updated data', () => {
 	expect(() =>
 		plugin.hooks['server:update']?.(
 			{
+				// @ts-expect-error this should test invalid data
 				data: invalidData,
 			},
 			{

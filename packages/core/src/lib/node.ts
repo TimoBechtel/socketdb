@@ -20,8 +20,8 @@ export interface Meta {
 export type Node<Schema extends Json | LeafValue = any> = {
 	meta?: Meta;
 	value: Schema extends Json
-		? { [Key in keyof Schema]: Node<Schema[Key]> }
-		: LeafValue;
+		? { [key in keyof Schema]: Node<Schema[key]> }
+		: Schema;
 };
 
 export function isNode(value: any): value is Node {
@@ -63,6 +63,10 @@ export function unwrap<Schema extends Json | LeafValue>(
 	}
 }
 
+export function hasChildNodes(node?: Node): node is Node<Json> {
+	return isObject(node?.value);
+}
+
 export function traverseNode(
 	node: Node,
 	callback: (path: string, data: Node) => void | true
@@ -71,7 +75,7 @@ export function traverseNode(
 	while (stack.length) {
 		const current = stack.pop();
 		if (!current) return;
-		if (!isObject(current.node.value)) return;
+		if (!hasChildNodes(current.node)) return;
 
 		for (const [key, node] of Object.entries(current.node.value)) {
 			const path = joinPath(current.path, key);
