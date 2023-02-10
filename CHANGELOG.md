@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.1.0](https://github.com/TimoBechtel/socketdb/compare/v6.0.0...v6.1.0) (2023-02-10)
+
+
+### Features
+
+* **server:** add schema type for the server ([91dee56](https://github.com/TimoBechtel/socketdb/commit/91dee564bdabdc77168a6a092cbee4d2d95d730f))
+
+
+### Bug Fixes
+
+* **client:** wrong schema for the root instance ([1b6abb8](https://github.com/TimoBechtel/socketdb/commit/1b6abb8818b647391941bf3bdb82577513790efe))
+
 ## [6.0.0](https://github.com/TimoBechtel/socketdb/compare/v5.0.1...v6.0.0) (2023-02-09)
 
 

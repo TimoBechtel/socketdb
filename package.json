@@ -1,6 +1,6 @@
 {
 	"name": "socketdb",
-	"version": "6.0.0",
+	"version": "6.1.0",
 	"description": "Real-time synchronized data storage",
 	"homepage": "https://socketdb.com",
 	"license": "MIT",
