@@ -35,6 +35,7 @@ export type SocketDBClientAPI<Schema extends SchemaDefinition = any> = {
 type Unsubscriber = () => void;
 
 type SchemaDefinition = Json | LeafValue;
+type RootSchemaDefinition = Json;
 
 export type ChainReference<Schema extends SchemaDefinition = any> = {
 	get<Key extends keyof Schema>(
@@ -73,7 +74,7 @@ export type ClientHooks = {
 
 export type ClientPlugin = Plugin<ClientHooks>;
 
-export function SocketDBClient<Schema extends SchemaDefinition = any>({
+export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 	url: _url,
 	store = createStore(),
 	socketClient: _socketClient,
