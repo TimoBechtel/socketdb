@@ -7,6 +7,7 @@ import {
 	deepClone,
 	isObject,
 	joinPath,
+	Json,
 	Node,
 	nodeify,
 	normalizePath,
@@ -19,53 +20,57 @@ import {
 } from '@socketdb/core';
 import { createHooks, Hook } from 'krog';
 import { createWebsocketServer } from './socket-implementation/websocketServer';
+import { RecursivePartial } from './utils';
 
 // can be overwritten by consumers
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface SessionContext extends Record<string, unknown> {}
 
+type RootSchemaDefinition = Json;
+
 type Subscriptions = {
 	[id: string]: { [path: string]: (data: BatchedUpdate) => void };
 };
 
-export type SocketDBServerDataAPI = {
-	update: (data: Node) => void;
+export type SocketDBServerDataAPI<Schema extends RootSchemaDefinition> = {
+	update: (data: Node<RecursivePartial<Schema>>) => void;
 	get: (path: string) => Node;
 	delete: (path: string) => void;
 };
 
-export type SocketDBServerAPI = SocketDBServerDataAPI & {
-	listen: (port?: number, callback?: () => void) => void;
-};
+export type SocketDBServerAPI<Schema extends RootSchemaDefinition> =
+	SocketDBServerDataAPI<Schema> & {
+		listen: (port?: number, callback?: () => void) => void;
+	};
 
 /**
  * @deprecated. Use SocketDBServerAPI instead.
  * Type alias will be removed in a future update.
  */
-export type SocketDB = SocketDBServerAPI;
+export type SocketDB = SocketDBServerAPI<RootSchemaDefinition>;
 
-export type ServerHooks = {
+export type ServerHooks<Schema extends RootSchemaDefinition> = {
 	'server:clientConnect'?: Hook<
 		{ id: string },
 		{
 			client: { id: string; context: SessionContext };
-			api: SocketDBServerDataAPI;
+			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 	'server:clientDisconnect'?: Hook<
 		{ id: string },
 		{
 			client: { id: string; context: SessionContext };
-			api: SocketDBServerDataAPI;
+			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 	'server:update'?: Hook<
-		{ data: Node },
+		{ data: Node<RecursivePartial<Schema>> },
 		// if client id is null, it means the update comes from the server
 		// TODO: allow client object to be null, when update comes from server
 		{
 			client: { id: string | null; context: SessionContext | null };
-			api: SocketDBServerDataAPI;
+			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 	'server:delete'?: Hook<
@@ -74,14 +79,16 @@ export type ServerHooks = {
 		// TODO: allow client object to be null, when update comes from server
 		{
 			client: { id: string | null; context: SessionContext | null };
-			api: SocketDBServerDataAPI;
+			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 };
 
-export type ServerPlugin = Plugin<ServerHooks>;
+export type ServerPlugin<
+	Schema extends RootSchemaDefinition = RootSchemaDefinition
+> = Plugin<ServerHooks<Schema>>;
 
-export function SocketDBServer({
+export function SocketDBServer<Schema extends RootSchemaDefinition>({
 	port = 8080,
 	store = createStore(),
 	updateInterval = 50,
@@ -97,9 +104,9 @@ export function SocketDBServer({
 	store?: Store;
 	updateInterval?: number;
 	socketServer?: SocketServer;
-	plugins?: ServerPlugin[];
+	plugins?: ServerPlugin<Schema>[];
 	autoListen?: boolean;
-} = {}): SocketDBServerAPI {
+} = {}): SocketDBServerAPI<Schema> {
 	// use half of the update interval, because we have two update queues resulting in double the time
 	updateInterval = updateInterval / 2;
 
@@ -107,7 +114,7 @@ export function SocketDBServer({
 
 	const queue = createUpdateBatcher(notifySubscribers, updateInterval);
 
-	const api: SocketDBServerDataAPI = {
+	const api: SocketDBServerDataAPI<Schema> = {
 		update,
 		get: (path: string): Node => {
 			const data = store.get(path);
@@ -117,14 +124,17 @@ export function SocketDBServer({
 		delete: del,
 	};
 
-	const hooks = createHooks<ServerHooks>();
+	const hooks = createHooks<ServerHooks<Schema>>();
 	registerPlugins(plugins);
 
-	function registerPlugins(plugins: ServerPlugin[]) {
+	function registerPlugins(plugins: ServerPlugin<Schema>[]) {
 		plugins.forEach((plugin) => {
 			Object.entries(plugin.hooks).forEach(
-				([name, hook]: [string, ServerHooks[keyof ServerHooks]]) => {
-					hooks.register(name as keyof ServerHooks, hook);
+				([name, hook]: [
+					string,
+					ServerHooks<Schema>[keyof ServerHooks<Schema>]
+				]) => {
+					hooks.register(name as keyof ServerHooks<Schema>, hook);
 				}
 			);
 		});
@@ -320,7 +330,10 @@ export function SocketDBServer({
 		);
 	});
 
-	const listen: SocketDBServerAPI['listen'] = (port = 8080, callback) => {
+	const listen: SocketDBServerAPI<Schema>['listen'] = (
+		port = 8080,
+		callback
+	) => {
 		socketServer.listen(port, callback);
 	};
 

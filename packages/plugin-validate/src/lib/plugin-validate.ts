@@ -1,10 +1,10 @@
-import { createStore, mergeDiff, nodeify, unwrap } from '@socketdb/core';
+import { createStore, Json, mergeDiff, nodeify, unwrap } from '@socketdb/core';
 import type { ServerPlugin } from '@socketdb/server';
 import AJV, { JSONSchemaType } from 'ajv';
 
-export function pluginValidate<DataType>(
+export function pluginValidate<DataType extends Json>(
 	schema: JSONSchemaType<DataType>
-): ServerPlugin {
+): ServerPlugin<DataType> {
 	const ajv = new AJV();
 	const validate = ajv.compile(schema);
 	return {

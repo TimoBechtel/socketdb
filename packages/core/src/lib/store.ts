@@ -1,4 +1,4 @@
-import { isNode, Node } from './node';
+import { hasChildNodes, isNode, Node } from './node';
 import { parsePath } from './path';
 import { isObject, mergeDiff } from './utils';
 
@@ -20,7 +20,7 @@ export function createStore(): Store {
 		let current = store;
 		for (const key of parsePath(path)) {
 			if (
-				!isObject(current.value) ||
+				!hasChildNodes(current) ||
 				current.value[key] === undefined ||
 				current.value[key].value === null
 			) {
