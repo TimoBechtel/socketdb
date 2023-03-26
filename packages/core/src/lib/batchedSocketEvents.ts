@@ -17,7 +17,7 @@ export function createBatchedClient<Events extends GenericEvents>(
 ) {
 	type QueuedEvent = GenericQueuedEvent<Events>;
 
-	const events = createEventBroker<QueuedEvent['data']>();
+	const events = createEventBroker<Events>();
 
 	const queue = createQueue<QueuedEvent, QueuedEvent[]>({
 		batch(current, update) {
@@ -34,7 +34,7 @@ export function createBatchedClient<Events extends GenericEvents>(
 
 	connection.on('events', (socketEvents: QueuedEvent[]) => {
 		socketEvents?.forEach((event) => {
-			events.notify(event.event as string, event.data);
+			events.notify(event.event, event.data);
 		});
 	});
 
@@ -46,14 +46,14 @@ export function createBatchedClient<Events extends GenericEvents>(
 			event: K,
 			callback: (data: Events[K]) => void
 		) {
-			events.addListener(event as string, callback as any);
-			return () => events.removeListener(event as string, callback as any);
+			events.addListener(event, callback);
+			return () => events.removeListener(event, callback);
 		},
 		unsubscribe<K extends keyof Events>(
 			event: K,
 			callback?: (data: Events[K]) => void
 		) {
-			events.removeListener(event as string, callback as any);
+			events.removeListener(event, callback);
 		},
 	};
 }
