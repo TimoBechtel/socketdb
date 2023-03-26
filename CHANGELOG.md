@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.2.0](https://github.com/TimoBechtel/socketdb/compare/v6.1.0...v6.2.0) (2023-03-26)
+
+
+### Features
+
+* **server:** allow adding multiple callbacks to the default websocketServer ([a0e932f](https://github.com/TimoBechtel/socketdb/commit/a0e932f87242b2732ce7445b54ea8736aeda258c))
+
 ## [6.1.0](https://github.com/TimoBechtel/socketdb/compare/v6.0.0...v6.1.0) (2023-02-10)
 
 
