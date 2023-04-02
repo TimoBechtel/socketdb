@@ -70,6 +70,13 @@ export type ClientHooks = {
 	'client:firstConnect'?: Hook;
 	'client:reconnect'?: Hook;
 	'client:disconnect'?: Hook;
+	/**
+	 * Called before the client sends a heartbeat to the server.
+	 *
+	 * The payload coming from the server will be passed as a argument.
+	 * Returned value will be sent to the server as heartbeat payload.
+	 */
+	'client:heartbeat'?: Hook<Record<string, unknown>>;
 };
 
 export type ClientPlugin = Plugin<ClientHooks>;
@@ -227,6 +234,16 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 	connection.onDisconnect(() => {
 		hooks.call('client:disconnect');
 		connectionLost = true;
+	});
+
+	// answer keep-alive checks
+	socketEvents.subscribe(SOCKET_EVENTS.keepAlive.ping, (payload) => {
+		hooks
+			.call('client:heartbeat', { args: payload })
+			.then((payload) => {
+				socketEvents.queue(SOCKET_EVENTS.keepAlive.pong, payload);
+			})
+			.catch(console.warn);
 	});
 
 	function registerPlugins(plugins: ClientPlugin[]) {

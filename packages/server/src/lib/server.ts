@@ -19,6 +19,7 @@ import {
 	traverseNode,
 } from '@socketdb/core';
 import { createHooks, Hook } from 'krog';
+import { createBatchedInterval } from './batchedInterval';
 import { createWebsocketServer } from './socket-implementation/websocketServer';
 import { RecursivePartial } from './utils';
 
@@ -52,6 +53,37 @@ export type SocketDB = SocketDBServerAPI<RootSchemaDefinition>;
 export type ServerHooks<Schema extends RootSchemaDefinition> = {
 	'server:clientConnect'?: Hook<
 		{ id: string },
+		{
+			client: { id: string; context: SessionContext };
+			api: SocketDBServerDataAPI<Schema>;
+		}
+	>;
+	/**
+	 * Allows you to intercept the keep-alive check for a client.
+	 *
+	 * Throwing an error will skip the check and disconnect the client.
+	 *
+	 * Returned arguments will be sent to the client as a payload.
+	 *
+	 */
+	'server:keepAliveCheck'?: Hook<
+		Record<string, unknown>,
+		{
+			client: { id: string; context: SessionContext };
+			api: SocketDBServerDataAPI<Schema>;
+		}
+	>;
+	/**
+	 * Allows you to verify the pong (heartbeat) response from the client.
+	 *
+	 * If you throw an error, the client will be disconnected. Otherwise, the client will be considered connected.
+	 *
+	 * You can use this to add additional checks, e.g. verify the client token expiration.
+	 *
+	 * Any payload sent by the client will be passed as arguments.
+	 */
+	'server:heartbeat'?: Hook<
+		Record<string, unknown>,
 		{
 			client: { id: string; context: SessionContext };
 			api: SocketDBServerDataAPI<Schema>;
@@ -95,6 +127,7 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 	socketServer = createWebsocketServer(),
 	plugins = [],
 	autoListen = true,
+	keepAliveInterval = 30_000,
 }: {
 	/**
 	 * The port to listen on.
@@ -106,6 +139,13 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 	socketServer?: SocketServer;
 	plugins?: ServerPlugin<Schema>[];
 	autoListen?: boolean;
+	/**
+	 * Interval in milliseconds between keep alive pings.
+	 * @default 30000
+	 *
+	 * Set to 0 to disable keep alive.
+	 */
+	keepAliveInterval?: number;
 } = {}): SocketDBServerAPI<Schema> {
 	// use half of the update interval, because we have two update queues resulting in double the time
 	updateInterval = updateInterval / 2;
@@ -223,6 +263,14 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 		}
 	}
 
+	const shouldDoKeepAlive =
+		keepAliveInterval > 0 && keepAliveInterval !== Infinity;
+	const keepAliveChecks = shouldDoKeepAlive
+		? createBatchedInterval({
+				interval: keepAliveInterval,
+		  })
+		: null;
+
 	socketServer.onConnection((connection, id, context = {}) => {
 		const clientContext = { id, context };
 		const socketEvents = createBatchedClient(connection, updateInterval);
@@ -235,7 +283,44 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 			{ asRef: true }
 		);
 
+		let alive = true;
+		const disableKeepAliveChecks =
+			keepAliveChecks?.add(() => {
+				if (!alive) {
+					connection.close();
+					return;
+				}
+				alive = false;
+				hooks
+					.call('server:keepAliveCheck', {
+						args: {},
+						context: { client: clientContext, api },
+					})
+					.then((payload) => {
+						socketEvents.queue(SOCKET_EVENTS.keepAlive.ping, payload);
+					})
+					.catch(() => {
+						connection.close();
+					});
+			}) || null;
+		if (shouldDoKeepAlive) {
+			socketEvents.subscribe(SOCKET_EVENTS.keepAlive.pong, (payload) => {
+				hooks
+					.call('server:heartbeat', {
+						args: payload,
+						context: { client: clientContext, api },
+					})
+					.then(() => {
+						alive = true;
+					})
+					// if a error is thrown in the pong hook, alive stays at false
+					// and the client will be disconnected after the next keep alive check
+					.catch(console.warn);
+			});
+		}
+
 		connection.onDisconnect(() => {
+			disableKeepAliveChecks?.();
 			delete subscriber[id];
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
 			hooks.call(

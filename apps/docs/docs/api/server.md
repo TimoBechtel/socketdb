@@ -8,9 +8,16 @@ function SocketDBServer(config?: {
 	socketServer?: SocketServer;
 	plugins?: ServerPlugin[];
 	autoListen?: boolean;
-}): SocketDB;
+	/**
+	 * Interval in milliseconds between keep alive pings.
+	 * @default 30000
+	 *
+	 * Set to 0 to disable keep alive.
+	 */
+	keepAliveInterval?: number;
+}): SocketDBServerAPI;
 
-type SocketDB = {
+type SocketDBServerAPI = {
 	update: (data: Node) => void;
 	get: (path: string) => Node;
 	delete: (path: string) => void;

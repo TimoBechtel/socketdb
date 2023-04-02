@@ -7,6 +7,7 @@ import {
 	Socket,
 	SocketClient,
 	SocketServer,
+	SOCKET_EVENTS,
 } from '@socketdb/core';
 import { mockSocketServer, SocketDBServer } from '@socketdb/server';
 
@@ -362,4 +363,120 @@ test('path subscribe callback notifies again after node has been re-attached (cr
 		expect(updateCount).toEqual(2);
 		done();
 	}, 500);
+});
+
+test('server should periodically send a ping and client should return a pong', (done) => {
+	const { connectClient, socketServer } = mockSocketServer();
+	let pongs = 0;
+	const { notify: notifyClient, socketClient } = mockSocketClient({
+		onSend(event, data) {
+			if (pongs === 0) {
+				expect(event).toEqual(SOCKET_EVENTS.keepAlive.pong);
+				notifyServer(event, data);
+				done();
+			}
+			pongs++;
+		},
+	});
+
+	SocketDBClient({ socketClient, updateInterval: 5 });
+	SocketDBServer({ socketServer, updateInterval: 5, keepAliveInterval: 5 });
+
+	let pings = 0;
+	const { notify: notifyServer } = connectClient({
+		onSend(event, data) {
+			if (pings === 0) {
+				expect(event).toEqual(SOCKET_EVENTS.keepAlive.ping);
+				notifyClient(event, data);
+			}
+			pings++;
+		},
+	});
+});
+
+test('keepAlive heartbeat allows sending payloads using plugins', (done) => {
+	const { connectClient, socketServer } = mockSocketServer();
+	const payloadFromServer = { hello: 'client' };
+	const payloadFromClient = { hello: 'server' };
+
+	let pongs = 0;
+	const { notify: notifyClient, socketClient } = mockSocketClient({
+		onSend(event, data) {
+			if (pongs === 0) {
+				expect(event).toEqual(SOCKET_EVENTS.keepAlive.pong);
+				expect(data).toEqual(payloadFromClient);
+				notifyServer(event, data);
+				done();
+			}
+			pongs++;
+		},
+	});
+
+	SocketDBClient({
+		socketClient,
+		updateInterval: 5,
+		plugins: [
+			{
+				name: 'test',
+				hooks: {
+					'client:heartbeat': (serverPayload) => {
+						expect(serverPayload).toEqual(payloadFromServer);
+						return payloadFromClient;
+					},
+				},
+			},
+		],
+	});
+	SocketDBServer({
+		socketServer,
+		updateInterval: 5,
+		keepAliveInterval: 5,
+		plugins: [
+			{
+				name: 'test',
+				hooks: {
+					'server:keepAliveCheck': () => {
+						return payloadFromServer;
+					},
+					'server:heartbeat': (payload) => {
+						expect(payload).toEqual(payloadFromClient);
+					},
+				},
+			},
+		],
+	});
+
+	let pings = 0;
+	const { notify: notifyServer } = connectClient({
+		onSend(event, data) {
+			if (pings === 0) {
+				expect(event).toEqual(SOCKET_EVENTS.keepAlive.ping);
+				expect(data).toEqual(payloadFromServer);
+				notifyClient(event, data);
+			}
+			pings++;
+		},
+	});
+});
+
+test('server closes connection when the client stops reacting to ping requests', (done) => {
+	const { connectClient, socketServer } = mockSocketServer();
+	const { notify: notifyClient, socketClient } = mockSocketClient({
+		onSend() {
+			// never send a pong to simulate a non-responding client
+		},
+	});
+
+	SocketDBClient({ socketClient, updateInterval: 5 });
+	SocketDBServer({ socketServer, updateInterval: 5, keepAliveInterval: 20 });
+
+	connectClient({
+		onSend(event, data) {
+			notifyClient(event, data);
+		},
+		onClose() {
+			// connection should be closed after a failed ping
+			done();
+		},
+	});
 });
