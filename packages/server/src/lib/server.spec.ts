@@ -18,6 +18,7 @@ test('updates data on manual update', () => {
 			onConnection() {},
 		},
 	});
+	server.listen();
 
 	server.update(
 		nodeify({
@@ -35,7 +36,7 @@ test('updates data on socket request', () => {
 
 	const { socketServer, connectClient } = mockSocketServer();
 
-	SocketDBServer({ store, socketServer });
+	SocketDBServer({ store, socketServer }).listen();
 
 	const { notify } = connectClient();
 	notify(SOCKET_EVENTS.data.clientUpdate, {
@@ -61,7 +62,7 @@ test('deletes data on socket request', (done) => {
 
 	const { socketServer, connectClient } = mockSocketServer();
 
-	SocketDBServer({ store, socketServer });
+	SocketDBServer({ store, socketServer }).listen();
 
 	const { notify } = connectClient();
 	notify(SOCKET_EVENTS.data.clientUpdate, {
@@ -105,7 +106,7 @@ test('sends data on first subscribe', (done) => {
 
 	const { socketServer, connectClient } = mockSocketServer();
 
-	SocketDBServer({ store, socketServer });
+	SocketDBServer({ store, socketServer }).listen();
 
 	const { notify } = connectClient({
 		id: '1',
@@ -124,7 +125,7 @@ test('emits updates to subscriber', (done) => {
 	const store = createStore();
 	const { socketServer, connectClient } = mockSocketServer();
 
-	SocketDBServer({ store, socketServer, updateInterval: 5 });
+	SocketDBServer({ store, socketServer, updateInterval: 5 }).listen();
 
 	let count = 1;
 	const { notify } = connectClient({
@@ -177,7 +178,7 @@ test('only emits changed values', (done) => {
 
 	const { socketServer, connectClient } = mockSocketServer();
 
-	SocketDBServer({ store, socketServer });
+	SocketDBServer({ store, socketServer }).listen();
 
 	let updateCount = 0;
 
@@ -234,7 +235,7 @@ test('emits updates to all subscribers', async () => {
 	);
 	const { socketServer, connectClient } = mockSocketServer();
 
-	SocketDBServer({ store, socketServer });
+	SocketDBServer({ store, socketServer }).listen();
 
 	await new Promise<void>((resolve) => {
 		const { notify } = connectClient({
@@ -275,6 +276,7 @@ test('sends keys when entries are added or removed', async () => {
 	const { socketServer, connectClient } = mockSocketServer();
 
 	const server = SocketDBServer({ store, socketServer, updateInterval: 5 });
+	server.listen();
 
 	server.update(
 		nodeify({
@@ -331,6 +333,7 @@ test('only send data if client is subscribed', (done) => {
 	const { socketServer, connectClient } = mockSocketServer();
 
 	const server = SocketDBServer({ store, socketServer, updateInterval: 10 });
+	server.listen();
 
 	let receivedCount = 0;
 
@@ -364,7 +367,7 @@ test('should batch updates', (done) => {
 
 	const { socketServer, connectClient } = mockSocketServer();
 
-	SocketDBServer({ store, socketServer, updateInterval: 10 });
+	SocketDBServer({ store, socketServer, updateInterval: 10 }).listen();
 
 	let receivedCount = 0;
 
@@ -429,5 +432,5 @@ test('allows adding a custom user context', (done) => {
 				},
 			},
 		],
-	});
+	}).listen();
 });

@@ -119,24 +119,16 @@ export type ServerPlugin<
 > = Plugin<ServerHooks<Schema>>;
 
 export function SocketDBServer<Schema extends RootSchemaDefinition>({
-	port = 8080,
 	store = createStore(),
 	updateInterval = 50,
 	socketServer = createWebsocketServer(),
 	plugins = [],
-	autoListen = true,
 	keepAliveInterval = 30_000,
 }: {
-	/**
-	 * The port to listen on.
-	 * @deprecated Use .listen(PORT) instead and set autoListen to false. This will be the default behavior in the future.
-	 */
-	port?: number;
 	store?: Store;
 	updateInterval?: number;
 	socketServer?: SocketServer;
 	plugins?: ServerPlugin<Schema>[];
-	autoListen?: boolean;
 	/**
 	 * Interval in milliseconds between keep alive pings.
 	 * @default 30000
@@ -419,20 +411,6 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 	) => {
 		socketServer.listen(port, callback);
 	};
-
-	if (autoListen) {
-		console.warn(
-			'You are running SocketDB in self initializing mode. This mode might be removed in a future update. It is recommended to turn off autoListen and use the listen() method instead.'
-		);
-		listen(port);
-		return {
-			...api,
-			intercept: hooks.register,
-			listen() {
-				console.warn('No-op. Turn off autoListen to use the listen() method.');
-			},
-		};
-	}
 
 	return {
 		listen,

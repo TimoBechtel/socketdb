@@ -32,6 +32,7 @@ test('allows providing hooks via plugins', (done) => {
 			},
 		],
 	});
+	server.listen();
 
 	server.update(
 		nodeify({
@@ -73,6 +74,8 @@ test('allows providing hooks via the intercept function', (done) => {
 			},
 		};
 	});
+
+	server.listen();
 
 	server.update(
 		nodeify({

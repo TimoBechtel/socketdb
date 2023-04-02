@@ -24,7 +24,7 @@ test('client receives updated data', (done) => {
 		socketClient,
 	});
 
-	SocketDBServer({ socketServer });
+	SocketDBServer({ socketServer }).listen();
 
 	const { notify: notifyServer } = connectClient({
 		onSend(event, data) {
@@ -72,7 +72,7 @@ test('all clients receive data on update', async () => {
 		socketClient: socket2,
 	});
 
-	SocketDBServer({ socketServer });
+	SocketDBServer({ socketServer }).listen();
 
 	const { notify: notifyS1 } = connectClient({
 		onSend(event, data) {
@@ -140,7 +140,7 @@ test('only sends data once for every update on same root path', (done) => {
 	});
 
 	const client = SocketDBClient({ socketClient, updateInterval: 5 });
-	SocketDBServer({ socketServer, updateInterval: 5 });
+	SocketDBServer({ socketServer, updateInterval: 5 }).listen();
 
 	const { notify: notifyServer } = connectClient({
 		onSend(event, data) {
@@ -175,7 +175,7 @@ test('on/once always receives data on first call, even when not subscribed to be
 	});
 
 	const client = SocketDBClient({ socketClient, updateInterval: 5 });
-	SocketDBServer({ socketServer, updateInterval: 5 });
+	SocketDBServer({ socketServer, updateInterval: 5 }).listen();
 
 	const { notify: notifyServer } = connectClient({
 		onSend(event, data) {
@@ -208,7 +208,7 @@ test('should notify client on deletion', (done) => {
 	const store = createStore();
 
 	const client = SocketDBClient({ socketClient, updateInterval: 5 });
-	SocketDBServer({ socketServer, updateInterval: 5, store });
+	SocketDBServer({ socketServer, updateInterval: 5, store }).listen();
 
 	const { notify: notifyServer } = connectClient({
 		onSend(event, data) {
@@ -267,7 +267,7 @@ test('should batch all socket events', (done) => {
 		},
 		listen() {},
 	};
-	SocketDBServer({ socketServer, updateInterval: 10, store });
+	SocketDBServer({ socketServer, updateInterval: 10, store }).listen();
 
 	let serverEmitCount = 0;
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -335,7 +335,7 @@ test('path subscribe callback notifies again after node has been re-attached (cr
 	const store = createStore();
 
 	const client = SocketDBClient({ socketClient, updateInterval: 5 });
-	SocketDBServer({ socketServer, updateInterval: 5, store });
+	SocketDBServer({ socketServer, updateInterval: 5, store }).listen();
 
 	const { notify: notifyServer } = connectClient({
 		onSend(event, data) {
@@ -380,7 +380,11 @@ test('server should periodically send a ping and client should return a pong', (
 	});
 
 	SocketDBClient({ socketClient, updateInterval: 5 });
-	SocketDBServer({ socketServer, updateInterval: 5, keepAliveInterval: 5 });
+	SocketDBServer({
+		socketServer,
+		updateInterval: 5,
+		keepAliveInterval: 5,
+	}).listen();
 
 	let pings = 0;
 	const { notify: notifyServer } = connectClient({
@@ -444,7 +448,7 @@ test('keepAlive heartbeat allows sending payloads using plugins', (done) => {
 				},
 			},
 		],
-	});
+	}).listen();
 
 	let pings = 0;
 	const { notify: notifyServer } = connectClient({
@@ -468,7 +472,11 @@ test('server closes connection when the client stops reacting to ping requests',
 	});
 
 	SocketDBClient({ socketClient, updateInterval: 5 });
-	SocketDBServer({ socketServer, updateInterval: 5, keepAliveInterval: 20 });
+	SocketDBServer({
+		socketServer,
+		updateInterval: 5,
+		keepAliveInterval: 20,
+	}).listen();
 
 	connectClient({
 		onSend(event, data) {
