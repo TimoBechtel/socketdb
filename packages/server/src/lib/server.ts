@@ -42,6 +42,10 @@ export type SocketDBServerDataAPI<Schema extends RootSchemaDefinition> = {
 export type SocketDBServerAPI<Schema extends RootSchemaDefinition> =
 	SocketDBServerDataAPI<Schema> & {
 		listen: (port?: number, callback?: () => void) => void;
+		intercept: <Hook extends keyof ServerHooks<Schema>>(
+			hook: Hook,
+			callback: ServerHooks<Schema>[Hook]
+		) => () => void;
 	};
 
 /**
@@ -429,6 +433,7 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 		listen(port);
 		return {
 			...api,
+			intercept: hooks.register,
 			listen() {
 				console.warn('No-op. Turn off autoListen to use the listen() method.');
 			},
@@ -437,6 +442,7 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 
 	return {
 		listen,
+		intercept: hooks.register,
 		...api,
 	};
 }

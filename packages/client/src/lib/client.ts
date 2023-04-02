@@ -30,6 +30,10 @@ import { createWebsocketClient } from './socket-implementation/websocketClient';
 
 export type SocketDBClientAPI<Schema extends SchemaDefinition = any> = {
 	disconnect: () => void;
+	intercept: <Hook extends keyof ClientHooks>(
+		hook: Hook,
+		callback: ClientHooks[Hook]
+	) => () => void;
 } & ChainReference<Schema>;
 
 type Unsubscriber = () => void;
@@ -359,6 +363,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 
 	return {
 		...get(''),
+		intercept: hooks.register,
 		disconnect() {
 			connection.close();
 		},
