@@ -1,0 +1,52 @@
+# v7 Migration Guide
+
+## Both @socketdb/client and @socketdb/server need to be updated to v7
+
+You need to update both the client and the server at the same time. This is due to the addition of a heartbeat mechanism. The server will now send a ping to the client in a regular interval. If the client does not respond, the connection will be closed.
+
+## Removed auto-listen feature
+
+The SocketDB server no longer automatically listens on the port. You need to call the `listen` method to start start the server.
+
+```diff
+import { SocketDBServer } from '@socketdb/server';
+
+- const socketDB = new SocketDBServer({
+- 	port: 8080,
+- 	autoListen: true,
+- });
++ const socketDB = new SocketDBServer({
++ socketDB.listen(8080);
+```
+
+## Deprecated type aliases have been removed
+
+The following type aliases have been remove:
+
+### Core
+
+- removed `KeyValue`: use `Json` instead
+
+  ```diff
+  - import type { KeyValue } from '@socketdb/core';
+  + import type { Json } from '@socketdb/core';
+  ```
+
+- removed `Value`: use `LeafValue` instead
+  ```diff
+  - import type { Value } from '@socketdb/core';
+  + import type { LeafValue } from '@socketdb/core';
+  ```
+
+### Server
+
+- removed `SocketDB`: use `SocketDBServerAPI` instead
+
+  ```diff
+  - import type { SocketDB } from '@socketdb/server';
+  + import type { SocketDBServerAPI } from '@socketdb/server';
+  + import type { Json } from '@socketdb/core';
+
+  - let socketDB: SocketDB;
+  + let socketDB: SocketDBServerAPI<Json>;
+  ```
