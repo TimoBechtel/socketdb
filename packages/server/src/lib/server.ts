@@ -48,12 +48,6 @@ export type SocketDBServerAPI<Schema extends RootSchemaDefinition> =
 		) => () => void;
 	};
 
-/**
- * @deprecated. Use SocketDBServerAPI instead.
- * Type alias will be removed in a future update.
- */
-export type SocketDB = SocketDBServerAPI<RootSchemaDefinition>;
-
 export type ServerHooks<Schema extends RootSchemaDefinition> = {
 	'server:clientConnect'?: Hook<
 		{ id: string },
