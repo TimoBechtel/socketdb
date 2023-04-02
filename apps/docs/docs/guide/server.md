@@ -33,7 +33,6 @@ const server = createServer(app);
 
 SocketDBServer({
 	socketServer: createWebsocketServer({ server }),
-	autoListen: false,
 });
 
 server.listen(8080);

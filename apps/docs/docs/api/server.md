@@ -2,12 +2,10 @@
 
 ```ts
 function SocketDBServer(config?: {
-	port?: number;
 	store?: Store;
 	updateInterval?: number;
 	socketServer?: SocketServer;
-	plugins?: ServerPlugin[];
-	autoListen?: boolean;
+	plugins?: ServerPlugin<Schema>[];
 	/**
 	 * Interval in milliseconds between keep alive pings.
 	 * @default 30000
