@@ -85,14 +85,3 @@ export function traverseNode(
 		}
 	}
 }
-
-// deprecated exports for backwards compatibility
-// TODO: remove in next major version
-/**
- * @deprecated Use `Json` instead
- */
-export type KeyValue = Json;
-/**
- * @deprecated Use `LeafValue` instead
- */
-export type Value = LeafValue;
