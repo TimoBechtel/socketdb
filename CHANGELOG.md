@@ -1,5 +1,27 @@
 # Changelog
 
+## [7.0.0](https://github.com/TimoBechtel/socketdb/compare/v6.2.0...v7.0.0) (2023-04-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **server:** The server doesn't start automatically anymore. It now requires a .listen() call.
+* **server:** Deprecated type alias SocketDB has been removed. Use SocketDBServerAPI instead.
+* **core:** Removed deprecated type aliases KeyValue & Value. Use Json & LeafValue instead.
+* This update affects both client & server. Make sure to update both.
+
+### Features
+
+* add heartbeat mechanism ([ce491cd](https://github.com/TimoBechtel/socketdb/commit/ce491cd752f2d093305135e75fb18f7054584605))
+* add intercept api to make it easier to call into hooks ([ebeadd6](https://github.com/TimoBechtel/socketdb/commit/ebeadd61a9221e0c81f1648fbbcbf1e781e6561d)), closes [#50](https://github.com/TimoBechtel/socketdb/issues/50)
+
+
+### Code Refactoring
+
+* **core:** remove deprecated type exports ([1964b4f](https://github.com/TimoBechtel/socketdb/commit/1964b4f7734680ae9c993b9f623b1b0e839463ee))
+* **server:** remove auto-listen feature ([3f32429](https://github.com/TimoBechtel/socketdb/commit/3f32429bb0c2d5f82c66e7f551b531da22b80154))
+* **server:** remove deprecated type alias ([492a965](https://github.com/TimoBechtel/socketdb/commit/492a965c701e787a7fa7add95f5527f683fc05d0))
+
 ## [6.2.0](https://github.com/TimoBechtel/socketdb/compare/v6.1.0...v6.2.0) (2023-03-26)
 
 
