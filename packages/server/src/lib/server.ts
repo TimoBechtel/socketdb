@@ -1,24 +1,27 @@
 import {
 	BatchedUpdate,
+	DATA_CONTEXT,
+	DataEvents,
+	Json,
+	KeepAliveEvents,
+	Node,
+	NormalizedPath,
+	Plugin,
+	SOCKET_EVENTS,
+	SocketServer,
+	Store,
 	createBatchedClient,
 	createStore,
 	createUpdateBatcher,
-	DATA_CONTEXT,
 	deepClone,
 	isObject,
 	joinPath,
-	Json,
-	Node,
 	nodeify,
 	normalizePath,
 	parsePath,
-	Plugin,
-	SocketServer,
-	SOCKET_EVENTS,
-	Store,
 	traverseNode,
 } from '@socketdb/core';
-import { createHooks, Hook } from 'krog';
+import { Hook, createHooks } from 'krog';
 import { createBatchedInterval } from './batchedInterval';
 import { createWebsocketServer } from './socket-implementation/websocketServer';
 import { RecursivePartial } from './utils';
@@ -240,14 +243,14 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 
 	function addSubscriber(
 		id: string,
-		path: string,
+		path: NormalizedPath,
 		callback: (diff: BatchedUpdate) => void
 	) {
 		if (!subscriber[id]) subscriber[id] = {};
 		subscriber[id][path] = callback;
 	}
 
-	function removeSubscriber(id: string, path: string) {
+	function removeSubscriber(id: string, path: NormalizedPath) {
 		if (subscriber[id]) {
 			delete subscriber[id][path];
 		}
@@ -263,7 +266,10 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 
 	socketServer.onConnection((connection, id, context = {}) => {
 		const clientContext = { id, context };
-		const socketEvents = createBatchedClient(connection, updateInterval);
+		const socketEvents = createBatchedClient<KeepAliveEvents & DataEvents>(
+			connection,
+			updateInterval
+		);
 		hooks.call(
 			'server:clientConnect',
 			{
@@ -359,8 +365,8 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 				const value = storedData?.value;
 				if (isObject(value)) {
 					handledKeys = Object.keys(value);
-					// destructure keys to only send the current keys, as they might change while queued
 					socketEvents.queue(`${DATA_CONTEXT}:${wildcardPath}`, {
+						// destructure keys to only send the current keys, as they might change while queued
 						data: { added: [...handledKeys] },
 					});
 				}

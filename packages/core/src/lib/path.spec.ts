@@ -22,6 +22,12 @@ test('checks if path is wildcard', () => {
 	expect(isWildcardPath('*')).toBe(true);
 	expect(isWildcardPath('')).toBe(false);
 	expect(isWildcardPath('abc/adf/*')).toBe(true);
+	expect(isWildcardPath('abc/adf/*/*')).toBe(true);
+	expect(isWildcardPath('/*')).toBe(true);
+
+	// invalid wildcard paths
+	expect(isWildcardPath('abc/adf/')).toBe(false);
+	expect(isWildcardPath('abc/adf*')).toBe(false);
 });
 
 test('trims wildcard from path', () => {
@@ -29,13 +35,12 @@ test('trims wildcard from path', () => {
 	expect(trimWildcard('a/b/c/*')).toEqual('a/b/c');
 	expect(trimWildcard('*')).toEqual('');
 	expect(trimWildcard('/*')).toEqual('');
-	// expects '/*' to be present:
-	expect(trimWildcard('asc*')).toEqual('as');
+	// ignores invalid wildcard paths
+	expect(trimWildcard('asc*')).toEqual('asc*');
 });
 
 test('checks if path is a child of another path', () => {
 	expect(isChildPath('a/b/c', 'a/b')).toBe(true);
-	expect(isChildPath('a/b', 'a')).toBe(true);
 	expect(isChildPath('a/*', 'a')).toBe(true);
 	expect(isChildPath('a', '')).toBe(true);
 

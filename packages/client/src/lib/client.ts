@@ -1,31 +1,33 @@
 import {
 	BatchedUpdate,
+	DATA_CONTEXT,
+	DataEvents,
+	Json,
+	KeepAliveEvents,
+	LeafValue,
+	Meta,
+	Node,
+	Plugin,
+	SOCKET_EVENTS,
+	SocketClient,
+	Store,
 	createBatchedClient,
 	createStore,
 	createSubscriptionManager,
 	createUpdateBatcher,
-	DATA_CONTEXT,
 	deepClone,
 	isNode,
 	isObject,
 	isWildcardPath,
 	joinPath,
-	Json,
-	LeafValue,
 	mergeDiff,
-	Meta,
-	Node,
 	nodeify,
 	parsePath,
-	Plugin,
-	SocketClient,
-	SOCKET_EVENTS,
-	Store,
 	traverseNode,
 	trimWildcard,
 	unwrap,
 } from '@socketdb/core';
-import { createHooks, Hook } from 'krog';
+import { Hook, createHooks } from 'krog';
 import { createWebsocketClient } from './socket-implementation/websocketClient';
 
 export type SocketDBClientAPI<Schema extends SchemaDefinition = any> = {
@@ -111,7 +113,10 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 	const connection: SocketClient =
 		_socketClient || createWebsocketClient({ url });
 
-	const socketEvents = createBatchedClient(connection, updateInterval);
+	const socketEvents = createBatchedClient<KeepAliveEvents & DataEvents>(
+		connection,
+		updateInterval
+	);
 
 	const hooks = createHooks<ClientHooks>();
 
@@ -299,7 +304,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 					wildcardPath,
 					onKeysReceived,
 					() => {
-						const cachedData = store.get(trimWildcard(path));
+						const cachedData = store.get(path);
 						if (cachedData === null) return null;
 						return cachedData.value === null ? null : cachedData;
 					}

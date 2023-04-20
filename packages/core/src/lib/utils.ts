@@ -35,3 +35,5 @@ export function deepClone<T>(source: T): T {
 	// In my tests, JSON.parse/JSON.stringify seems to be the fastest or equally fast to custom implementation
 	return JSON.parse(JSON.stringify(source));
 }
+
+export type Brand<T, B> = T & { __brand__: B };

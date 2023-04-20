@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import {
 	BatchedUpdate,
-	createStore,
 	DATA_CONTEXT,
-	nodeify,
-	SocketClient,
 	SOCKET_EVENTS,
+	SocketClient,
+	createStore,
+	nodeify,
 } from '@socketdb/core';
 import { SocketDBClient } from './client';
 import { mockSocketClient } from './socket-implementation/mockClient';
@@ -17,7 +17,9 @@ test('throws error when using * as pathname', () => {
 	};
 	const client = SocketDBClient<Schema>({ socketClient });
 
-	expect(() => client.get('players').get('1*').get('name')).toThrowError();
+	expect(() => client.get('players').get('1*').get('name')).not.toThrowError();
+	expect(() => client.get('players').get('1/*').get('name')).toThrowError();
+	expect(() => client.get('players').get('*').get('name')).toThrowError();
 });
 
 test('emits update object for path', (done) => {

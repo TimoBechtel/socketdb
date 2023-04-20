@@ -1,5 +1,6 @@
 export * from './lib/batchedSocketEvents';
 export * from './lib/constants';
+export * from './lib/events';
 export * from './lib/node';
 export * from './lib/path';
 export * from './lib/plugin';
