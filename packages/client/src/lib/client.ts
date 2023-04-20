@@ -7,6 +7,7 @@ import {
 	LeafValue,
 	Meta,
 	Node,
+	NormalizedPath,
 	Plugin,
 	SOCKET_EVENTS,
 	SocketClient,
@@ -22,6 +23,7 @@ import {
 	joinPath,
 	mergeDiff,
 	nodeify,
+	normalizePath,
 	parsePath,
 	traverseNode,
 	trimWildcard,
@@ -266,17 +268,17 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 	}
 
 	function get<Schema extends SchemaDefinition>(
-		path: string
+		rootPath: string
 	): ChainReference<Schema> {
-		const rootPath = path;
+		const normalizedPath = normalizePath(rootPath);
 		return {
 			get(path) {
 				if (isWildcardPath(String(path)))
 					throw new Error('You cannot use * (wildcard) as a pathname.');
-				return get(joinPath(rootPath, String(path)));
+				return get(joinPath(normalizedPath, String(path)));
 			},
 			each(callback) {
-				const wildcardPath = joinPath(path, '*');
+				const wildcardPath = joinPath(normalizedPath, '*');
 				let handledKeys: string[] = [];
 				const onKeysReceived = (node: Node) => {
 					// node is a snapshot of the store for the given path
@@ -289,7 +291,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 
 						// notify about new keys
 						unhandledKeys.forEach((key) => {
-							const refpath = joinPath(path, key);
+							const refpath = joinPath(normalizedPath, key);
 							callback(get(refpath), key as keyof Schema);
 						});
 
@@ -304,7 +306,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 					wildcardPath,
 					onKeysReceived,
 					() => {
-						const cachedData = store.get(path);
+						const cachedData = store.get(normalizedPath);
 						if (cachedData === null) return null;
 						return cachedData.value === null ? null : cachedData;
 					}
@@ -313,11 +315,11 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 			set(value, meta) {
 				if (!connectionLost) {
 					hooks
-						.call('client:set', { args: { path, value, meta } })
+						.call('client:set', { args: { path: normalizedPath, value, meta } })
 						.then(({ path, value, meta }) => {
 							const node = nodeify(value);
 							if (meta) node.meta = meta;
-							const update = createUpdate(path, node);
+							const update = createUpdate(normalizePath(path), node);
 							const currentData = store.get();
 							const diff =
 								currentData === null
@@ -331,9 +333,13 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 			},
 			delete() {
 				hooks
-					.call('client:delete', { args: { path } }, { asRef: true })
+					.call(
+						'client:delete',
+						{ args: { path: normalizedPath } },
+						{ asRef: true }
+					)
 					.then(({ path }) => {
-						queueUpdate({ type: 'delete', path });
+						queueUpdate({ type: 'delete', path: normalizePath(path) });
 					})
 					.catch(console.warn);
 			},
@@ -341,23 +347,23 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 				const listener = (data: Node) => {
 					callback(unwrap(data), data.meta);
 				};
-				return subscriptions.update.subscribe(path, listener, () => {
-					const cachedData = store.get(path);
+				return subscriptions.update.subscribe(normalizedPath, listener, () => {
+					const cachedData = store.get(normalizedPath);
 					if (cachedData === null) return null;
 					return cachedData.value === null ? null : cachedData;
 				});
 			},
 			once(callback) {
 				subscriptions.update.subscribe(
-					path,
+					normalizedPath,
 					function listener(data) {
 						// maybe should use subscribe {once: true} ?
 						// and not send "unsubscribe" back
-						subscriptions.update.unsubscribe(path, listener);
+						subscriptions.update.unsubscribe(normalizedPath, listener);
 						callback(unwrap(data), data.meta);
 					},
 					() => {
-						const cachedData = store.get(path);
+						const cachedData = store.get(normalizedPath);
 						if (cachedData === null) return null;
 						return cachedData.value === null ? null : cachedData;
 					}
@@ -375,7 +381,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 	};
 }
 
-function createUpdate(path: string, data: Node): Node {
+function createUpdate(path: NormalizedPath, data: Node): Node {
 	const diff: { value: { [key: string]: Node } } = { value: {} };
 	let current = diff;
 	const keys = parsePath(path);

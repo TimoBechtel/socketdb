@@ -1,10 +1,11 @@
 import { Node } from './node';
+import { NormalizedPath } from './path';
 import { createQueue } from './queue';
 import { createStore, Store } from './store';
 import { isObject } from './utils';
 
 export type BatchedUpdate = {
-	delete?: string[];
+	delete?: NormalizedPath[];
 	change?: Node;
 };
 
@@ -15,7 +16,7 @@ type Change = {
 
 type Deletion = {
 	type: 'delete';
-	path: string;
+	path: NormalizedPath;
 };
 
 export function createUpdateBatcher(
@@ -24,7 +25,7 @@ export function createUpdateBatcher(
 ) {
 	return createQueue<
 		Change | Deletion,
-		{ diff: Store; deletions: Set<string> }
+		{ diff: Store; deletions: Set<NormalizedPath> }
 	>({
 		createState() {
 			return {

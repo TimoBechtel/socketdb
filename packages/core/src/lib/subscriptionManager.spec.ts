@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { Node, nodeify } from './node';
+import { normalizePath } from './path';
 import { createStore } from './store';
 import { createSubscriptionManager } from './subscriptionManager';
 
@@ -13,10 +14,10 @@ test('subscribes to highest path', () => {
 		restoreSubscription() {},
 	});
 
-	manager.subscribe('/foo', () => {});
-	manager.subscribe('/foo/bar', () => {});
+	manager.subscribe(normalizePath('/foo'), () => {});
+	manager.subscribe(normalizePath('/foo/bar'), () => {});
 
-	expect(subscribedPaths).toEqual(['/foo']);
+	expect(subscribedPaths).toEqual(['foo']);
 });
 
 test('unsubscribes from path', () => {
@@ -31,8 +32,8 @@ test('unsubscribes from path', () => {
 		restoreSubscription() {},
 	});
 
-	const unsubscribe = manager.subscribe('/foo', () => {});
-	expect(subscribedPaths).toEqual(['/foo']);
+	const unsubscribe = manager.subscribe(normalizePath('/foo'), () => {});
+	expect(subscribedPaths).toEqual(['foo']);
 
 	unsubscribe();
 	expect(subscribedPaths).toEqual([]);
@@ -51,11 +52,11 @@ test('unsubscribes from path - alternative function', () => {
 	});
 
 	const fun = () => {};
-	manager.subscribe('/foo', fun);
+	manager.subscribe(normalizePath('/foo'), fun);
 
-	expect(subscribedPaths).toEqual(['/foo']);
+	expect(subscribedPaths).toEqual(['foo']);
 
-	manager.unsubscribe('/foo', fun);
+	manager.unsubscribe(normalizePath('/foo'), fun);
 	expect(subscribedPaths).toEqual([]);
 });
 
@@ -71,12 +72,12 @@ test('subscribes next higher path', () => {
 		restoreSubscription() {},
 	});
 
-	const unsubscribe = manager.subscribe('/foo', () => {});
-	manager.subscribe('/foo/bar', () => {});
-	expect(subscribedPaths).toEqual(['/foo']);
+	const unsubscribe = manager.subscribe(normalizePath('/foo'), () => {});
+	manager.subscribe(normalizePath('/foo/bar'), () => {});
+	expect(subscribedPaths).toEqual(['foo']);
 
 	unsubscribe();
-	expect(subscribedPaths).toEqual(['/foo/bar']);
+	expect(subscribedPaths).toEqual(['foo/bar']);
 });
 
 test('resubscribes', () => {
@@ -89,12 +90,12 @@ test('resubscribes', () => {
 		},
 	});
 
-	manager.subscribe('/foo', () => {});
-	manager.subscribe('/bar', () => {});
-	manager.subscribe('/foo/bar', () => {});
+	manager.subscribe(normalizePath('/foo'), () => {});
+	manager.subscribe(normalizePath('/bar'), () => {});
+	manager.subscribe(normalizePath('/foo/bar'), () => {});
 	manager.resubscribe();
 
-	expect(restoredPaths).toEqual(['/foo', '/bar']);
+	expect(restoredPaths).toEqual(['foo', 'bar']);
 });
 
 test('notifies subscriber', (done) => {
@@ -104,12 +105,12 @@ test('notifies subscriber', (done) => {
 		restoreSubscription() {},
 	});
 
-	manager.subscribe('/foo', (data) => {
+	manager.subscribe(normalizePath('/foo'), (data) => {
 		expect(data).toBe('bar');
 		done();
 	});
 
-	manager.notify('/foo', 'bar');
+	manager.notify(normalizePath('/foo'), 'bar');
 });
 
 test('recursively notifies subscriber of child paths', (done) => {
@@ -119,12 +120,12 @@ test('recursively notifies subscriber of child paths', (done) => {
 		restoreSubscription() {},
 	});
 
-	manager.subscribe('/foo/bar', (data) => {
+	manager.subscribe(normalizePath('/foo/bar'), (data) => {
 		expect(data).toBe('baz');
 		done();
 	});
 
-	manager.notify('/foo', 'baz', {
+	manager.notify(normalizePath('/foo'), 'baz', {
 		recursiveDown: true,
 	});
 });
@@ -136,12 +137,12 @@ test('recursively notifies subscriber of parent paths', (done) => {
 		restoreSubscription() {},
 	});
 
-	manager.subscribe('/foo', (data) => {
+	manager.subscribe(normalizePath('/foo'), (data) => {
 		expect(data).toBe('baz');
 		done();
 	});
 
-	manager.notify('/foo/bar', 'baz', {
+	manager.notify(normalizePath('/foo/bar'), 'baz', {
 		recursiveUp: true,
 	});
 });
@@ -153,16 +154,16 @@ test('ignores self, if set', (done) => {
 		restoreSubscription() {},
 	});
 
-	manager.subscribe('/foo/bar', () => {
+	manager.subscribe(normalizePath('/foo/bar'), () => {
 		fail('should not be called');
 	});
 
-	manager.subscribe('/foo', (data) => {
+	manager.subscribe(normalizePath('/foo'), (data) => {
 		expect(data).toBe('baz');
 		done();
 	});
 
-	manager.notify('/foo/bar', 'baz', {
+	manager.notify(normalizePath('/foo/bar'), 'baz', {
 		recursiveUp: true,
 		excludeSelf: true,
 	});
@@ -185,20 +186,24 @@ test('get data using the passed function and notify subscribers with that data',
 		restoreSubscription() {},
 	});
 
-	manager.subscribe('/a', (data) => {
+	manager.subscribe(normalizePath('/a'), (data) => {
 		expect(data).toEqual(nodeify(testData.a));
 	});
-	manager.subscribe('/a/b', (data) => {
+	manager.subscribe(normalizePath('/a/b'), (data) => {
 		expect(data).toEqual(nodeify(testData.a.b));
 	});
-	manager.subscribe('/a/b/c', (data) => {
+	manager.subscribe(normalizePath('/a/b/c'), (data) => {
 		expect(data).toEqual(nodeify(testData.a.b.c));
 		done();
 	});
 
-	manager.notify('/a', (path) => store.get(path) ?? nodeify(null), {
-		recursiveDown: true,
-	});
+	manager.notify(
+		normalizePath('/a'),
+		(path) => store.get(path) ?? nodeify(null),
+		{
+			recursiveDown: true,
+		}
+	);
 });
 
 test('get data from cache on if it is already subscribed', (done) => {
@@ -209,10 +214,10 @@ test('get data from cache on if it is already subscribed', (done) => {
 		restoreSubscription() {},
 	});
 
-	manager.subscribe('/foo', () => {});
+	manager.subscribe(normalizePath('/foo'), () => {});
 
 	manager.subscribe(
-		'/foo/bar',
+		normalizePath('/foo/bar'),
 		(data) => {
 			expect(data).toBe('baz');
 			done();

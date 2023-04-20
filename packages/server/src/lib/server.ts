@@ -221,7 +221,7 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 		Object.values(subscriber).forEach((subscription) => {
 			Object.entries(subscription).forEach(([subscribedPath, callback]) => {
 				const update: BatchedUpdate = {};
-				const deletePaths: string[] =
+				const deletePaths =
 					diff.delete?.filter(
 						(path) =>
 							path.startsWith(subscribedPath) || subscribedPath.startsWith(path)

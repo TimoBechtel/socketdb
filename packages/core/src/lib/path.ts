@@ -29,13 +29,33 @@ export function normalizePath<Path extends string>(path: Path) {
 	return trimmed as NormalizedPath<Path>;
 }
 
+type JoinPathReturnType<
+	PathA extends string,
+	PathB extends string
+> = PathA extends ''
+	? NormalizedPath<PathB>
+	: PathB extends ''
+	? NormalizedPath<PathA>
+	: NormalizedPath<`${PathA}/${PathB}`>;
+
+/**
+ * Joins two paths together. It always returns a normalized path with no leading or trailing slashes.
+ * So joinPath('a', '/') will return 'a'
+ */
 export function joinPath<PathA extends string, PathB extends string>(
 	path: PathA,
 	subpath: PathB
-) {
-	return `${path ? path + '/' : ''}${subpath}` as PathA extends ''
-		? PathB
-		: `${PathA}/${PathB}`;
+): JoinPathReturnType<PathA, PathB> {
+	const normalizedPath = normalizePath(path);
+	const normalizedSubpath = normalizePath(subpath);
+	if (normalizedPath === '')
+		return normalizedSubpath as JoinPathReturnType<PathA, PathB>;
+	if (normalizedSubpath === '')
+		return normalizedPath as JoinPathReturnType<PathA, PathB>;
+	return `${normalizedPath}/${normalizedSubpath}` as JoinPathReturnType<
+		PathA,
+		PathB
+	>;
 }
 
 export function isWildcardPath(path: string): path is WildcardPath {
@@ -50,5 +70,7 @@ export function isChildPath<Parent extends string>(
 	path: string,
 	parentPath: Parent
 ): path is `${Parent}/${string}` {
-	return path.startsWith(joinPath(parentPath, ''));
+	const normalizedParentPath = normalizePath(parentPath);
+	if (normalizedParentPath === '') return true;
+	return normalizePath(path).startsWith(`${normalizedParentPath}/`);
 }

@@ -1,7 +1,7 @@
-import { isChildPath, parsePath } from './path';
+import { NormalizedPath, isChildPath, parsePath } from './path';
 
 type UpdateListener<T> = {
-	[path: string]: ((data: T) => void)[];
+	[path: NormalizedPath]: ((data: T) => void)[];
 };
 /**
  * manages client side subscriptions to the server
@@ -20,7 +20,7 @@ export function createSubscriptionManager<DataType = any>({
 	 * @param notify Notify listeners about new data.
 	 */
 	createPathSubscription: (
-		path: string,
+		path: NormalizedPath,
 		notify: (
 			data: DataType | (() => DataType),
 			options?: {
@@ -33,34 +33,34 @@ export function createSubscriptionManager<DataType = any>({
 			}
 		) => void
 	) => void;
-	destroySubscription: (path: string) => void;
-	restoreSubscription: (path: string) => void;
+	destroySubscription: (path: NormalizedPath) => void;
+	restoreSubscription: (path: NormalizedPath) => void;
 }) {
-	let subscribedPaths: string[] = [];
+	let subscribedPaths: NormalizedPath[] = [];
 	const updateListener: UpdateListener<DataType> = {};
 
-	function addSocketPathSubscription(path: string) {
+	function addSocketPathSubscription(path: NormalizedPath) {
 		subscribedPaths.push(path);
 		createPathSubscription(path, (data, options) => {
 			notify(path, data, options);
 		});
 	}
 
-	function removeSocketPathSubscription(path: string) {
+	function removeSocketPathSubscription(path: NormalizedPath) {
 		if (subscribedPaths.indexOf(path) !== -1) {
 			subscribedPaths = subscribedPaths.filter((p) => p !== path);
 			destroySubscription(path);
 		}
 	}
 
-	function isSameOrHigherLevelPathSubscribed(path: string): boolean {
+	function isSameOrHigherLevelPathSubscribed(path: NormalizedPath): boolean {
 		return subscribedPaths.some(
 			(subscribedPath) =>
 				path === subscribedPath || isChildPath(path, subscribedPath)
 		);
 	}
 
-	function findNextHighestLevelPaths(path: string): string[] {
+	function findNextHighestLevelPaths(path: NormalizedPath): NormalizedPath[] {
 		return Object.keys(updateListener)
 			.sort((k1, k2) => parsePath(k1).length - parsePath(k2).length)
 			.reduce((arr: string[], key: string) => {
@@ -70,7 +70,7 @@ export function createSubscriptionManager<DataType = any>({
 					}
 				}
 				return arr;
-			}, []);
+			}, []) as NormalizedPath[];
 	}
 
 	function findLowerLevelSubscribedPaths(newPath: string) {
@@ -82,7 +82,7 @@ export function createSubscriptionManager<DataType = any>({
 	}
 
 	function subscribe(
-		path: string,
+		path: NormalizedPath,
 		callback: (data: DataType) => void,
 		fromCache?: () => DataType | null
 	) {
@@ -94,11 +94,11 @@ export function createSubscriptionManager<DataType = any>({
 			oldPaths.forEach(removeSocketPathSubscription);
 			addSocketPathSubscription(path);
 		} else {
-			/* 
+			/*
 			  if path is not subscribed, but a higher level path is,
 			  we assume that the cached data is already up to date
 			  and we notify the callback with the cached data.
-			  
+
 			  If cached data is null, it either means:
 			   a) we have no data yet, or:
 			   b) data does not exist on server yet/anymore
@@ -113,7 +113,10 @@ export function createSubscriptionManager<DataType = any>({
 		};
 	}
 
-	function unsubscribe(path: string, callback: (data: DataType) => void) {
+	function unsubscribe(
+		path: NormalizedPath,
+		callback: (data: DataType) => void
+	) {
 		if (!updateListener[path]) return;
 
 		updateListener[path] = updateListener[path].filter((l) => l !== callback);
@@ -145,7 +148,7 @@ export function createSubscriptionManager<DataType = any>({
 	 * @param options
 	 */
 	function notify(
-		path: string,
+		path: NormalizedPath,
 		data: DataType | ((path: string) => DataType),
 		options: {
 			// recursively notify all children
@@ -166,18 +169,20 @@ export function createSubscriptionManager<DataType = any>({
 			}
 		}
 		if (options.recursiveDown || options.recursiveUp) {
-			Object.keys(updateListener).forEach((subscribedPath) => {
-				if (options.recursiveDown && isChildPath(subscribedPath, path)) {
-					for (const listener of updateListener[subscribedPath] || []) {
-						listener(isRetrieverFunction(data) ? data(subscribedPath) : data);
+			(Object.keys(updateListener) as NormalizedPath[]).forEach(
+				(subscribedPath) => {
+					if (options.recursiveDown && isChildPath(subscribedPath, path)) {
+						for (const listener of updateListener[subscribedPath] || []) {
+							listener(isRetrieverFunction(data) ? data(subscribedPath) : data);
+						}
+					}
+					if (options.recursiveUp && isChildPath(path, subscribedPath)) {
+						for (const listener of updateListener[subscribedPath] || []) {
+							listener(isRetrieverFunction(data) ? data(subscribedPath) : data);
+						}
 					}
 				}
-				if (options.recursiveUp && isChildPath(path, subscribedPath)) {
-					for (const listener of updateListener[subscribedPath] || []) {
-						listener(isRetrieverFunction(data) ? data(subscribedPath) : data);
-					}
-				}
-			});
+			);
 		}
 	}
 

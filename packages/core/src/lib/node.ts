@@ -1,4 +1,4 @@
-import { joinPath } from './path';
+import { NormalizedPath, joinPath } from './path';
 import { isObject } from './utils';
 
 type JsonPrimitives = string | number | boolean | null | undefined;
@@ -69,9 +69,11 @@ export function hasChildNodes(node?: Node): node is Node<Json> {
 
 export function traverseNode(
 	node: Node,
-	callback: (path: string, data: Node) => void | true
+	callback: (path: NormalizedPath, data: Node) => void | true
 ) {
-	const stack: { node: Node; path: string }[] = [{ node, path: '' }];
+	const stack: { node: Node; path: NormalizedPath }[] = [
+		{ node, path: '' as NormalizedPath<''> },
+	];
 	while (stack.length) {
 		const current = stack.pop();
 		if (!current) return;

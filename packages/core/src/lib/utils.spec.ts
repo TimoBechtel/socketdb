@@ -16,7 +16,12 @@ test('returns true on any other object', () => {
 
 test('joins paths', () => {
 	expect(joinPath('', 'sub')).toBe('sub');
+	expect(joinPath('a', '')).toBe('a');
+	expect(joinPath('a', '/')).toBe('a');
+	expect(joinPath('/', 'a')).toBe('a');
+	expect(joinPath('/', '/')).toBe('');
 	expect(joinPath('a', 'b')).toBe('a/b');
+	expect(joinPath('/a', 'b/')).toBe('a/b');
 });
 
 test('clones array and objects', () => {

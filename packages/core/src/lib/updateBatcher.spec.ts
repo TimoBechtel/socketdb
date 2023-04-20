@@ -1,4 +1,5 @@
 import { nodeify } from './node';
+import { normalizePath } from './path';
 import { createUpdateBatcher } from './updateBatcher';
 
 test('batches update', (done) => {
@@ -8,7 +9,7 @@ test('batches update', (done) => {
 		done();
 	}, 100);
 	queue({ type: 'change', data: nodeify({ a: { b: { c: 1 } } }) });
-	queue({ type: 'delete', path: 'a/b/c' });
+	queue({ type: 'delete', path: normalizePath('a/b/c') });
 	queue({ type: 'change', data: nodeify({ a: { b: { d: 2 } } }) });
 	queue({ type: 'change', data: nodeify({ a: { b: { c: { e: 4 } } } }) });
 });
@@ -20,5 +21,5 @@ test('does not send changes, if path was deleted', (done) => {
 		done();
 	}, 100);
 	queue({ type: 'change', data: nodeify({ player: { a: { name: 'b' } } }) });
-	queue({ type: 'delete', path: 'player' });
+	queue({ type: 'delete', path: normalizePath('player') });
 });

@@ -41,8 +41,10 @@ test('trims wildcard from path', () => {
 
 test('checks if path is a child of another path', () => {
 	expect(isChildPath('a/b/c', 'a/b')).toBe(true);
+	expect(isChildPath('/a/b/c', 'a/b')).toBe(true);
 	expect(isChildPath('a/*', 'a')).toBe(true);
 	expect(isChildPath('a', '')).toBe(true);
+	expect(isChildPath('a', '/')).toBe(true);
 
 	expect(isChildPath('a', 'a')).toBe(false);
 	expect(isChildPath('a/b/cd', 'a/b/c')).toBe(false);
