@@ -1,0 +1,4 @@
+{
+	"jest.jestCommandLine": "nx run-many --target test",
+	"jest.rootPath": "."
+}
