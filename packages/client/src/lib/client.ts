@@ -62,7 +62,12 @@ export type ChainReference<Schema extends SchemaDefinition = any> = {
 	 * This is useful for just setting meta data without changing any data itself.
 	 * Note: This behavior might change in the future.
 	 */
-	set: (value: Schema, meta?: Meta) => ChainReference<Schema>;
+	set: (
+		// while we technically can set partial data, the type doesn't allow it yet
+		// we might loosen the type in the future e.g. RecursivePartial<Schema>
+		value: Schema,
+		meta?: Meta
+	) => ChainReference<Schema>;
 	delete: () => void;
 	on: (callback: (data: Schema | null, meta?: Meta) => void) => Unsubscriber;
 	once: (callback: (data: Schema | null, meta?: Meta) => void) => void;
