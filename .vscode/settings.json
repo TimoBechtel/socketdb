@@ -1,4 +1,5 @@
 {
 	"jest.jestCommandLine": "nx run-many --target test",
-	"jest.rootPath": "."
+	"jest.rootPath": ".",
+	"jest.autoRun": "off"
 }
