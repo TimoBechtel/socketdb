@@ -1,15 +1,6 @@
 import {
-	type BatchedUpdate,
 	DATA_CONTEXT,
-	type DataEvents,
-	type Json,
-	type KeepAliveEvents,
-	type Node,
-	type NormalizedPath,
-	type Plugin,
 	SOCKET_EVENTS,
-	type SocketServer,
-	type Store,
 	createBatchedClient,
 	createStore,
 	createUpdateBatcher,
@@ -20,8 +11,17 @@ import {
 	normalizePath,
 	parsePath,
 	traverseNode,
+	type BatchedUpdate,
+	type DataEvents,
+	type Json,
+	type KeepAliveEvents,
+	type Node,
+	type NormalizedPath,
+	type Plugin,
+	type SocketServer,
+	type Store,
 } from '@socketdb/core';
-import { type Hook, createHooks } from 'krog';
+import { createHooks, type Hook } from 'krog';
 import { createBatchedInterval } from './batchedInterval';
 import { createWebsocketServer } from './socket-implementation/websocketServer';
 import { type RecursivePartial } from './utils';
@@ -52,6 +52,15 @@ export type SocketDBServerAPI<Schema extends RootSchemaDefinition> =
 	};
 
 export type ServerHooks<Schema extends RootSchemaDefinition> = {
+	/**
+	 * Called when the server is initialized.
+	 */
+	'server:init'?: Hook<
+		Record<string, never>,
+		{
+			api: SocketDBServerDataAPI<Schema>;
+		}
+	>;
 	'server:clientConnect'?: Hook<
 		{ id: string },
 		{
@@ -415,7 +424,14 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 		port = 8080,
 		callback
 	) => {
-		socketServer.listen(port, callback);
+		socketServer.listen(port, () => {
+			hooks
+				.call('server:init', { args: {}, context: { api } })
+				.then(() => {
+					callback?.();
+				})
+				.catch(console.warn);
+		});
 	};
 
 	return {

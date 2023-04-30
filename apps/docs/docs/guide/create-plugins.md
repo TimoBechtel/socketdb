@@ -72,16 +72,22 @@ type ClientHooks = {
 	 */
 	'client:heartbeat'?: Hook<Record<string, unknown>>;
 };
-type Hook<Arguments = void, Context = void> = (
-	args: Arguments,
-	cxt: Context
-) => void | Arguments | Promise<void | Arguments>;
+type Hook<Arguments = void, Context = void> = (args: Arguments, cxt: Context) => void | Arguments | Promise<void | Arguments>;
 ```
 
 ### Server
 
 ```ts
 type ServerHooks = {
+	/**
+	 * Called when the server is initialized.
+	 */
+	'server:init'?: Hook<
+		Record<string, never>,
+		{
+			api: SocketDBServerDataAPI<Schema>;
+		}
+	>;
 	'server:clientConnect'?: Hook<
 		{ id: string },
 		{
@@ -144,8 +150,5 @@ type ServerHooks = {
 		}
 	>;
 };
-type Hook<Arguments = void, Context = void> = (
-	args: Arguments,
-	cxt: Context
-) => void | Arguments | Promise<void | Arguments>;
+type Hook<Arguments = void, Context = void> = (args: Arguments, cxt: Context) => void | Arguments | Promise<void | Arguments>;
 ```
