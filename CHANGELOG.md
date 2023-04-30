@@ -1,5 +1,17 @@
 # Changelog
 
+## [7.1.0](https://github.com/TimoBechtel/socketdb/compare/v7.0.0...v7.1.0) (2023-04-30)
+
+
+### Features
+
+* **server:** add hook that is called on initialization ([b872ab1](https://github.com/TimoBechtel/socketdb/commit/b872ab1ec424e83519b56164730885a9f427334d))
+
+
+### Performance Improvements
+
+* replace clone function with an implementation that is 3x as fast ([e469b78](https://github.com/TimoBechtel/socketdb/commit/e469b78e148f291389585a3d627f4ba8946eaacb))
+
 ## [7.0.0](https://github.com/TimoBechtel/socketdb/compare/v6.2.0...v7.0.0) (2023-04-02)
 
 
