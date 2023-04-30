@@ -1,22 +1,10 @@
 import {
-	type BatchedUpdate,
 	DATA_CONTEXT,
-	type DataEvents,
-	type Json,
-	type KeepAliveEvents,
-	type LeafValue,
-	type Meta,
-	type Node,
-	type NormalizedPath,
-	type Plugin,
 	SOCKET_EVENTS,
-	type SocketClient,
-	type Store,
 	createBatchedClient,
 	createStore,
 	createSubscriptionManager,
 	createUpdateBatcher,
-	deepClone,
 	isNode,
 	isObject,
 	isWildcardPath,
@@ -25,11 +13,23 @@ import {
 	nodeify,
 	normalizePath,
 	parsePath,
+	simpleDeepClone,
 	traverseNode,
 	trimWildcard,
 	unwrap,
+	type BatchedUpdate,
+	type DataEvents,
+	type Json,
+	type KeepAliveEvents,
+	type LeafValue,
+	type Meta,
+	type Node,
+	type NormalizedPath,
+	type Plugin,
+	type SocketClient,
+	type Store,
 } from '@socketdb/core';
-import { type Hook, createHooks } from 'krog';
+import { createHooks, type Hook } from 'krog';
 import { createWebsocketClient } from './socket-implementation/websocketClient';
 
 export type SocketDBClientAPI<Schema extends SchemaDefinition = any> = {
@@ -193,7 +193,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 									subscriptions.update.notify(path, () => {
 										const currentData = store.get(path);
 										if (currentData === null) return nodeify(null);
-										return deepClone(currentData);
+										return simpleDeepClone(currentData);
 									});
 									if (isObject(data.value)) {
 										// with child paths, we need to notify all listeners for the wildcard path
@@ -329,7 +329,9 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 							const diff =
 								currentData === null
 									? update
-									: mergeDiff(update, deepClone(currentData));
+									: // note: simpleDeepClone skips leaf values (e.g. arrays),
+									  // but mergeDiff will also skip them, so it's fine here
+									  mergeDiff(update, simpleDeepClone(currentData));
 							if (isNode(diff)) queueUpdate({ type: 'change', data: diff });
 						})
 						.catch(console.warn);

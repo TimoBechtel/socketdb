@@ -4,12 +4,12 @@ import {
 	createBatchedClient,
 	createStore,
 	createUpdateBatcher,
-	deepClone,
 	isObject,
 	joinPath,
 	nodeify,
 	normalizePath,
 	parsePath,
+	simpleDeepClone,
 	traverseNode,
 	type BatchedUpdate,
 	type DataEvents,
@@ -161,7 +161,7 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 		get: (path: string): Node => {
 			const data = store.get(path);
 			if (!data) return nodeify(null);
-			return deepClone(data);
+			return simpleDeepClone(data);
 		},
 		delete: del,
 	};
@@ -348,8 +348,8 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 				const storedData = store.get(path);
 				socketEvents.queue(`${DATA_CONTEXT}:${path}`, {
 					data: {
-						// deepClone to only send the current snapshot, as data might change while queued
-						change: storedData ? deepClone(storedData) : nodeify(null),
+						// simpleDeepClone to only send the current snapshot, as data might change while queued
+						change: storedData ? simpleDeepClone(storedData) : nodeify(null),
 					},
 				});
 				if (once) return;
