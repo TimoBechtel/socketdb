@@ -1,7 +1,7 @@
-import { createEventBroker, SocketServer } from '@socketdb/core';
-import { createServer, IncomingMessage } from 'http';
+import { createEventBroker, type SocketServer } from '@socketdb/core';
+import { createServer, type IncomingMessage } from 'http';
 import ws from 'ws';
-import { SessionContext } from '../server';
+import { type SessionContext } from '../server';
 import { createHttpResponse, WebsocketServerError } from './httpUpgradeError';
 import { createIncrementalIdGenerator } from './incrementalIdGenerator';
 

@@ -1,6 +1,6 @@
-import { DATA_CONTEXT, SOCKET_EVENTS } from './constants';
-import { WildcardPath } from './path';
-import { BatchedUpdate } from './updateBatcher';
+import { type DATA_CONTEXT, type SOCKET_EVENTS } from './constants';
+import { type WildcardPath } from './path';
+import { type BatchedUpdate } from './updateBatcher';
 
 export type DataEvents = {
 	[updatePath in `${typeof DATA_CONTEXT}:${string}`]: { data: BatchedUpdate };

@@ -1,6 +1,6 @@
-import { GenericQueuedEvent } from '../batchedSocketEvents';
+import { type GenericQueuedEvent } from '../batchedSocketEvents';
 import { createEventBroker } from './eventBroker';
-import { Socket } from './socket';
+import { type Socket } from './socket';
 
 /**
  * mocks a single socket connection that also unwraps batched events for easier testing

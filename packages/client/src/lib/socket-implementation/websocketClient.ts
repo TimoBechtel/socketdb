@@ -1,4 +1,4 @@
-import { createEventBroker, SocketClient } from '@socketdb/core';
+import { createEventBroker, type SocketClient } from '@socketdb/core';
 
 export const createWebsocketClient = ({
 	url,

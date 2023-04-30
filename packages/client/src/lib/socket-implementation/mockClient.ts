@@ -1,4 +1,4 @@
-import { mockSocket, SocketClient } from '@socketdb/core';
+import { mockSocket, type SocketClient } from '@socketdb/core';
 
 export function mockSocketClient({
 	onClose,

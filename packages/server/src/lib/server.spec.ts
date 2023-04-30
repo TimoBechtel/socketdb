@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import {
-	BatchedUpdate,
+	type BatchedUpdate,
 	createStore,
 	DATA_CONTEXT,
 	nodeify,

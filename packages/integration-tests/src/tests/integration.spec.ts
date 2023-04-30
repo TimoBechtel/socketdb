@@ -4,9 +4,9 @@ import {
 	createEventBroker,
 	createStore,
 	nodeify,
-	Socket,
-	SocketClient,
-	SocketServer,
+	type Socket,
+	type SocketClient,
+	type SocketServer,
 	SOCKET_EVENTS,
 } from '@socketdb/core';
 import { mockSocketServer, SocketDBServer } from '@socketdb/server';

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { Node, nodeify } from './node';
+import { type Node, nodeify } from './node';
 import { normalizePath } from './path';
 import { createStore } from './store';
 import { createSubscriptionManager } from './subscriptionManager';

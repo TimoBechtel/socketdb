@@ -1,4 +1,4 @@
-import { hasChildNodes, isNode, Node } from './node';
+import { hasChildNodes, isNode, type Node } from './node';
 import { parsePath } from './path';
 import { isObject, mergeDiff } from './utils';
 

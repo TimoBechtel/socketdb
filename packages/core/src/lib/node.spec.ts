@@ -1,4 +1,4 @@
-import { isNode, Node, nodeify, traverseNode, unwrap } from './node';
+import { isNode, type Node, nodeify, traverseNode, unwrap } from './node';
 
 test('wraps object with nodes', () => {
 	const obj = {

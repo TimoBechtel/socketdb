@@ -1,17 +1,17 @@
 import {
-	BatchedUpdate,
+	type BatchedUpdate,
 	DATA_CONTEXT,
-	DataEvents,
-	Json,
-	KeepAliveEvents,
-	LeafValue,
-	Meta,
-	Node,
-	NormalizedPath,
-	Plugin,
+	type DataEvents,
+	type Json,
+	type KeepAliveEvents,
+	type LeafValue,
+	type Meta,
+	type Node,
+	type NormalizedPath,
+	type Plugin,
 	SOCKET_EVENTS,
-	SocketClient,
-	Store,
+	type SocketClient,
+	type Store,
 	createBatchedClient,
 	createStore,
 	createSubscriptionManager,
@@ -29,7 +29,7 @@ import {
 	trimWildcard,
 	unwrap,
 } from '@socketdb/core';
-import { Hook, createHooks } from 'krog';
+import { type Hook, createHooks } from 'krog';
 import { createWebsocketClient } from './socket-implementation/websocketClient';
 
 export type SocketDBClientAPI<Schema extends SchemaDefinition = any> = {

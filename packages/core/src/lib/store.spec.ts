@@ -1,4 +1,4 @@
-import { Node, nodeify } from './node';
+import { type Node, nodeify } from './node';
 import { createStore } from './store';
 
 test('returns null, if key does not exist', () => {

@@ -1,4 +1,4 @@
-import { Brand } from './utils';
+import { type Brand } from './utils';
 
 export type WildcardPath = `${string}/*` | `*`;
 

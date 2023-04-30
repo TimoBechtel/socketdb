@@ -1,4 +1,4 @@
-import { Socket } from './socket';
+import { type Socket } from './socket';
 
 type SessionContext = Record<string, unknown>;
 

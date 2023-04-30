@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { nodeify } from '@socketdb/core';
-import { JSONSchemaType, pluginValidate } from './plugin-validate';
+import { type JSONSchemaType, pluginValidate } from './plugin-validate';
 
 type Data = {
 	[key: string]: {

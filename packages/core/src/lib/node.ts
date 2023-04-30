@@ -1,4 +1,4 @@
-import { NormalizedPath, joinPath } from './path';
+import { type NormalizedPath, joinPath } from './path';
 import { isObject } from './utils';
 
 type JsonPrimitives = string | number | boolean | null | undefined;

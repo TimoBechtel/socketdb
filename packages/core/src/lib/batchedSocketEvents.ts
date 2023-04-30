@@ -1,6 +1,6 @@
 import { createQueue } from './queue';
 import { createEventBroker } from './socket-connection/eventBroker';
-import { Socket } from './socket-connection/socket';
+import { type Socket } from './socket-connection/socket';
 
 type GenericEvents = {
 	[key: string]: any;

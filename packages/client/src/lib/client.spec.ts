@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import {
-	BatchedUpdate,
+	type BatchedUpdate,
 	DATA_CONTEXT,
 	SOCKET_EVENTS,
-	SocketClient,
+	type SocketClient,
 	createStore,
 	nodeify,
 } from '@socketdb/core';

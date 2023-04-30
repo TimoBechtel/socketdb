@@ -1,4 +1,4 @@
-import { NormalizedPath, isChildPath, parsePath } from './path';
+import { type NormalizedPath, isChildPath, parsePath } from './path';
 
 type UpdateListener<T> = {
 	[path: NormalizedPath]: ((data: T) => void)[];

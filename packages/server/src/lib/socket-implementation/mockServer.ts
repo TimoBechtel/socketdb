@@ -1,4 +1,4 @@
-import { mockSocket, Socket, SocketServer } from '@socketdb/core';
+import { mockSocket, type Socket, type SocketServer } from '@socketdb/core';
 
 /**
  * creates a mock socket server for testing

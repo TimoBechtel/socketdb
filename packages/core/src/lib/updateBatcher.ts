@@ -1,7 +1,7 @@
-import { Node } from './node';
-import { NormalizedPath } from './path';
+import { type Node } from './node';
+import { type NormalizedPath } from './path';
 import { createQueue } from './queue';
-import { createStore, Store } from './store';
+import { createStore, type Store } from './store';
 import { isObject } from './utils';
 
 export type BatchedUpdate = {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import { createStore, SocketClient } from '@socketdb/core';
+import { createStore, type SocketClient } from '@socketdb/core';
 import { SocketDBClient } from './client';
 
 test('allow providing hooks via plugins', (done) => {

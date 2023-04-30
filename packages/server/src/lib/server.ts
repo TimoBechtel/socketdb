@@ -1,15 +1,15 @@
 import {
-	BatchedUpdate,
+	type BatchedUpdate,
 	DATA_CONTEXT,
-	DataEvents,
-	Json,
-	KeepAliveEvents,
-	Node,
-	NormalizedPath,
-	Plugin,
+	type DataEvents,
+	type Json,
+	type KeepAliveEvents,
+	type Node,
+	type NormalizedPath,
+	type Plugin,
 	SOCKET_EVENTS,
-	SocketServer,
-	Store,
+	type SocketServer,
+	type Store,
 	createBatchedClient,
 	createStore,
 	createUpdateBatcher,
@@ -21,10 +21,10 @@ import {
 	parsePath,
 	traverseNode,
 } from '@socketdb/core';
-import { Hook, createHooks } from 'krog';
+import { type Hook, createHooks } from 'krog';
 import { createBatchedInterval } from './batchedInterval';
 import { createWebsocketServer } from './socket-implementation/websocketServer';
-import { RecursivePartial } from './utils';
+import { type RecursivePartial } from './utils';
 
 // can be overwritten by consumers
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
