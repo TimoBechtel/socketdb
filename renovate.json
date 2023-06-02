@@ -1,6 +1,34 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
-		"config:base"
+		":dependencyDashboard",
+		":semanticPrefixChore",
+		":ignoreModulesAndTests",
+		":prHourlyLimit2",
+		":prConcurrentLimit10",
+		"group:monorepos",
+		"group:recommended",
+		"group:allNonMajor",
+		"workarounds:all",
+		":combinePatchMinorReleases",
+		"schedule:nonOfficeHours",
+		":automergeLinters",
+		":automergeTesters",
+		":automergeRequireAllStatusChecks"
+	],
+	"rangeStrategy": "bump",
+	"separateMajorMinor": true,
+	"separateMultipleMajor": true,
+	"rebaseWhen": "auto",
+	"packageRules": [
+		{
+			"extends": ["monorepo:nrwl"],
+			"enabled": false
+		},
+		{
+			"matchDepTypes": ["devDependencies"],
+			"excludePackagePrefixes": ["@types/"],
+			"automerge": true
+		}
 	]
 }
