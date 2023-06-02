@@ -9,7 +9,8 @@
 		"docs": "pnpm nx serve docs"
 	},
 	"engines": {
-		"node": "16.x"
+		"node": "18.x",
+		"pnpm": "7.x"
 	},
 	"config": {
 		"commitizen": {
