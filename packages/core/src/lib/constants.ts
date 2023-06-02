@@ -1,5 +1,6 @@
 export const DATA_CONTEXT = 'data' as const;
 export const KEEP_ALIVE_CONTEXT = 'keep-alive' as const;
+export const CONNECTION_CONTEXT = 'connection' as const;
 
 export const SOCKET_EVENTS = {
 	data: {
@@ -11,5 +12,8 @@ export const SOCKET_EVENTS = {
 	keepAlive: {
 		ping: `${KEEP_ALIVE_CONTEXT}:ping`,
 		pong: `${KEEP_ALIVE_CONTEXT}:pong`,
+	},
+	connection: {
+		goodbye: `${CONNECTION_CONTEXT}:goodbye`,
 	},
 } as const;

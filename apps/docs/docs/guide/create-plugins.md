@@ -63,7 +63,20 @@ type ClientHooks = {
 	'client:delete'?: Hook<{ path: string }>;
 	'client:firstConnect'?: Hook;
 	'client:reconnect'?: Hook;
+	/**
+	 * Called when the client is disconnected from the server.
+	 *
+	 * If the connection is closed by the server,
+	 * "client:serverDisconnectMessage" will also be called before this hook.
+	 */
 	'client:disconnect'?: Hook;
+	/**
+	 * Called when the client receives a goodbye message from the server,
+	 * before the server closes the connection.
+	 *
+	 * It includes the reason why the server disconnected the client.
+	 */
+	'client:serverDisconnectMessage'?: Hook<GoodbyeMessage>;
 	/**
 	 * Called before the client sends a heartbeat to the server.
 	 *

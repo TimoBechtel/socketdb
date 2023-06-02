@@ -4,10 +4,11 @@ import {
 	createEventBroker,
 	createStore,
 	nodeify,
+	SOCKET_EVENTS,
+	type GoodbyeMessage,
 	type Socket,
 	type SocketClient,
 	type SocketServer,
-	SOCKET_EVENTS,
 } from '@socketdb/core';
 import { mockSocketServer, SocketDBServer } from '@socketdb/server';
 
@@ -486,5 +487,60 @@ test('server closes connection when the client stops reacting to ping requests',
 			// connection should be closed after a failed ping
 			done();
 		},
+	});
+});
+
+test('client receives a disconnect reason when gracefully disconnected by server', (done) => {
+	const { connectClient, socketServer } = mockSocketServer();
+
+	const {
+		socketClient,
+		notify: notifyClient,
+		disconnect: disconnectClient,
+	} = mockSocketClient({
+		onSend(event, data) {
+			notifyServer(event, data);
+		},
+	});
+
+	let receivedDisconnect = false;
+
+	SocketDBClient({
+		socketClient,
+		updateInterval: 5,
+		plugins: [
+			{
+				name: 'test',
+				hooks: {
+					'client:serverDisconnectMessage': (serverPayload) => {
+						receivedDisconnect = true;
+						expect(serverPayload).toEqual({ reason: 'test' });
+					},
+					'client:disconnect': () => {
+						expect(receivedDisconnect).toEqual(true);
+						done();
+					},
+				},
+			},
+		],
+	});
+	const server = SocketDBServer({
+		socketServer,
+		updateInterval: 5,
+		keepAliveInterval: 0,
+	});
+	server.listen();
+
+	const { notify: notifyServer } = connectClient({
+		onSend(event, data) {
+			notifyClient(event, data);
+		},
+		onClose() {
+			disconnectClient();
+		},
+	});
+
+	server.getClients().forEach((client) => {
+		client.close({ reason: 'test' } as unknown as GoodbyeMessage);
 	});
 });

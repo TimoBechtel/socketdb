@@ -12,7 +12,9 @@ import {
 	simpleDeepClone,
 	traverseNode,
 	type BatchedUpdate,
+	type ConnectionEvents,
 	type DataEvents,
+	type GoodbyeMessage,
 	type Json,
 	type KeepAliveEvents,
 	type Node,
@@ -66,7 +68,7 @@ type Client = {
 	/**
 	 * Closes the connection to the client.
 	 */
-	close: () => void;
+	close: (payload?: GoodbyeMessage) => void;
 };
 
 // for updates that are triggered by the server
@@ -302,14 +304,22 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 	const clients = new Map<string, Client>();
 
 	socketServer.onConnection((connection, id, context = {}) => {
-		const clientContext: Client = { id, context, close: connection.close };
+		const socketEvents = createBatchedClient<
+			KeepAliveEvents & DataEvents & ConnectionEvents
+		>(connection, updateInterval);
+
+		const gracefullyDisconnect = (
+			data: GoodbyeMessage = { reason: 'unspecified' }
+		) => {
+			// we cant schedule this because we are closing the connection right away
+			socketEvents.sendImmediately('connection:goodbye', data);
+			connection.close();
+		};
+
+		const clientContext: Client = { id, context, close: gracefullyDisconnect };
 
 		clients.set(id, clientContext);
 
-		const socketEvents = createBatchedClient<KeepAliveEvents & DataEvents>(
-			connection,
-			updateInterval
-		);
 		hooks.call(
 			'server:clientConnect',
 			{
@@ -336,7 +346,7 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 						socketEvents.queue(SOCKET_EVENTS.keepAlive.ping, payload);
 					})
 					.catch(() => {
-						connection.close();
+						gracefullyDisconnect({ reason: 'keep-alive-check-failed' });
 					});
 			}) || null;
 		if (shouldDoKeepAlive) {

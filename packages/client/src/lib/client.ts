@@ -18,7 +18,9 @@ import {
 	trimWildcard,
 	unwrap,
 	type BatchedUpdate,
+	type ConnectionEvents,
 	type DataEvents,
+	type GoodbyeMessage,
 	type Json,
 	type KeepAliveEvents,
 	type LeafValue,
@@ -82,7 +84,20 @@ export type ClientHooks = {
 	'client:delete'?: Hook<{ path: string }>;
 	'client:firstConnect'?: Hook;
 	'client:reconnect'?: Hook;
+	/**
+	 * Called when the client is disconnected from the server.
+	 *
+	 * If the connection is closed by the server,
+	 * "client:serverDisconnectMessage" will also be called before this hook.
+	 */
 	'client:disconnect'?: Hook;
+	/**
+	 * Called when the client receives a goodbye message from the server,
+	 * before the server closes the connection.
+	 *
+	 * It includes the reason why the server disconnected the client.
+	 */
+	'client:serverDisconnectMessage'?: Hook<GoodbyeMessage>;
 	/**
 	 * Called before the client sends a heartbeat to the server.
 	 *
@@ -120,10 +135,13 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 	const connection: SocketClient =
 		_socketClient || createWebsocketClient({ url });
 
-	const socketEvents = createBatchedClient<KeepAliveEvents & DataEvents>(
-		connection,
-		updateInterval
-	);
+	const socketEvents = createBatchedClient<
+		KeepAliveEvents & DataEvents & ConnectionEvents
+	>(connection, updateInterval);
+
+	socketEvents.subscribe('connection:goodbye', (payload) => {
+		hooks.call('client:serverDisconnectMessage', { args: payload });
+	});
 
 	const hooks = createHooks<ClientHooks>();
 

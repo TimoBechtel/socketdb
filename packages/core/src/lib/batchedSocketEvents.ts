@@ -42,6 +42,13 @@ export function createBatchedClient<Events extends GenericEvents>(
 		queue<K extends keyof Events>(event: K, data: Events[K]) {
 			queue({ event, data });
 		},
+		/**
+		 * Directly sends an event without batching.
+		 * This is useful for events that need to be sent immediately, e.g. when the connection is about to close.
+		 */
+		sendImmediately<K extends keyof Events>(event: K, data: Events[K]) {
+			connection.send('events', [{ event, data }]);
+		},
 		subscribe<K extends keyof Events>(
 			event: K,
 			callback: (data: Events[K]) => void

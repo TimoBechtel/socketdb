@@ -24,3 +24,24 @@ export type KeepAliveEvents = {
 	[SOCKET_EVENTS.keepAlive.ping]: Record<string, unknown>;
 	[SOCKET_EVENTS.keepAlive.pong]: Record<string, unknown>;
 };
+
+/**
+ * Can be overridden to add custom goodbye messages using module augmentation.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface CustomGoodbyeMessage {}
+
+/**
+ * A socket event that is sent before the client is disconnected from the server.
+ *
+ * You can extend this by ov
+ */
+export type GoodbyeMessage =
+	| {
+			reason: 'keep-alive-check-failed' | 'unspecified';
+	  }
+	| CustomGoodbyeMessage;
+
+export type ConnectionEvents = {
+	[SOCKET_EVENTS.connection.goodbye]: GoodbyeMessage;
+};
