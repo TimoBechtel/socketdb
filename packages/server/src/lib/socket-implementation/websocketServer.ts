@@ -10,6 +10,7 @@ import { createIncrementalIdGenerator } from './incrementalIdGenerator';
  */
 type CustomizableWSOptions = Omit<ws.ServerOptions, 'noServer' | 'port'>;
 
+// This is needed until the SocketServer type is updated. It is not yet as this is a breaking change.
 interface DefaultWebsocketServer extends SocketServer {
 	onConnection: (
 		...args: Parameters<SocketServer['onConnection']>

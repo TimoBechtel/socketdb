@@ -1,5 +1,15 @@
 import { createEventBroker, type SocketClient } from '@socketdb/core';
 
+type Unsubscriber = () => void;
+// This is needed until the SocketClient type is updated. It is not yet as this is a breaking change.
+interface DefaultWebsocketClient extends SocketClient {
+	onConnect: (...args: Parameters<SocketClient['onConnect']>) => Unsubscriber;
+	onDisconnect: (
+		...args: Parameters<SocketClient['onDisconnect']>
+	) => Unsubscriber;
+	onError: (callback: (error: unknown) => void) => Unsubscriber;
+}
+
 export const createWebsocketClient = ({
 	url,
 	protocols,
@@ -8,7 +18,7 @@ export const createWebsocketClient = ({
 	url: string;
 	protocols?: string[];
 	reconnectTimeout?: number;
-}): SocketClient => {
+}): DefaultWebsocketClient => {
 	if (typeof WebSocket === 'undefined') {
 		console.error(
 			'Error: You tried to use the default WebsocketClient in a non-browser environment.',
@@ -20,8 +30,12 @@ export const createWebsocketClient = ({
 	}
 
 	const messageEvents = createEventBroker();
-	const connectionClosedListener: (() => void)[] = [];
-	const connectionOpenedListener: (() => void)[] = [];
+	const socketEvents = createEventBroker<{
+		'connection-closed': void;
+		'connection-opened': void;
+		'connection-error': unknown;
+	}>();
+
 	let manuallyClosed = false;
 
 	let socket: Promise<WebSocket>;
@@ -47,7 +61,7 @@ export const createWebsocketClient = ({
 	}
 
 	function onOpen() {
-		connectionOpenedListener.forEach((callback) => callback());
+		socketEvents.notify('connection-opened', undefined);
 	}
 
 	function onMessage({ data: packet }: MessageEvent) {
@@ -55,13 +69,14 @@ export const createWebsocketClient = ({
 		messageEvents.notify(event, data);
 	}
 
-	async function onError(error: Event) {
-		console.error(error);
+	async function onError(event: Event) {
+		console.error('Socket error:', event);
+		socketEvents.notify('connection-error', event);
 		(await socket).close();
 	}
 
 	function onClose() {
-		connectionClosedListener.forEach((callback) => callback());
+		socketEvents.notify('connection-closed', undefined);
 		if (!manuallyClosed)
 			setTimeout(() => {
 				connect();
@@ -77,14 +92,17 @@ export const createWebsocketClient = ({
 
 	return {
 		onConnect(callback) {
-			connectionOpenedListener.push(callback);
+			return socketEvents.addListener('connection-opened', callback);
 		},
 		onDisconnect(callback) {
-			connectionClosedListener.push(callback);
+			return socketEvents.addListener('connection-closed', callback);
+		},
+		onError(callback) {
+			return socketEvents.addListener('connection-error', callback);
 		},
 		on: messageEvents.addListener,
 		off: messageEvents.removeListener,
-		send(event: string, data: any) {
+		send(event, data) {
 			sendMessage(JSON.stringify({ event, data }));
 		},
 		close() {
