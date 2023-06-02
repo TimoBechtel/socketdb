@@ -49,7 +49,31 @@ export type SocketDBServerAPI<Schema extends RootSchemaDefinition> =
 			hook: Hook,
 			callback: ServerHooks<Schema>[Hook]
 		) => () => void;
+		/**
+		 * Returns the client with the given id or null if no client was found.
+		 *
+		 * You can also pass a filter function to find a client.
+		 */
+		getClient: (
+			id: string | ((context: SessionContext) => boolean)
+		) => Client | null;
+		getClients: (filter?: (context: SessionContext) => boolean) => Client[];
 	};
+
+type Client = {
+	id: string;
+	context: SessionContext;
+	/**
+	 * Closes the connection to the client.
+	 */
+	close: () => void;
+};
+
+// for updates that are triggered by the server
+// TODO: remove this type and use Client | null or Client | undefined instead
+type Nullified<T> = {
+	[K in keyof T]: null;
+};
 
 export type ServerHooks<Schema extends RootSchemaDefinition> = {
 	/**
@@ -64,7 +88,7 @@ export type ServerHooks<Schema extends RootSchemaDefinition> = {
 	'server:clientConnect'?: Hook<
 		{ id: string },
 		{
-			client: { id: string; context: SessionContext };
+			client: Client;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
@@ -79,7 +103,7 @@ export type ServerHooks<Schema extends RootSchemaDefinition> = {
 	'server:keepAliveCheck'?: Hook<
 		Record<string, unknown>,
 		{
-			client: { id: string; context: SessionContext };
+			client: Client;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
@@ -95,32 +119,32 @@ export type ServerHooks<Schema extends RootSchemaDefinition> = {
 	'server:heartbeat'?: Hook<
 		Record<string, unknown>,
 		{
-			client: { id: string; context: SessionContext };
+			client: Client;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 	'server:clientDisconnect'?: Hook<
 		{ id: string },
 		{
-			client: { id: string; context: SessionContext };
+			client: Client;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 	'server:update'?: Hook<
 		{ data: Node<RecursivePartial<Schema>> },
-		// if client id is null, it means the update comes from the server
-		// TODO: allow client object to be null, when update comes from server
 		{
-			client: { id: string | null; context: SessionContext | null };
+			// if the update has been triggered by the server, the client will have null values
+			// This will change in the future to be something like Client | undefined
+			client: Client | Nullified<Client>;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 	'server:delete'?: Hook<
 		{ path: string },
-		// if client id is null, it means the deletion comes from the server
-		// TODO: allow client object to be null, when update comes from server
 		{
-			client: { id: string | null; context: SessionContext | null };
+			// if the update has been triggered by the server, the client will have null values
+			// This will change in the future to be something like Client | undefined
+			client: Client | Nullified<Client>;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
@@ -184,9 +208,10 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 
 	function update(
 		data: Node,
-		client: { id: string | null; context: SessionContext | null } = {
+		client: Client | Nullified<Client> = {
 			id: null,
 			context: null,
+			close: null,
 		}
 	) {
 		hooks
@@ -206,9 +231,10 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 
 	function del(
 		path: string,
-		client: { id: string | null; context: SessionContext | null } = {
+		client: Client | Nullified<Client> = {
 			id: null,
 			context: null,
+			close: null,
 		}
 	) {
 		hooks
@@ -273,8 +299,13 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 		  })
 		: null;
 
+	const clients = new Map<string, Client>();
+
 	socketServer.onConnection((connection, id, context = {}) => {
-		const clientContext = { id, context };
+		const clientContext: Client = { id, context, close: connection.close };
+
+		clients.set(id, clientContext);
+
 		const socketEvents = createBatchedClient<KeepAliveEvents & DataEvents>(
 			connection,
 			updateInterval
@@ -325,6 +356,8 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 		}
 
 		connection.onDisconnect(() => {
+			clients.delete(id);
+
 			disableKeepAliveChecks?.();
 			delete subscriber[id];
 			delete subscriber[id + 'wildcard']; // this should be handled in a cleaner way
@@ -437,6 +470,14 @@ export function SocketDBServer<Schema extends RootSchemaDefinition>({
 	return {
 		listen,
 		intercept: hooks.register,
+		getClient: (filter) => {
+			if (typeof filter === 'string') return clients.get(filter) || null;
+			return [...clients.values()].find((c) => filter(c.context)) || null;
+		},
+		getClients: (filter) => {
+			if (filter === undefined) return [...clients.values()];
+			return [...clients.values()].filter((c) => filter(c.context));
+		},
 		...api,
 	};
 }

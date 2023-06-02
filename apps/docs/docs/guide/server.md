@@ -7,7 +7,6 @@ const server = SocketDBServer(options);
 
 ## options (object)
 
-- `port: number` (optional) port on which to listen for websocket connections, default: 8080
 - `store: Store` (optional)
   in-memory cache, allows you to set a custom store, see [custom-store](custom-store), default
 - `socketServer: SocketServer` (optional)
@@ -17,6 +16,8 @@ const server = SocketDBServer(options);
   set it to 0 to disable batching, defaults to: 50
 - `plugins: ServerPlugin[]` (optional)
   set [plugins](plugins)
+- `keepAliveInterval: number` (optional)
+  Interval in milliseconds between keep alive pings. Set to 0 to disable keep alive. Defaults to 30000
 
 ## existing server
 
@@ -68,4 +69,53 @@ Allows you to delete data for a given path.
 
 ```js
 server.delete('my/fears');
+```
+
+## listen
+
+`listen: (port?: number, callback?: () => void) => void`
+
+Starts the server on given port. Defaults to 8080.
+
+```js
+server.listen(8080, () => {
+	console.log('server is listening');
+});
+```
+
+## intercept
+
+`intercept: (hook: Hook, callback: ServerHooks[Hook]) => () => void`
+
+Allows you to intercept server hooks without having to define a plugin. See [what hooks are available](create-plugins#server).
+
+```js
+const unsubscribe = server.intercept('server:clientConnect', ({ id }) => {
+	console.log('client connected', id);
+});
+
+// later
+unsubscribe();
+```
+
+## getClient
+
+`getClient: (id: string | ((context: SessionContext) => boolean)) => Client | null`
+
+Returns the client with the given id or null if no client was found. You can also pass a filter function to find a specific client.
+
+```js
+const client = server.getClient('connection-id');
+const client = server.getClient((context) => context.userId === 'user-id');
+```
+
+## getClients
+
+`getClients: (filter?: (context: SessionContext) => boolean) => Client[]`
+
+Returns all clients or clients that match the given filter function.
+
+```js
+const clients = server.getClients();
+const clients = server.getClients((context) => context.userId === 'user-id');
 ```

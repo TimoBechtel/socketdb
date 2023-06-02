@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import {
-	type BatchedUpdate,
-	createStore,
 	DATA_CONTEXT,
-	nodeify,
 	SOCKET_EVENTS,
+	createStore,
+	nodeify,
+	type BatchedUpdate,
 } from '@socketdb/core';
 import { SocketDBServer } from './server';
 import { mockSocketServer } from './socket-implementation/mockServer';
@@ -433,4 +433,38 @@ test('allows adding a custom user context', (done) => {
 			},
 		],
 	}).listen();
+});
+
+test('allows getting the user context', () => {
+	const { socketServer, connectClient } = mockSocketServer({
+		initializeSession() {
+			return {
+				username: 'Peter',
+			};
+		},
+	});
+
+	const server = SocketDBServer({ socketServer });
+
+	server.listen();
+
+	const { disconnect } = connectClient({
+		id: '1',
+	});
+
+	// get client by id
+	expect(server.getClient('1')).not.toBeNull();
+	expect(server.getClient('2')).toBeNull();
+	// get client using a filter
+	expect(server.getClient((c) => c['username'] === 'Peter')).not.toBeNull();
+
+	// get all clients
+	expect(server.getClients()).toHaveLength(1);
+	// get all clients using a filter
+	expect(server.getClients((c) => c['username'] === 'Peter')).toHaveLength(1);
+
+	disconnect();
+
+	expect(server.getClient('1')).toBeNull();
+	expect(server.getClients()).toHaveLength(0);
 });

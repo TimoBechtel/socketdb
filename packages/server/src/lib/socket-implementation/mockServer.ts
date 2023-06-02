@@ -1,10 +1,14 @@
-import { mockSocket, type Socket, type SocketServer } from '@socketdb/core';
+import { mockSocket, type SocketServer } from '@socketdb/core';
 
 /**
  * creates a mock socket server for testing
  */
-export function mockSocketServer() {
-	let connect: (client: Socket, id: string) => void = () => {
+export function mockSocketServer({
+	initializeSession,
+}: {
+	initializeSession?: () => Record<string, unknown>;
+} = {}) {
+	let connect: Parameters<SocketServer['onConnection']>[0] = () => {
 		throw new Error('connect not yet initialized');
 	};
 
@@ -31,7 +35,7 @@ export function mockSocketServer() {
 				onClose,
 				onSend,
 			});
-			connect(socket, id);
+			connect(socket, id, initializeSession?.());
 			return {
 				disconnect,
 				notify,

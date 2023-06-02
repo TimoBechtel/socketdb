@@ -91,7 +91,7 @@ type ServerHooks = {
 	'server:clientConnect'?: Hook<
 		{ id: string },
 		{
-			client: { id: string; context: SessionContext };
+			client: Client;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
@@ -106,7 +106,7 @@ type ServerHooks = {
 	'server:keepAliveCheck'?: Hook<
 		Record<string, unknown>,
 		{
-			client: { id: string; context: SessionContext };
+			client: Client;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
@@ -122,33 +122,44 @@ type ServerHooks = {
 	'server:heartbeat'?: Hook<
 		Record<string, unknown>,
 		{
-			client: { id: string; context: SessionContext };
+			client: Client;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 	'server:clientDisconnect'?: Hook<
 		{ id: string },
 		{
-			client: { id: string; context: SessionContext };
+			client: Client;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 	'server:update'?: Hook<
 		{ data: Node<RecursivePartial<Schema>> },
-		// if client id is null, it means the update comes from the server
 		{
-			client: { id: string | null; context: SessionContext | null };
+			// if the update has been triggered by the server, the client will have null values
+			// This will change in the future to be something like Client | undefined
+			client: Client | Nullified<Client>;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 	'server:delete'?: Hook<
 		{ path: string },
-		// if client id is null, it means the deletion comes from the server
 		{
-			client: { id: string | null; context: SessionContext | null };
+			// if the update has been triggered by the server, the client will have null values
+			// This will change in the future to be something like Client | undefined
+			client: Client | Nullified<Client>;
 			api: SocketDBServerDataAPI<Schema>;
 		}
 	>;
 };
 type Hook<Arguments = void, Context = void> = (args: Arguments, cxt: Context) => void | Arguments | Promise<void | Arguments>;
+
+type Client = {
+	id: string;
+	context: SessionContext;
+	/**
+	 * Closes the connection to the client.
+	 */
+	close: () => void;
+};
 ```
