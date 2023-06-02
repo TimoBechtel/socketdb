@@ -5,7 +5,7 @@
 	"projectType": "library",
 	"targets": {
 		"build": {
-			"executor": "@nrwl/rollup:rollup",
+			"executor": "@nx/rollup:rollup",
 			"outputs": ["{options.outputPath}"],
 			"options": {
 				"outputPath": "dist/packages/plugin-validate",
@@ -37,14 +37,14 @@
 			"dependsOn": ["build"]
 		},
 		"lint": {
-			"executor": "@nrwl/linter:eslint",
+			"executor": "@nx/linter:eslint",
 			"outputs": ["{options.outputFile}"],
 			"options": {
 				"lintFilePatterns": ["packages/plugin-validate/**/*.ts"]
 			}
 		},
 		"test": {
-			"executor": "@nrwl/jest:jest",
+			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
 				"jestConfig": "packages/plugin-validate/jest.config.ts",
