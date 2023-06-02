@@ -7,10 +7,12 @@
  * You might need to authenticate with NPM before running this script.
  */
 
-import { readCachedProjectGraph } from '@nx/devkit';
+import pkg from '@nx/devkit';
+const { readCachedProjectGraph } = pkg;
+
+import chalk from 'chalk';
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
-import chalk from 'chalk';
 
 function invariant(condition, message) {
 	if (!condition) {
