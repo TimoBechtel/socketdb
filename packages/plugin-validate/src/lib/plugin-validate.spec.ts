@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { nodeify } from '@socketdb/core';
-import { type JSONSchemaType, pluginValidate } from './plugin-validate';
+import { pluginValidate, type JSONSchemaType } from './plugin-validate';
 
 type Data = {
 	[key: string]: {
@@ -72,7 +72,7 @@ test('validates updated data', () => {
 				data: validData,
 			},
 			{
-				client: { id: '123', context: {} },
+				client: { id: '123', context: {}, close: () => {} },
 				api: {
 					get: () => validData,
 					delete() {},
@@ -131,7 +131,7 @@ test('allow partial updates', () => {
 				data: updatedData,
 			},
 			{
-				client: { id: '123', context: {} },
+				client: { id: '123', context: {}, close: () => {} },
 				api: {
 					get: () => storedData,
 					delete() {},
@@ -164,7 +164,7 @@ test('validates deleted data', () => {
 		plugin.hooks['server:delete']?.(
 			{ path: validDeletePath },
 			{
-				client: { id: '123', context: {} },
+				client: { id: '123', context: {}, close: () => {} },
 				api: {
 					get: () => storedData,
 					delete() {},
@@ -178,7 +178,7 @@ test('validates deleted data', () => {
 		plugin.hooks['server:delete']?.(
 			{ path: invalidDeletePath },
 			{
-				client: { id: '123', context: {} },
+				client: { id: '123', context: {}, close: () => {} },
 				api: {
 					get: () => storedData,
 					delete() {},
