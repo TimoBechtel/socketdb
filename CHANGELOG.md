@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.2.0](https://github.com/TimoBechtel/socketdb/compare/v7.1.0...v7.2.0) (2023-06-02)
+
+
+### Features
+
+* allow sending a disconnect reason to the client ([03f8fdb](https://github.com/TimoBechtel/socketdb/commit/03f8fdbb336680efd5b8681c696725ea91bbc4e5))
+* **server:** add api to manage client connections ([a792f41](https://github.com/TimoBechtel/socketdb/commit/a792f411e8c613197accf0a17b995e85f2265644))
+
 ## [7.1.0](https://github.com/TimoBechtel/socketdb/compare/v7.0.0...v7.1.0) (2023-04-30)
 
 
