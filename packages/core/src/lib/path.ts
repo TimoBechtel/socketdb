@@ -1,6 +1,10 @@
 import { type Brand } from './utils';
 
-export type WildcardPath = `${string}/*` | `*`;
+export type WildcardPath =
+	| `${string}/*`
+	| `*`
+	| NormalizedPath<`*`>
+	| NormalizedPath<`${string}/*`>;
 
 /**
  * Parses a path into an array of path segments
@@ -57,7 +61,6 @@ export function joinPath<PathA extends string, PathB extends string>(
 		PathB
 	>;
 }
-
 export function isWildcardPath(path: string): path is WildcardPath {
 	return path === '*' || path.slice(-2) === '/*';
 }
