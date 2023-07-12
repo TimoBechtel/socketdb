@@ -28,6 +28,7 @@
 		{
 			"matchDepTypes": ["devDependencies"],
 			"excludePackagePrefixes": ["@types/"],
+			"matchUpdateTypes": ["minor", "patch"],
 			"automerge": true
 		}
 	]
