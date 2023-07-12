@@ -1,12 +1,12 @@
 <h1 align="center">
-  <img alt="logo" src="https://socketdb.com/logo.png">
-  <br>
+  <img alt="logo" src="https://socketdb.com/logo.png" />
+  <br />
   SocketDB
 </h1>
 <h3 align="center">Real-time synchronized data storage</h3>
 <p align="center">
   <a href="https://www.npmjs.com/package/socketdb" target="_blank">
-    <img alt="Version" src="https://img.shields.io/npm/v/socketdb.svg">
+    <img alt="Version" src="https://img.shields.io/npm/v/socketdb.svg" />
   </a>
   <a href="https://socketdb.com/guide" target="_blank">
     <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" />
@@ -25,7 +25,7 @@
 
 ## Table of Contents
 
-- [Installation](#Install)
+- [Installation](#install)
 - [Test](#run-tests)
 - [Contributing](#Contributing)
 - [License](#license)

@@ -1,5 +1,10 @@
 import { mockSocket, type SocketClient } from '@socketdb/core';
 
+/**
+ * Creates a mock socket client that can be used for testing
+ *
+ * @internal
+ */
 export function mockSocketClient({
 	onClose,
 	onSend,

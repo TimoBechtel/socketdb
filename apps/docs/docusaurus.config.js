@@ -18,6 +18,17 @@ const config = {
 	organizationName: 'TimoBechtel', // Usually your GitHub org/user name.
 	projectName: 'socketdb', // Usually your repo name.
 
+	plugins: [
+		[
+			'docusaurus-plugin-typedoc',
+			{
+				entryPoints: ['./packages/*'],
+				entryPointStrategy: 'packages',
+				readme: 'none',
+			},
+		],
+	],
+
 	presets: [
 		[
 			'@docusaurus/preset-classic',
@@ -57,10 +68,9 @@ const config = {
 						label: 'Guide',
 					},
 					{
-						type: 'doc',
-						docId: 'api/README',
+						to: '/api',
 						position: 'left',
-						label: 'API',
+						label: 'API Reference',
 					},
 					{
 						href: 'https://twitter.com/TimoBechtel',

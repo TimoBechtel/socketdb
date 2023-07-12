@@ -4,6 +4,8 @@ import { type Socket } from './socket';
 
 /**
  * mocks a single socket connection that also unwraps batched events for easier testing
+ *
+ * @internal
  */
 export function mockSocket({
 	onClose,
