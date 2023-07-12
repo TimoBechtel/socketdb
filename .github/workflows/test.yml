@@ -32,7 +32,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm nx affected --target=lint --parallel=3
-      - name: Test
-        run: pnpm nx affected --target=test --parallel=3 --ci --code-coverage
+      - name: Lint, Test, Build
+        run: pnpm nx affected --targets=lint,test,build --parallel=3 --ci --code-coverage --prod
