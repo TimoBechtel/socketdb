@@ -13,6 +13,6 @@
 		"validation"
 	],
 	"peerDependencies": {
-		"@socketdb/server": "^4.0.0"
+		"@socketdb/server": "^7.2.0"
 	}
 }
