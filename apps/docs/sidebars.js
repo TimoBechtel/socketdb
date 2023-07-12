@@ -47,6 +47,7 @@ const sidebars = {
 				'guide/migration-guides/v4-to-v5',
 				'guide/migration-guides/v5-to-v6',
 				'guide/migration-guides/v6-to-v7',
+				'guide/migration-guides/v7-to-v8',
 			],
 		},
 	],

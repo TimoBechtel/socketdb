@@ -1,0 +1,11 @@
+# v8 Migration Guide
+
+## Client does not automatically connect to the server anymore
+
+The client now needs to be explicitly connected to the server. This is done by calling `client.connect()`.
+
+```diff
+-const db = SocketDBClient<Schema>({ url: 'ws://localhost:8080' });
++const db = SocketDBClient<Schema>();
++db.connect('ws://localhost:8080');
+```
