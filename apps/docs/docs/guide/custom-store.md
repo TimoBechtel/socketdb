@@ -1,6 +1,6 @@
 # Custom Store
 
-You can use your own store for the [SocketDBClient](/api/client) as well as [SocketDBServer](/api/server).
+You can use your own store for the [SocketDBClient](/api/modules/socketdb_client#socketdbclient) as well as [SocketDBServer](/api/modules/socketdb_server#socketdbserver).
 This allows you to, for example, add persistence to your application.
 
 > You might need to install the core utils package for this: `@socketdb/core`
