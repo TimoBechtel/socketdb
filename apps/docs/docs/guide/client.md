@@ -3,6 +3,8 @@
 ```js
 import { SocketDBClient } from '@socketdb/client';
 const db = SocketDBClient(options);
+
+db.connect();
 ```
 
 ## Data Schema
@@ -19,14 +21,13 @@ type Schema = {
 };
 
 const db = SocketDBClient<Schema>(options);
+db.connect();
 
 db.get('users').get('1').set({ name: 1 }); // => throws a ts compilation error
 ```
 
 ## options (object)
 
-- `url: string` (optional)
-  url to SocketDBServer, defaults to: `ws://${window.location.hostname}:${window.location.port}`
 - `store: Store` (optional)
   in-memory cache, allows you to set a custom store, see [custom-store](custom-store), default
 - `socketClient: SocketClient` (optional)
@@ -36,6 +37,16 @@ db.get('users').get('1').set({ name: 1 }); // => throws a ts compilation error
   set it to 0 to disable batching, defaults to: 50
 - `plugins: ClientPlugin[]` (optional)
   set [plugins](plugins)
+
+## connect
+
+`connect: (url?: string) => void`
+
+Connects to the server. `url` is optional and defaults to the domain & port the client is running on. (e.g. `wss://mydomain.com:443`)
+
+```js
+db.connect('ws://localhost:8080');
+```
 
 ## get
 

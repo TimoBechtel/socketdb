@@ -32,9 +32,13 @@ import {
 	type Store,
 } from '@socketdb/core';
 import { createHooks, type Hook } from 'krog';
-import { createWebsocketClient } from './socket-implementation/websocketClient';
+import {
+	__isDefaultWebsocketClient,
+	createWebsocketClient,
+} from './socket-implementation/websocketClient';
 
 export type SocketDBClientAPI<Schema extends SchemaDefinition = any> = {
+	connect: () => void;
 	disconnect: () => void;
 	intercept: <Hook extends keyof ClientHooks>(
 		hook: Hook,
@@ -110,13 +114,11 @@ export type ClientHooks = {
 export type ClientPlugin = Plugin<ClientHooks>;
 
 export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
-	url: _url,
 	store = createStore(),
 	socketClient: _socketClient,
 	updateInterval = 50,
 	plugins = [],
 }: {
-	url?: string;
 	store?: Store;
 	socketClient?: SocketClient;
 	updateInterval?: number;
@@ -125,15 +127,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 	// use half of the update interval, because we have two update queues resulting in double the time
 	updateInterval = updateInterval / 2;
 
-	const url: string =
-		_url ||
-		(typeof window !== 'undefined'
-			? `ws${window.location.protocol === 'https:' ? 's' : ''}://${
-					window.location.hostname
-			  }:${window.location.port}`
-			: 'ws://localhost:8080');
-	const connection: SocketClient =
-		_socketClient || createWebsocketClient({ url });
+	const connection = _socketClient || createWebsocketClient();
 
 	const socketEvents = createBatchedClient<
 		KeepAliveEvents & DataEvents & ConnectionEvents
@@ -402,6 +396,18 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 		intercept: hooks.register,
 		disconnect() {
 			connection.close();
+		},
+		connect(url?: string) {
+			url =
+				url ||
+				(typeof window !== 'undefined'
+					? `ws${window.location.protocol === 'https:' ? 's' : ''}://${
+							window.location.hostname
+					  }:${window.location.port}`
+					: 'ws://localhost:8080');
+			if (__isDefaultWebsocketClient(connection)) {
+				connection.connect(url);
+			}
 		},
 	};
 }

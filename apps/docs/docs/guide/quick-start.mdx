@@ -39,10 +39,12 @@ import { SocketDBClient } from '@socketdb/client';
 Then, in your frontend javascript, you can connect to the server like this:
 
 ```js
-const db = SocketDBClient({ url: 'ws://localhost:8080' });
+const db = SocketDBClient();
+db.connect('ws://localhost:8080');
 
 db.get('some').get('path').on(console.log);
 db.get('some').set({ path: 'Hello World' });
+// => Hello World
 ```
 
 :::tip Typescript
