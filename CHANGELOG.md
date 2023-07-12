@@ -1,5 +1,21 @@
 # Changelog
 
+## [8.0.0](https://github.com/TimoBechtel/socketdb/compare/v7.2.0...v8.0.0) (2023-07-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* **client:** The client now requires a ".connect()" call to establish a connection.
+
+### Features
+
+* **client:** add connect function to allow initializing without connecting ([5910eac](https://github.com/TimoBechtel/socketdb/commit/5910eac84d6100ff02102df96477dfdc92505acf))
+
+
+### Bug Fixes
+
+* **docs:** broken links ([a1d8fea](https://github.com/TimoBechtel/socketdb/commit/a1d8fea8376276434110c3d2810c773e7873408b))
+
 ## [7.2.0](https://github.com/TimoBechtel/socketdb/compare/v7.1.0...v7.2.0) (2023-06-02)
 
 
