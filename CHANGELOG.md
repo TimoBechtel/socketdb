@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.1](https://github.com/TimoBechtel/socketdb/compare/v8.0.0...v8.0.1) (2023-07-13)
+
+
+### Bug Fixes
+
+* **client:** wrong types for connect function ([85e3910](https://github.com/TimoBechtel/socketdb/commit/85e3910ef86d52a0f45216c65c92ba8ab647377a))
+
 ## [8.0.0](https://github.com/TimoBechtel/socketdb/compare/v7.2.0...v8.0.0) (2023-07-12)
 
 
