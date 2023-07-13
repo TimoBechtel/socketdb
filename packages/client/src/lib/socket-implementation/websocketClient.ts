@@ -44,67 +44,82 @@ export const createWebsocketClient = ({
 	}>();
 
 	let manuallyClosed = false;
-	let socket: Promise<WebSocket> | null = null;
+	let socket: WebSocket | null = null;
 	let lastConnectUrl: string;
+	let reconnectTimeoutId: ReturnType<typeof setTimeout>;
+
+	// messages that will be queued while the socket is connecting
+	const queuedMessages: string[] = [];
 
 	async function connect(url: string) {
-		if ((await socket)?.readyState === WebSocket.CONNECTING) return;
-
-		// close previous connection if it exists
-		if ((await socket)?.readyState === WebSocket.OPEN) {
-			await disconnect();
+		if (
+			socket?.readyState === WebSocket.CONNECTING ||
+			socket?.readyState === WebSocket.OPEN
+		) {
+			// ignore if we are already connected/connecting to the same url
+			if (url === lastConnectUrl) return;
+			// otherwise we close it, so we can connect to the new url
+			disconnect();
 		}
 
-		socket = new Promise((resolve) => {
-			lastConnectUrl = url;
-			manuallyClosed = false;
+		lastConnectUrl = url;
+		manuallyClosed = false;
+		if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
 
-			const _socket = new WebSocket(url, protocols);
-			_socket.onopen = () => {
-				resolve(_socket);
-				onOpen();
-			};
-			_socket.onmessage = onMessage;
-			_socket.onclose = onClose;
-			_socket.onerror = onError;
-		});
-		return socket;
+		const newSocket = new WebSocket(url, protocols);
+		newSocket.onopen = () => {
+			socketEvents.notify('connection-opened', undefined);
+			// send messages that might have been queued while the socket was connecting
+			queuedMessages.forEach((message) => {
+				newSocket.send(message);
+			});
+			queuedMessages.length = 0;
+		};
+		newSocket.onmessage = ({ data: packet }) => {
+			const { event, data } = JSON.parse(packet);
+			messageEvents.notify(event, data);
+		};
+		newSocket.onclose = () => {
+			socketEvents.notify('connection-closed', undefined);
+			if (!manuallyClosed && lastConnectUrl) {
+				if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
+				reconnectTimeoutId = setTimeout(() => {
+					connect(lastConnectUrl);
+				}, reconnectTimeout);
+			}
+		};
+		newSocket.onerror = (event) => {
+			socketEvents.notify('connection-error', event);
+			console.error('Websocket connection failed.');
+			newSocket.close();
+		};
+
+		socket = newSocket;
 	}
 
 	async function disconnect() {
 		manuallyClosed = true;
-		const ws = await socket;
-		if (ws?.readyState === WebSocket.CLOSING) return;
-		ws?.close();
-	}
-
-	function onOpen() {
-		socketEvents.notify('connection-opened', undefined);
-	}
-
-	function onMessage({ data: packet }: MessageEvent) {
-		const { event, data } = JSON.parse(packet);
-		messageEvents.notify(event, data);
-	}
-
-	async function onError(event: Event) {
-		console.error('Socket error:', event);
-		socketEvents.notify('connection-error', event);
-		(await socket)?.close();
-	}
-
-	function onClose() {
-		socketEvents.notify('connection-closed', undefined);
-		if (!manuallyClosed && lastConnectUrl)
-			setTimeout(() => {
-				connect(lastConnectUrl);
-			}, reconnectTimeout);
+		if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
+		if (!socket) return;
+		if (
+			socket.readyState === WebSocket.CLOSING ||
+			socket.readyState === WebSocket.CLOSED
+		)
+			return;
+		socket.close();
 	}
 
 	async function sendMessage(message: string) {
-		const ws = await socket;
-		if (ws && ws.readyState === WebSocket.OPEN) {
-			ws.send(message);
+		// when the socket is connecting, we queue messages
+		// this allows us to call db.set() while where still connecting
+		// we should not queue messages otherwise, as this may cause sync issues
+		if (socket?.readyState === WebSocket.CONNECTING) {
+			queuedMessages.push(message);
+			return;
+		}
+
+		if (socket?.readyState === WebSocket.OPEN) {
+			socket.send(message);
 		}
 	}
 
