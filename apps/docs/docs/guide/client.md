@@ -48,6 +48,10 @@ Connects to the server. `url` is optional and defaults to the domain & port the 
 db.connect('ws://localhost:8080');
 ```
 
+:::note Side note
+You do not need to wait for the connection to finish before updating any data. SocketDB will handle this for you. Just make sure to call `connect` once before you try to update any data.
+:::
+
 ## get
 
 `get: (path: string) => ChainReference;`
