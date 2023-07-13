@@ -52,7 +52,7 @@ export const createWebsocketClient = ({
 
 		// close previous connection if it exists
 		if ((await socket)?.readyState === WebSocket.OPEN) {
-			disconnect();
+			await disconnect();
 		}
 
 		socket = new Promise((resolve) => {
