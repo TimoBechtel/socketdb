@@ -28,8 +28,9 @@ export type KeepAliveEvents = {
 /**
  * Can be overridden to add custom goodbye messages using module augmentation.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface CustomGoodbyeMessage {}
+export interface CustomGoodbyeMessage {
+	reason: 'custom';
+}
 
 /**
  * A socket event that is sent before the client is disconnected from the server.
