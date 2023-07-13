@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.2](https://github.com/TimoBechtel/socketdb/compare/v8.0.1...v8.0.2) (2023-07-13)
+
+
+### Bug Fixes
+
+* **core:** type for GoodbyeMessage ([d67c550](https://github.com/TimoBechtel/socketdb/commit/d67c550c9e3a085e6167e1ebe3d6f18d5718cff3))
+
 ## [8.0.1](https://github.com/TimoBechtel/socketdb/compare/v8.0.0...v8.0.1) (2023-07-13)
 
 
