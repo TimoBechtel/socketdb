@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import {
-	type BatchedUpdate,
 	DATA_CONTEXT,
 	SOCKET_EVENTS,
-	type SocketClient,
 	createStore,
 	nodeify,
+	type BatchedUpdate,
+	type SocketClient,
 } from '@socketdb/core';
 import { SocketDBClient } from './client';
 import { mockSocketClient } from './socket-implementation/mockClient';
@@ -891,4 +891,53 @@ test('can disconnect', (done) => {
 
 	const client = SocketDBClient({ socketClient });
 	client.disconnect();
+});
+
+test('can unsubscribe from all subscriptions within a subscriptionContext', (done) => {
+	let subscribeCount = 0;
+	let unsubscribeCount = 0;
+
+	const { socketClient, notify } = mockSocketClient({
+		onSend(event) {
+			if (
+				event === SOCKET_EVENTS.data.requestKeysSubscription ||
+				event === SOCKET_EVENTS.data.requestSubscription
+			) {
+				subscribeCount++;
+			} else if (event === SOCKET_EVENTS.data.requestUnsubscription) {
+				unsubscribeCount++;
+			}
+		},
+	});
+
+	const client = SocketDBClient({ socketClient, updateInterval: 5 });
+
+	let updateCount = 0;
+
+	const unsubscribe = client.subscribeGroup((client) => {
+		client.get('players').each((ref) => {
+			ref.once(() => {
+				ref.on(() => {
+					updateCount++;
+				});
+			});
+		});
+	});
+
+	notify(`${DATA_CONTEXT}:players/*`, {
+		data: { added: ['1'] },
+	});
+	notify(`${DATA_CONTEXT}:players/1`, {
+		data: { change: nodeify({ name: 'Thomas' }) },
+	});
+	notify(`${DATA_CONTEXT}:players/1`, {
+		data: { change: nodeify({ name: 'Thomas' }) },
+	});
+	unsubscribe();
+	setTimeout(() => {
+		expect(subscribeCount).toBe(3);
+		expect(unsubscribeCount).toBe(3);
+		expect(updateCount).toBe(1);
+		done();
+	}, 50);
 });

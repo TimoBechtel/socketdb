@@ -179,3 +179,46 @@ So make sure to not update its child nodes after deleting, or otherwise you migh
 `disconnect: () => void`
 
 Closes connection to server.
+
+## subscribeGroup
+
+`subscribeGroup: (callback: (ref: ChainReference) => void) => Unsubscriber`
+
+Allows you to group multiple subscriptions together.
+It returns an unsubscriber function that will unsubscribe all subscriptions that were created inside the callback.
+
+```js
+const unsubscribeAll = db.subscribeGroup((ref) => {
+	ref.get('player').on((player) => {
+		console.log('player', player);
+	});
+	ref.get('enemies').each((enemyRef) => {
+		enemyRef.on((enemy) => {
+			console.log('enemy', enemy);
+		});
+	});
+});
+
+// unsubscribe all subscriptions
+unsubscribeAll();
+```
+
+This is especially useful when using react:
+
+```jsx
+function MyExampleComponent() {
+	const db = useSocketDB();
+
+	useEffect(() => {
+		return db.subscribeGroup((ref) => {
+			ref.get('player').each((playerRef, id) => {
+				playerRef.on((player) => {
+					console.log('player', id, player);
+				});
+			});
+		});
+	}, [db]);
+
+	return null;
+}
+```

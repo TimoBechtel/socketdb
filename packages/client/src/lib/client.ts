@@ -55,6 +55,39 @@ export type ChainReference<Schema extends SchemaDefinition = any> = {
 	get<Key extends keyof Schema>(
 		path: Schema extends Json ? Key : never
 	): ChainReference<Schema extends Json ? Schema[Key] : never>;
+	/**
+	 * Group multiple subscriptions together.
+	 * This is useful if you want to unsubscribe from multiple subscriptions at once.
+	 *
+	 * @example
+	 * const unsubscribe = db.get('posts').subscribeGroup((_db) => {
+	 * 	_db.each((node, key) => {
+	 * 		console.log(`New post with id ${key} added!`);
+	 * 		node.on((post) => {
+	 * 			console.log(`Post with id ${key} was updated!`);
+	 * 		});
+	 * 	});
+	 * });
+	 *
+	 * // unsubscribe from all subscriptions
+	 * unsubscribe();
+	 */
+	subscribeGroup: (
+		callback: (ref: ChainReference<Schema>) => void
+	) => Unsubscriber;
+	/**
+	 * Allows you to subscribe to sub-nodes of a path.
+	 * It will be called every time a new node was added to a path.
+	 *
+	 * @example
+	 * db.get('posts').each((node, key) => {
+	 *   console.log(`New post with id ${key} added!`);
+	 *   node.on((post) => {
+	 *    console.log(`Post with id ${key} was updated!`);
+	 *   });
+	 * });
+	 *
+	 */
 	each: (
 		callback: (
 			ref: ChainReference<Schema extends Json ? Schema[keyof Schema] : never>,
@@ -285,14 +318,17 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 	}
 
 	function get<Schema extends SchemaDefinition>(
-		rootPath: string
+		rootPath: string,
+		context: {
+			unsubscriber?: Unsubscriber[];
+		} = {}
 	): ChainReference<Schema> {
 		const normalizedPath = normalizePath(rootPath);
 		return {
 			get(path) {
 				if (isWildcardPath(String(path)))
 					throw new Error('You cannot use * (wildcard) as a pathname.');
-				return get(joinPath(normalizedPath, String(path)));
+				return get(joinPath(normalizedPath, String(path)), context);
 			},
 			each(callback) {
 				const wildcardPath = joinPath(normalizedPath, '*');
@@ -309,7 +345,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 						// notify about new keys
 						unhandledKeys.forEach((key) => {
 							const refpath = joinPath(normalizedPath, key);
-							callback(get(refpath), key as keyof Schema);
+							callback(get(refpath, context), key as keyof Schema);
 						});
 
 						// update handled keys
@@ -319,7 +355,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 						handledKeys = [];
 					}
 				};
-				return subscriptions.update.subscribe(
+				const unsubscribe = subscriptions.update.subscribe(
 					wildcardPath,
 					onKeysReceived,
 					() => {
@@ -328,6 +364,12 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 						return cachedData.value === null ? null : cachedData;
 					}
 				);
+
+				if (context.unsubscriber) {
+					context.unsubscriber.push(unsubscribe);
+				}
+
+				return unsubscribe;
 			},
 			set(value, meta) {
 				if (!connectionLost) {
@@ -366,14 +408,24 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 				const listener = (data: Node) => {
 					callback(unwrap(data), data.meta);
 				};
-				return subscriptions.update.subscribe(normalizedPath, listener, () => {
-					const cachedData = store.get(normalizedPath);
-					if (cachedData === null) return null;
-					return cachedData.value === null ? null : cachedData;
-				});
+				const unsubscribe = subscriptions.update.subscribe(
+					normalizedPath,
+					listener,
+					() => {
+						const cachedData = store.get(normalizedPath);
+						if (cachedData === null) return null;
+						return cachedData.value === null ? null : cachedData;
+					}
+				);
+
+				if (context.unsubscriber) {
+					context.unsubscriber.push(unsubscribe);
+				}
+
+				return unsubscribe;
 			},
 			once(callback) {
-				return subscriptions.update.subscribe(
+				const unsubscribe = subscriptions.update.subscribe(
 					normalizedPath,
 					function listener(data) {
 						// maybe should use subscribe {once: true} ?
@@ -387,6 +439,19 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 						return cachedData.value === null ? null : cachedData;
 					}
 				);
+
+				if (context.unsubscriber) {
+					context.unsubscriber.push(unsubscribe);
+				}
+
+				return unsubscribe;
+			},
+			subscribeGroup(callback) {
+				const unsubscriber: Unsubscriber[] = [];
+				callback(get(normalizedPath, { unsubscriber }));
+				return () => {
+					unsubscriber.forEach((unsubscribe) => unsubscribe());
+				};
 			},
 		};
 	}
