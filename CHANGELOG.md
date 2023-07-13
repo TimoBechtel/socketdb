@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.2.0](https://github.com/TimoBechtel/socketdb/compare/v8.1.0...v8.2.0) (2023-07-13)
+
+
+### Features
+
+* **client:** add subscribeGroup that allows you to group subscriptions together ([1d80cf4](https://github.com/TimoBechtel/socketdb/commit/1d80cf44de2dd5b5e13796ccd1ca8cd4fe50422d)), closes [#37](https://github.com/TimoBechtel/socketdb/issues/37)
+
 ## [8.1.0](https://github.com/TimoBechtel/socketdb/compare/v8.0.2...v8.1.0) (2023-07-13)
 
 
