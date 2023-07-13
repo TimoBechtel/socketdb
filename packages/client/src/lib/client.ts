@@ -38,7 +38,7 @@ import {
 } from './socket-implementation/websocketClient';
 
 export type SocketDBClientAPI<Schema extends SchemaDefinition = any> = {
-	connect: () => void;
+	connect: (url?: string) => void;
 	disconnect: () => void;
 	intercept: <Hook extends keyof ClientHooks>(
 		hook: Hook,
@@ -397,7 +397,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 		disconnect() {
 			connection.close();
 		},
-		connect(url?: string) {
+		connect(url) {
 			url =
 				url ||
 				(typeof window !== 'undefined'
