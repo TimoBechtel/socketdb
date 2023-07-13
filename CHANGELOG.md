@@ -1,5 +1,18 @@
 # Changelog
 
+## [8.1.0](https://github.com/TimoBechtel/socketdb/compare/v8.0.2...v8.1.0) (2023-07-13)
+
+
+### Features
+
+* **client:** allow unsubscribing the "once" call ([0fca516](https://github.com/TimoBechtel/socketdb/commit/0fca516cf7a52424fe97ca070a19aa726a1c9d6a))
+
+
+### Bug Fixes
+
+* **client:** issues with reconnecting after a disconnect ([de37704](https://github.com/TimoBechtel/socketdb/commit/de377043cbac7387deae1c56dcab52e2450f17f3))
+* **client:** websocket reconnection issues ([339d190](https://github.com/TimoBechtel/socketdb/commit/339d190af3e9dd83c71ddb1c3e7b8ec37cd85509))
+
 ## [8.0.2](https://github.com/TimoBechtel/socketdb/compare/v8.0.1...v8.0.2) (2023-07-13)
 
 
