@@ -4,7 +4,7 @@ A list of available plugins. If you find a plugin, that is not on this list, fee
 
 ## Official plugins
 
-- [`@SocketDB/plugin-validate`](https://github.com/SocketDB/plugin-validate) - data validation
+- [`@SocketDB/plugin-validate`](https://github.com/TimoBechtel/socketdb/tree/main/packages/plugin-validate) - data validation
 
 ## Community plugins
 
