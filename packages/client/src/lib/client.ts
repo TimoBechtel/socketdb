@@ -76,7 +76,7 @@ export type ChainReference<Schema extends SchemaDefinition = any> = {
 	) => ChainReference<Schema>;
 	delete: () => void;
 	on: (callback: (data: Schema | null, meta?: Meta) => void) => Unsubscriber;
-	once: (callback: (data: Schema | null, meta?: Meta) => void) => void;
+	once: (callback: (data: Schema | null, meta?: Meta) => void) => Unsubscriber;
 };
 
 export type ClientHooks = {
@@ -373,7 +373,7 @@ export function SocketDBClient<Schema extends RootSchemaDefinition = any>({
 				});
 			},
 			once(callback) {
-				subscriptions.update.subscribe(
+				return subscriptions.update.subscribe(
 					normalizedPath,
 					function listener(data) {
 						// maybe should use subscribe {once: true} ?

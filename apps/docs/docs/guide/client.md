@@ -81,7 +81,7 @@ const unsubscribe = db.get('friends/status').on((data, meta) => {
 
 ## once
 
-`once: (callback: (data: any, meta: Meta) => void) => void`
+`once: (callback: (data: any, meta: Meta) => void) => Unsubscriber`
 
 Same as `on`, but only receives data once.
 It will automatically unsubscribe from server after receiving data.
