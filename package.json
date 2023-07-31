@@ -31,7 +31,7 @@
 		"@docusaurus/preset-classic": "2.4.0",
 		"@emotion/react": "^11.10.6",
 		"@emotion/styled": "^11.10.6",
-		"@mdx-js/react": "^1.6.22",
+		"@mdx-js/react": "^2.3.0",
 		"@sapphire/docusaurus-plugin-npm2yarn2pnpm": "^1.1.4",
 		"ajv": "^8.12.0",
 		"clsx": "^1.2.1",

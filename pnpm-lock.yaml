@@ -13,7 +13,7 @@ specifiers:
   '@docusaurus/types': 2.4.0
   '@emotion/react': ^11.10.6
   '@emotion/styled': ^11.10.6
-  '@mdx-js/react': ^1.6.22
+  '@mdx-js/react': ^2.3.0
   '@nx-plus/docusaurus': 15.0.0-rc.0
   '@nx/devkit': 16.3.1
   '@nx/eslint-plugin': 16.3.1
@@ -59,7 +59,7 @@ dependencies:
   '@docusaurus/preset-classic': 2.4.0_pfdzrpmiyxuost7hv6iicnrxve
   '@emotion/react': 11.10.6_react@17.0.2
   '@emotion/styled': 11.10.6_lppulqnmkkrmfes7eqrbphxjnm
-  '@mdx-js/react': 1.6.22_react@17.0.2
+  '@mdx-js/react': 2.3.0_react@17.0.2
   '@sapphire/docusaurus-plugin-npm2yarn2pnpm': 1.1.4
   ajv: 8.12.0
   clsx: 1.2.1
@@ -2994,6 +2994,16 @@ packages:
       react: 17.0.2
     dev: false
 
+  /@mdx-js/react/2.3.0_react@17.0.2:
+    resolution: {integrity: sha512-zQH//gdOmuu7nt2oJR29vFhDv88oGPmVw6BggmrHeMI+xgEkp1B2dX9/bMBSYtK0dyLX/aOmesKS09g222K1/g==}
+    peerDependencies:
+      react: '>=16'
+    dependencies:
+      '@types/mdx': 2.0.5
+      '@types/react': 18.0.37
+      react: 17.0.2
+    dev: false
+
   /@mdx-js/util/1.6.22:
     resolution: {integrity: sha512-H1rQc1ZOHANWBvPcW+JpGwr+juXSxM8Q8YCkm3GhZd8REu1fHR3z99CErO1p9pkcfcxZnMdIZdIsXkOHY0NilA==}
     dev: false
@@ -4106,6 +4116,10 @@ packages:
     resolution: {integrity: sha512-Y/uImid8aAwrEA24/1tcRZwpxX3pIFTSilcNDKSPn+Y2iDywSEachzRuvgAYYLR3wpGXAsMbv5lvKLDZLeYPAw==}
     dependencies:
       '@types/unist': 2.0.6
+    dev: false
+
+  /@types/mdx/2.0.5:
+    resolution: {integrity: sha512-76CqzuD6Q7LC+AtbPqrvD9AqsN0k8bsYo2bM2J8pmNldP1aIPAbzUQ7QbobyXL4eLr1wK5x8FZFe8eF/ubRuBg==}
     dev: false
 
   /@types/mime/3.0.1:
