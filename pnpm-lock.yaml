@@ -34,7 +34,7 @@ specifiers:
   cz-git: ^1.6.1
   docusaurus-plugin-typedoc: ^0.19.2
   eslint: ~8.15.0
-  eslint-config-prettier: 8.1.0
+  eslint-config-prettier: 9.1.0
   husky: ^8.0.3
   is-ci: ^3.0.1
   jest: 29.4.3
@@ -77,7 +77,7 @@ devDependencies:
   '@docusaurus/types': 2.4.0_sfoxds7t5ydpegc3knd667wn6m
   '@nx-plus/docusaurus': 15.0.0-rc.0_rm3udyndzolyb3gaiti7hhu4pi
   '@nx/devkit': 16.3.1_nx@16.3.1
-  '@nx/eslint-plugin': 16.3.1_owmlni5vfaijuvr4rt4dsda4yq
+  '@nx/eslint-plugin': 16.3.1_jye5uzq3dn55rlplk7dxmydc6i
   '@nx/jest': 16.3.1_x6f7gf74pq5vlbqndl2kbu3m7e
   '@nx/js': 16.3.1_nx@16.3.1+typescript@5.0.4
   '@nx/linter': 16.3.1_uizd7dwhhnny4ifzmxbxocavuy
@@ -92,7 +92,7 @@ devDependencies:
   cz-git: 1.6.1
   docusaurus-plugin-typedoc: 0.19.2_aj2dbwu63jugij7homz7yad3pq
   eslint: 8.15.0
-  eslint-config-prettier: 8.1.0_eslint@8.15.0
+  eslint-config-prettier: 9.1.0_eslint@8.15.0
   husky: 8.0.3
   is-ci: 3.0.1
   jest: 29.4.3_lpnbhgxso4u2juc7wocetwmymy
@@ -3060,10 +3060,10 @@ packages:
       - nx
     dev: true
 
-  /@nrwl/eslint-plugin-nx/16.3.1_owmlni5vfaijuvr4rt4dsda4yq:
+  /@nrwl/eslint-plugin-nx/16.3.1_jye5uzq3dn55rlplk7dxmydc6i:
     resolution: {integrity: sha512-EgpWz8jpnTk3tWvzusmTXfv3WKejeFMQO4plaj6o4nXvx2uZ/1Iy0R6E8F7R2FcL8tbYCIXqk9Ac9m4A5Ypz4Q==}
     dependencies:
-      '@nx/eslint-plugin': 16.3.1_owmlni5vfaijuvr4rt4dsda4yq
+      '@nx/eslint-plugin': 16.3.1_jye5uzq3dn55rlplk7dxmydc6i
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@swc-node/register'
@@ -3312,7 +3312,7 @@ packages:
       tslib: 2.5.0
     dev: true
 
-  /@nx/eslint-plugin/16.3.1_owmlni5vfaijuvr4rt4dsda4yq:
+  /@nx/eslint-plugin/16.3.1_jye5uzq3dn55rlplk7dxmydc6i:
     resolution: {integrity: sha512-e+hT8Y5It1162mDAx2YbOt0luOlJev71KzNUrEJxL1ehsE514VNb9nXjK27YVz7EKc6UVyzolrE8ouwJm2Dm7w==}
     peerDependencies:
       '@typescript-eslint/parser': ^5.58.0
@@ -3321,7 +3321,7 @@ packages:
       eslint-config-prettier:
         optional: true
     dependencies:
-      '@nrwl/eslint-plugin-nx': 16.3.1_owmlni5vfaijuvr4rt4dsda4yq
+      '@nrwl/eslint-plugin-nx': 16.3.1_jye5uzq3dn55rlplk7dxmydc6i
       '@nx/devkit': 16.3.1_nx@16.3.1
       '@nx/js': 16.3.1_nx@16.3.1+typescript@5.0.4
       '@typescript-eslint/parser': 6.2.0_2q3o6kbv7m2w3e4zvedswhtv5y
@@ -3329,7 +3329,7 @@ packages:
       '@typescript-eslint/utils': 5.59.8_2q3o6kbv7m2w3e4zvedswhtv5y
       chalk: 4.1.2
       confusing-browser-globals: 1.0.11
-      eslint-config-prettier: 8.1.0_eslint@8.15.0
+      eslint-config-prettier: 9.1.0_eslint@8.15.0
       semver: 7.3.4
     transitivePeerDependencies:
       - '@babel/traverse'
@@ -6397,8 +6397,8 @@ packages:
       source-map: 0.6.1
     dev: true
 
-  /eslint-config-prettier/8.1.0_eslint@8.15.0:
-    resolution: {integrity: sha512-oKMhGv3ihGbCIimCAjqkdzx2Q+jthoqnXSP+d86M9tptwugycmTFdVR4IpLgq2c4SHifbwO90z2fQ8/Aio73yw==}
+  /eslint-config-prettier/9.1.0_eslint@8.15.0:
+    resolution: {integrity: sha512-NSWl5BFQWEPi1j4TjVNItzYV7dZXZ+wP6I6ZhrBGpChQhZRUaElihE9uRRkcbRnNb76UMKDF3r+WTmNcGPKsqw==}
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
