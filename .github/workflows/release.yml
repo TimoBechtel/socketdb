@@ -27,7 +27,7 @@ jobs:
 
       - name: Setup pnpm
         if: ${{ steps.release.outputs.release_created }}
-        uses: pnpm/action-setup@v2.2.4
+        uses: pnpm/action-setup@v2.4.1
         id: pnpm-install
         with:
           version: 7

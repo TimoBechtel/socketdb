@@ -17,6 +17,6 @@
 		"socket.io"
 	],
 	"peerDependencies": {
-		"ws": "^8.12.0"
+		"ws": "^8.18.0"
 	}
 }
